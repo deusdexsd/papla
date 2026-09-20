@@ -1,0 +1,328 @@
+import MurmurDictionary
+import AVFoundation
+import AppKit
+import Foundation
+import Observation
+
+@MainActor
+@Observable
+final class DictationController {
+    enum State: Equatable {
+        case idle
+        case starting
+        case listening
+        case finishing
+        case error(String)
+
+        var isActive: Bool {
+            switch self {
+            case .starting, .listening, .finishing: true
+            case .idle, .error: false
+            }
+        }
+
+        /// Whether the HUD panel should be on screen. Distinct from `isActive`: an error
+        /// isn't "active" (nothing is being captured, a second press should be able to
+        /// start fresh), but it does need to be *seen* — `fail()` holds it for 3 seconds
+        /// before dropping back to `.idle`, and the panel dismissing in the same instant
+        /// the message appears made every error invisible, just a flash.
+        var showsHUD: Bool {
+            switch self {
+            case .starting, .listening, .finishing, .error: true
+            case .idle: false
+            }
+        }
+    }
+
+    private(set) var state: State = .idle
+    /// Live transcript, updated as the engine revises it. Drives the HUD.
+    private(set) var transcript = ""
+    /// Smoothed 0…1 mic level for the waveform.
+    private(set) var level: Float = 0
+
+    private let hotkey = HotkeyMonitor()
+    private let capture = AudioCapture()
+    private let makeEngine: @Sendable () -> any TranscriptionEngine
+
+    /// Injected only by tests; production reads the setting per-utterance below.
+    private let formatter: (any TextFormatter)?
+
+    /// Fixed to the deterministic cleanup unless a test injects its own.
+    private var activeFormatter: any TextFormatter { formatter ?? RuleBasedFormatter() }
+
+    private var engine: (any TranscriptionEngine)?
+    private var consumeTask: Task<Void, Never>?
+    private var feedTask: Task<Void, Never>?
+    private var audioContinuation: AsyncStream<AudioChunk>.Continuation?
+
+    /// Timestamps for the history list: when the key went down, and when it came up.
+    private var holdStarted: Date?
+    private var releasedAt: Date?
+
+    init(
+        formatter: (any TextFormatter)? = nil,
+        makeEngine: @escaping @Sendable () -> any TranscriptionEngine = { ParakeetEngine() }
+    ) {
+        self.formatter = formatter
+        self.makeEngine = makeEngine
+    }
+
+    // MARK: - Lifecycle
+
+    /// - Returns: `false` if the hotkey tap couldn't be installed (missing Accessibility).
+    @discardableResult
+    func activate() -> Bool {
+        hotkey.trigger = Settings.shared.customShortcut.map(HotkeyMonitor.TriggerSpec.custom)
+            ?? .modifiersOnly(Settings.shared.triggerKeys)
+        hotkey.onPress = { [weak self] in self?.handleKeyPress() }
+        hotkey.onRelease = { [weak self] in self?.handleKeyRelease() }
+        return hotkey.start()
+    }
+
+    /// In `.hold` mode a press always starts a fresh recording (the matching release ends
+    /// it). In `.toggle` mode the same key both starts and stops: a press while idle starts,
+    /// a press while active stops — so it doubles as the "I changed my mind" cancel too.
+    private func handleKeyPress() {
+        switch Settings.shared.triggerMode {
+        case .hold:
+            beginDictation()
+        case .toggle:
+            if state.isActive {
+                endDictation()
+            } else {
+                beginDictation()
+            }
+        }
+    }
+
+    /// Ignored entirely in `.toggle` mode — releasing the key mid-sentence must not stop
+    /// the recording, that's the whole point of the mode.
+    private func handleKeyRelease() {
+        guard Settings.shared.triggerMode == .hold else { return }
+        endDictation()
+    }
+
+    func deactivate() {
+        hotkey.stop()
+        cancelDictation()
+    }
+
+    /// Re-arms the tap after the user picks a different push-to-talk key.
+    @discardableResult
+    func reloadHotkey() -> Bool {
+        hotkey.stop()
+        return activate()
+    }
+
+    // MARK: - Button-driven recording
+
+    /// Starts a recording from a Record button rather than the hotkey.
+    func startButtonRecording() {
+        guard case .idle = state else { return }
+        beginDictation()
+    }
+
+    func stopButtonRecording() {
+        endDictation()
+    }
+
+    // MARK: - Dictation
+
+    private func beginDictation() {
+        guard case .idle = state else { return }
+        state = .starting
+        transcript = ""
+        holdStarted = Date()
+
+        Task { @MainActor in
+            do {
+                guard await Permissions.requestMicrophone() else {
+                    fail("Dostęp do mikrofonu jest wyłączony. Włącz go w Ustawienia systemowe ▸ Prywatność i bezpieczeństwo ▸ Mikrofon.")
+                    return
+                }
+
+                let engine = makeEngine()
+                self.engine = engine
+
+                let chunks = try await engine.start()
+
+                guard let format = await engine.preferredInputFormat() else {
+                    throw TranscriptionError.noAudioFormat
+                }
+
+                // Audio must reach the engine in capture order. A stream plus a single
+                // draining task guarantees that; spawning a Task per buffer would not.
+                let (audioStream, audioContinuation) = AsyncStream<AudioChunk>.makeStream(
+                    bufferingPolicy: .bufferingNewest(64)
+                )
+                self.audioContinuation = audioContinuation
+
+                self.feedTask = Task.detached(priority: .userInitiated) {
+                    for await chunk in audioStream {
+                        await engine.feed(chunk)
+                    }
+                }
+
+                try capture.start(
+                    outputFormat: format,
+                    onBuffer: { chunk in
+                        audioContinuation.yield(chunk)
+                    },
+                    onLevel: { [weak self] level in
+                        Task { @MainActor in self?.updateLevel(level) }
+                    }
+                )
+
+                // Bail out if the user already let go while we were spinning up.
+                guard case .starting = self.state else {
+                    await self.teardown()
+                    return
+                }
+
+                self.state = .listening
+                Sounds.playStart()
+
+                self.consumeTask = Task { @MainActor in
+                    do {
+                        for try await chunk in chunks {
+                            self.transcript = chunk.text
+                        }
+                    } catch {
+                        self.fail(error.localizedDescription)
+                    }
+                }
+            } catch {
+                self.fail(error.localizedDescription)
+            }
+        }
+    }
+
+    private func endDictation() {
+        // `.finishing` is "active", so without this a second press during processing would
+        // run the whole tail again — re-reading `transcript` before the first pass cleared
+        // it and pasting the same utterance twice. The window is wide: Parakeet transcribes
+        // inside `finish()`.
+        guard state.isActive, state != .finishing else { return }
+        state = .finishing
+        capture.stop()
+        level = 0
+        releasedAt = Date()
+
+        Task { @MainActor in
+            // Drain every captured buffer into the engine before asking it to finalize,
+            // or the tail of the utterance gets dropped.
+            audioContinuation?.finish()
+            audioContinuation = nil
+            await feedTask?.value
+            feedTask = nil
+
+            await engine?.finish()
+            await consumeTask?.value
+            consumeTask = nil
+            engine = nil
+
+            let raw = transcript
+            guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                state = .idle
+                transcript = ""
+                return
+            }
+
+            let cleaned = Settings.shared.cleanupEnabled
+                ? await activeFormatter.format(raw)
+                : raw
+
+            // The dictionary runs last, and runs regardless of the cleanup setting. Biasing
+            // only raises the odds of the right word; this is the pass that guarantees it,
+            // so it must not be something the user can accidentally switch off.
+            let (output, corrections) = DictionaryStore.shared.corrector.apply(to: cleaned)
+            if !corrections.isEmpty {
+                Log.speech.info("dictionary · \(corrections.count, privacy: .public) correction(s) applied")
+            }
+
+            recordRun(text: output, corrections: corrections)
+            TextInjector.insert(output)
+            Sounds.playEnd()
+
+            state = .idle
+            transcript = ""
+        }
+    }
+
+    private func cancelDictation() {
+        capture.stop()
+        audioContinuation?.finish()
+        audioContinuation = nil
+        feedTask?.cancel()
+        feedTask = nil
+        consumeTask?.cancel()
+        consumeTask = nil
+
+        let engine = self.engine
+        self.engine = nil
+        Task { await engine?.finish() }
+
+        state = .idle
+        transcript = ""
+        level = 0
+    }
+
+    private func teardown() async {
+        capture.stop()
+        audioContinuation?.finish()
+        audioContinuation = nil
+        await feedTask?.value
+        feedTask = nil
+        await engine?.finish()
+        engine = nil
+        consumeTask?.cancel()
+        consumeTask = nil
+        state = .idle
+    }
+
+    // MARK: - Helpers
+
+    /// Files the finished utterance in the history list.
+    ///
+    /// `processSeconds` is measured from key release, not from capture start — that's the
+    /// wait the user actually experiences.
+    private func recordRun(text: String, corrections: [AppliedCorrection] = []) {
+        guard let holdStarted, let releasedAt else { return }
+        RunLog.record(
+            DictationRun(
+                date: releasedAt,
+                engine: "Parakeet",
+                audioSeconds: releasedAt.timeIntervalSince(holdStarted),
+                processSeconds: Date().timeIntervalSince(releasedAt),
+                text: text,
+                corrections: corrections.isEmpty ? nil : corrections
+            )
+        )
+        self.holdStarted = nil
+        self.releasedAt = nil
+    }
+
+    /// Light smoothing so the waveform glides instead of strobing at buffer rate.
+    private func updateLevel(_ new: Float) {
+        level += (new - level) * 0.35
+    }
+
+    private func fail(_ message: String) {
+        Log.app.error("\(message, privacy: .public)")
+        capture.stop()
+        audioContinuation?.finish()
+        audioContinuation = nil
+        feedTask?.cancel()
+        feedTask = nil
+        engine = nil
+        consumeTask?.cancel()
+        consumeTask = nil
+        state = .error(message)
+        level = 0
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            if case .error = state { state = .idle }
+        }
+    }
+}

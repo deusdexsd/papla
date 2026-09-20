@@ -1,0 +1,7 @@
+# Build
+.build/
+*.xcuserdatad
+.DS_Store
+
+# Built .app bundles at the repo root only
+/*.app/

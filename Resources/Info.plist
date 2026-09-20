@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Papla</string>
+	<key>CFBundleDisplayName</key>
+	<string>Papla</string>
+	<!-- Deliberately space-free and distinct from any other app named similarly, so that
+	     `pkill`/`killall` can target this process unambiguously. -->
+	<key>CFBundleExecutable</key>
+	<string>MurmurYouTube</string>
+	<key>CFBundleIdentifier</key>
+	<string>ai.pivotstudio.murmur-youtube</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<!-- A background utility: no Dock icon, no persistent app menu. Reached through the
+	     menu bar item (`MenuBarExtra`), which stays available regardless. -->
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Papla słucha, gdy trzymasz klawisz dyktowania, żeby zamienić Twoją mowę na tekst.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Papla transkrybuje Twoją mowę on-device, żeby wstawić tekst tam, gdzie piszesz.</string>
+</dict>
+</plist>
