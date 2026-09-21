@@ -33,6 +33,7 @@ struct ClipboardView: View {
 
     @State private var store = ClipboardStore.shared
     @State private var colorStore = ColorStore.shared
+    @State private var screenshots = ScreenshotIndex.shared
     @State private var query = ""
     @State private var filter: ClipboardKind?
     @State private var selection: UUID?
@@ -52,7 +53,17 @@ struct ClipboardView: View {
                 appName: "Próbnik kolorów", fromColorPicker: true
             )
         }
-        return picked.isEmpty ? store.items : (store.items + picked).sorted { $0.date > $1.date }
+        let captures = screenshots.entries.map { entry in
+            ClipboardItem(
+                id: entry.id, date: entry.date, kind: .screenshot,
+                filePaths: [entry.path],
+                appName: entry.isVideo ? "Nagranie ekranu" : "Zrzut ekranu",
+                fromScreenshot: true, isVideo: entry.isVideo
+            )
+        }
+        return picked.isEmpty && captures.isEmpty
+            ? store.items
+            : (store.items + picked + captures).sorted { $0.date > $1.date }
     }
 
     private var visible: [ClipboardItem] {
@@ -79,7 +90,10 @@ struct ClipboardView: View {
         }
         .background { if !isPanel { DS.Color.deck } }
         .modifier(GlassIfPanel(isPanel: isPanel, radius: cornerRadius))
-        .onAppear { resetForPresentation() }
+        .onAppear {
+            resetForPresentation()
+            screenshots.refresh()
+        }
         .onChange(of: controller.presentation) { resetForPresentation() }
         .onChange(of: query) { selection = visible.first?.id }
         .onChange(of: filter) { selection = visible.first?.id }
@@ -171,8 +185,13 @@ struct ClipboardView: View {
                         .contextMenu {
                             Button("Kopiuj") { copyOnly(item) }
                             if isPanel { Button("Wklej") { controller.paste(item) } }
+                            if let path = item.filePaths?.first {
+                                Button("Pokaż w Finderze") {
+                                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+                                }
+                            }
                             Divider()
-                            Button("Usuń", role: .destructive) { remove(item) }
+                            Button(item.fromScreenshot == true ? "Ukryj na liście" : "Usuń", role: .destructive) { remove(item) }
                         }
                     }
                 }
@@ -240,7 +259,9 @@ struct ClipboardView: View {
 
     /// Colour entries live in `ColorStore`, everything else in the clipboard's.
     private func remove(_ item: ClipboardItem) {
-        if item.fromColorPicker == true {
+        if item.fromScreenshot == true {
+            if let path = item.filePaths?.first { screenshots.hide(path: path) }
+        } else if item.fromColorPicker == true {
             if let entry = colorStore.entries.first(where: { $0.id == item.id }) { colorStore.delete(entry) }
         } else {
             store.delete(item)
@@ -381,7 +402,7 @@ private struct ClipboardRow: View {
         .onHover { isHovering = $0 }
         .task(id: item.id) {
             // Files, and image files with no stored copy, are previewed straight from disk.
-            guard item.kind == .file || (item.kind == .image && item.imageFile == nil),
+            guard item.kind == .file || item.kind == .screenshot || (item.kind == .image && item.imageFile == nil),
                   let path = item.filePaths?.first else { return }
             fileThumbnail = await ClipboardStore.shared.fileThumbnail(path: path)
         }
@@ -400,7 +421,7 @@ private struct ClipboardRow: View {
     private var subtitle: String {
         let app = item.appName ?? "Nieznana aplikacja"
         let when = Self.relative.localizedString(for: item.date, relativeTo: Date())
-        return "\(app) · \(when) · \(item.kind.title)"
+        return "\(app) · \(when) · \(item.kindTitle)"
     }
 
     @ViewBuilder
@@ -452,6 +473,22 @@ private struct ClipboardRow: View {
                 Image(nsImage: fileThumbnail).resizable().scaledToFit().padding(3)
             } else {
                 symbol
+            }
+        case .screenshot:
+            if let fileThumbnail {
+                Image(nsImage: fileThumbnail).resizable().scaledToFill().frame(width: side, height: side)
+                    .overlay(alignment: .bottomTrailing) {
+                        if item.isVideo == true {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.white, .black.opacity(0.55))
+                                .padding(2)
+                        }
+                    }
+            } else {
+                Image(systemName: item.isVideo == true ? "video" : "camera.viewfinder")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(onAccent ? .white : style.accent)
             }
         case .color:
             if let hex = item.colorHex, let color = ColorTools.parse(hex) {

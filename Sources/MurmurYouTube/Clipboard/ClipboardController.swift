@@ -72,6 +72,7 @@ final class ClipboardController {
 
     func showPanel() {
         if panel == nil { panel = ClipboardPanel(controller: self) }
+        ScreenshotIndex.shared.refresh()
         presentation += 1
         isPanelVisible = true
         panel?.present()
@@ -105,6 +106,16 @@ final class ClipboardController {
             return
         }
 
+        // A screenshot or recording: the file goes on the pasteboard as a file, and nothing
+        // is added to the clipboard history — the file on disk is already its own record.
+        if item.fromScreenshot == true {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.writeObjects((item.filePaths ?? []).map { URL(fileURLWithPath: $0) as NSURL })
+            ClipboardMonitor.shared.adopt()
+            return
+        }
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
@@ -113,7 +124,7 @@ final class ClipboardController {
             var text = item.text ?? ""
             if Settings.shared.pasteStraightenDashes, item.kind != .link { text = DashTools.straighten(text) }
             pasteboard.setString(text, forType: .string)
-        case .file:
+        case .file, .screenshot:
             let urls = (item.filePaths ?? []).map { URL(fileURLWithPath: $0) as NSURL }
             pasteboard.writeObjects(urls)
         case .image:

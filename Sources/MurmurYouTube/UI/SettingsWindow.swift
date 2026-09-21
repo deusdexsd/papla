@@ -353,6 +353,26 @@ struct SettingsContent: View {
             }
         }
 
+        panel(label: "Zrzuty ekranu") {
+            Toggle(isOn: Binding(
+                get: { settings.screenshotsEnabled },
+                set: {
+                    settings.screenshotsEnabled = $0
+                    ScreenshotIndex.shared.refresh()
+                }
+            )) {
+                Silkscreen(text: "Pokazuj zrzuty i nagrania ekranu")
+            }
+            .toggleStyle(.switch)
+            note("Zrzuty (⌘⇧3, ⌘⇧4) i nagrania ekranu (⌘⇧5) zrobione wbudowaną funkcją macOS "
+                + "pojawiają się w wyszukiwarce w kategorii Zrzuty, z miniaturami. Papla nie "
+                + "robi ich sama — tylko wyszukuje pliki w: "
+                + ScreenshotIndex.captureDirectories()
+                    .map { $0.path.replacingOccurrences(of: NSHomeDirectory(), with: "~") }
+                    .joined(separator: " oraz ")
+                + ". Przy pierwszym użyciu macOS zapyta o dostęp do folderu Pulpit.")
+        }
+
         panel(label: "Wygląd wyszukiwarki") {
             HStack(spacing: DS.Space.snug) {
                 ForEach(PanelAppearance.allCases, id: \.self) { appearance in

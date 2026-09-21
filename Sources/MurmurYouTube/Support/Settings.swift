@@ -283,6 +283,11 @@ final class Settings {
         didSet { defaults.set(clipboardKeepImages, forKey: Keys.clipboardKeepImages) }
     }
 
+    /// List macOS screenshots and screen recordings in the search under "Zrzuty".
+    var screenshotsEnabled: Bool {
+        didSet { defaults.set(screenshotsEnabled, forKey: Keys.screenshotsEnabled) }
+    }
+
     /// Light, dark or system for the floating search panel.
     var clipboardAppearance: PanelAppearance {
         didSet { defaults.set(clipboardAppearance.rawValue, forKey: Keys.clipboardAppearance) }
@@ -343,6 +348,7 @@ final class Settings {
         static let clipboardKeepImages = "clipboardKeepImages"
         static let pasteStraightenDashes = "pasteStraightenDashes"
         static let clipboardAppearance = "clipboardAppearance"
+        static let screenshotsEnabled = "screenshotsEnabled"
         static let colorMaxItems = "colorMaxItems"
         static let colorFormat = "colorFormat"
     }
@@ -384,6 +390,7 @@ final class Settings {
         colorPickerShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.colorPickerShortcut) ?? .defaultColorPickerShortcut
         clipboardMaxItems = defaults.object(forKey: Keys.clipboardMaxItems) as? Int ?? 500
         clipboardKeepImages = defaults.object(forKey: Keys.clipboardKeepImages) as? Bool ?? true
+        screenshotsEnabled = defaults.object(forKey: Keys.screenshotsEnabled) as? Bool ?? true
         clipboardAppearance = PanelAppearance(rawValue: defaults.string(forKey: Keys.clipboardAppearance) ?? "") ?? .system
         pasteStraightenDashes = defaults.object(forKey: Keys.pasteStraightenDashes) as? Bool ?? false
         colorMaxItems = defaults.object(forKey: Keys.colorMaxItems) as? Int ?? 200
