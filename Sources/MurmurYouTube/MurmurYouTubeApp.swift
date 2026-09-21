@@ -187,6 +187,7 @@ private struct MenuContent: View {
     @Bindable var colorController: ColorController
     let openWindow: OpenWindowAction
     @State private var settings = Settings.shared
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var isPreloadingParakeet = false
     @State private var parakeetOnDisk = ParakeetModels.isDownloaded
 
@@ -262,6 +263,14 @@ private struct MenuContent: View {
         Toggle("Czyść tekst", isOn: $settings.cleanupEnabled)
 
         Toggle("Dźwięk", isOn: $settings.soundEnabled)
+
+        Toggle("Uruchamiaj przy logowaniu", isOn: Binding(
+            get: { launchAtLogin },
+            set: {
+                LaunchAtLogin.set($0)
+                launchAtLogin = LaunchAtLogin.isEnabled
+            }
+        ))
 
         Divider()
 

@@ -58,6 +58,7 @@ struct SettingsContent: View {
     @State private var isRecordingGrabShortcut = false
     @State private var recorderToken: Any?
 
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var isConfirmingClipboardClear = false
     @State private var isConfirmingColorClear = false
 
@@ -452,6 +453,22 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var appearancePanels: some View {
+        panel(label: "Uruchamianie") {
+            Toggle(isOn: Binding(
+                get: { launchAtLogin },
+                set: {
+                    LaunchAtLogin.set($0)
+                    launchAtLogin = LaunchAtLogin.isEnabled
+                }
+            )) {
+                Silkscreen(text: "Uruchamiaj Paplę przy logowaniu")
+            }
+            .toggleStyle(.switch)
+            note("Papla startuje w tle razem z Twoim kontem — ikona w pasku menu, bez okna. "
+                + "Możesz to też wyłączyć w Ustawieniach systemowych ▸ Ogólne ▸ Rzeczy "
+                + "otwierane podczas logowania.")
+        }
+
         panel(label: "Pozycja wskaźnika") {
             VStack(alignment: .leading, spacing: DS.Space.base) {
                 HStack(spacing: DS.Space.snug) {
