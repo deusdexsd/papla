@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Papla — instrukcja obsługi</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root { --ink:#1d1d1f; --mute:#6e6e73; --line:#e5e5ea; --accent:#0a6cf5; --soft:#f5f5f7; }
+  * { box-sizing: border-box; }
+  body { font: 11pt/1.55 -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; color: var(--ink); margin: 0; }
+  h1 { font-size: 30pt; letter-spacing: -0.02em; margin: 0 0 4pt; }
+  h2 { font-size: 16pt; margin: 26pt 0 8pt; padding-top: 10pt; border-top: 1px solid var(--line); letter-spacing: -0.01em; break-after: avoid; }
+  h3 { font-size: 12pt; margin: 16pt 0 4pt; break-after: avoid; }
+  p, li { margin: 4pt 0; }
+  ul, ol { padding-left: 18pt; }
+  .lead { color: var(--mute); font-size: 13pt; margin-bottom: 14pt; }
+  kbd { font: 600 9.5pt ui-monospace, "SF Mono", Menlo, monospace; background: var(--soft); border: 1px solid var(--line);
+        border-bottom-width: 2px; border-radius: 5px; padding: 1pt 5pt; white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 10.5pt; }
+  th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; }
+  .note { background: #fff8e6; border-left: 3px solid #f5a623; padding: 7pt 10pt; border-radius: 4pt; margin: 8pt 0; break-inside: avoid; }
+  .tip { background: #eef5ff; border-left: 3px solid var(--accent); padding: 7pt 10pt; border-radius: 4pt; margin: 8pt 0; break-inside: avoid; }
+  code { font: 9.5pt ui-monospace, Menlo, monospace; background: var(--soft); padding: 1pt 4pt; border-radius: 4pt; }
+  pre { background: var(--soft); padding: 8pt 10pt; border-radius: 6pt; font: 9.5pt ui-monospace, Menlo, monospace; overflow: hidden; break-inside: avoid; }
+  .cover { padding: 6pt 0 10pt; }
+  .toc { columns: 2; column-gap: 24pt; color: var(--mute); font-size: 10.5pt; margin: 6pt 0 0; }
+  .toc div { margin: 2pt 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Papla</h1>
+  <div class="lead">Instrukcja obsługi — dyktowanie, chwytanie tekstu z ekranu, wyszukiwarka schowka i próbnik kolorów.</div>
+  <div class="toc">
+    <div>1. Czym jest Papla</div><div>2. Instalacja</div><div>3. Uprawnienia</div><div>4. Pierwsze uruchomienie</div>
+    <div>5. Dyktowanie</div><div>6. Chwytanie tekstu</div><div>7. Wyszukiwarka i schowek</div><div>8. Próbnik kolorów</div>
+    <div>9. Ustawienia</div><div>10. Skróty — ściągawka</div><div>11. Rozwiązywanie problemów</div><div>12. Dane i prywatność</div>
+  </div>
+</div>
+
+<h2>1. Czym jest Papla</h2>
+<p>Papla to aplikacja działająca w tle na Macu — jej ikona (kółeczka) siedzi w pasku menu na górze ekranu, bez ikony w Docku. Składa się z czterech niezależnych funkcji, z których każda ma <b>własny skrót klawiszowy, własną historię i własną zakładkę w ustawieniach</b>:</p>
+<ul>
+  <li><b>Dyktowanie</b> — mówisz po polsku, tekst sam wpisuje się tam, gdzie piszesz.</li>
+  <li><b>Chwytanie tekstu</b> — zaznaczasz obszar ekranu, a tekst z niego (albo wartość kodu QR) ląduje w schowku.</li>
+  <li><b>Wyszukiwarka / schowek</b> — historia wszystkiego, co skopiowałeś, ze zrzutami ekranu, miniaturami i kategoriami.</li>
+  <li><b>Próbnik kolorów</b> — pipeta, która zapisuje kolor z dowolnego miejsca na ekranie.</li>
+</ul>
+<p>Wszystko dzieje się lokalnie na Twoim Macu — żadne dane nie są wysyłane w sieć (jedyny wyjątek to jednorazowe pobranie modelu rozpoznawania mowy, patrz punkt 4).</p>
+
+<h2>2. Instalacja</h2>
+<ol>
+  <li>Otwórz plik <b>Papla.dmg</b> (dwuklik).</li>
+  <li>Przeciągnij <b>Papla</b> na skrót <b>Applications</b> (Programy) w tym samym oknie.</li>
+  <li>Uruchom Paplę z folderu Programy. W pasku menu pojawi się jej ikona.</li>
+</ol>
+<div class="note"><b>Jeśli macOS blokuje uruchomienie</b> („nie można zweryfikować dewelopera") — to zwykle dotyczy Maca, na który appka trafiła przez AirDrop lub internet. Kliknij ją <b>prawym przyciskiem ▸ Otwórz ▸ Otwórz</b>. Albo w Terminalu:
+<pre>xattr -dr com.apple.quarantine /Applications/Papla.app</pre></div>
+<p><b>Wymagania:</b> Mac z Apple Silicon (M1 lub nowszy) i macOS 26 (Tahoe) lub nowszy.</p>
+
+<h2>3. Uprawnienia</h2>
+<p>Papla prosi o uprawnienia systemowe, bo robi rzeczy, których macOS domyślnie nie pozwala aplikacjom: nasłuchuje skrótów w dowolnej aplikacji i wpisuje tekst. Wszystkie włączasz w <b>Ustawienia systemowe ▸ Prywatność i bezpieczeństwo</b>:</p>
+<table>
+  <tr><th>Uprawnienie</th><th>Do czego</th></tr>
+  <tr><td><b>Dostępność</b> (Ułatwienia dostępu)</td><td>Globalne skróty klawiszowe i wpisywanie tekstu w innych aplikacjach. <b>Bez tego nic nie działa.</b></td></tr>
+  <tr><td><b>Mikrofon</b></td><td>Dyktowanie.</td></tr>
+  <tr><td><b>Nagrywanie ekranu</b></td><td>Chwytanie tekstu z ekranu (robienie „zdjęcia" zaznaczonego obszaru).</td></tr>
+  <tr><td><b>Pulpit</b> (Pliki i foldery)</td><td>Wyświetlanie zrzutów ekranu w wyszukiwarce. macOS zapyta przy pierwszym otwarciu wyszukiwarki.</td></tr>
+</table>
+<p>Jak dodać: otwórz odpowiednią pozycję, kliknij <b>+</b>, wybierz Paplę z Programów i włącz przełącznik. Po włączeniu <b>zamknij Paplę (menu ▸ Zamknij Paplę) i uruchom ją ponownie</b> — działająca aplikacja często nie zauważa uprawnienia nadanego w trakcie pracy.</p>
+<div class="note"><b>Ważne po każdej aktualizacji:</b> Papla jest podpisana lokalnie (bez płatnego certyfikatu Apple), więc po zainstalowaniu nowej wersji macOS „zapomina" te uprawnienia. Wtedy: zaznacz Paplę na liście, kliknij <b>−</b> (usuń), dodaj ją ponownie przez <b>+</b> i uruchom od nowa. Samo przestawienie przełącznika często nie wystarcza.</div>
+
+<h2>4. Pierwsze uruchomienie</h2>
+<ol>
+  <li>Kliknij ikonę Papli w pasku menu i wybierz <b>Pobierz model mowy…</b> — to jednorazowe pobranie ok. 470 MB (model NVIDIA Parakeet, rozpoznaje polski). Bez tego dyktowanie nie zadziała. Po pobraniu w menu widać „Model mowy zainstalowany ✓".</li>
+  <li>Sprawdź uprawnienia z punktu 3.</li>
+  <li>Opcjonalnie włącz <b>Uruchamiaj przy logowaniu</b> (menu ▸ ta pozycja) — Papla wystartuje w tle razem z Twoim kontem.</li>
+</ol>
+<p>Menu pod ikoną zawiera też: <b>Pokaż Paplę</b> (główne okno), przyciski chwytania tekstu, otwarcia wyszukiwarki i próbnika kolorów, szybkie przełączniki oraz <b>Zamknij Paplę</b>.</p>
+
+<h2>5. Dyktowanie</h2>
+<p>Domyślny klawisz: <kbd>prawy ⌥</kbd> (Option). Możesz go zmienić w <b>Ustawienia ▸ Dyktowanie</b> — zaznacz jeden, dwa lub trzy klawisze modyfikujące naraz albo kliknij <b>Nagraj własny…</b> i naciśnij dowolną kombinację (np. <kbd>⌃⌥⌘\</kbd> albo klawisz funkcyjny).</p>
+<h3>Dwa sposoby wyzwalania</h3>
+<ul>
+  <li><b>Przytrzymaj</b> — trzymasz klawisz i mówisz; puszczasz, żeby zakończyć.</li>
+  <li><b>Przełącznik</b> — naciskasz raz, żeby zacząć; naciskasz drugi raz, żeby skończyć. Klawisz możesz puścić w trakcie mówienia — wygodne przy dłuższych wypowiedziach.</li>
+</ul>
+<h3>Jak to wygląda</h3>
+<p>Na dole ekranu pojawia się świetlista kula, która reaguje na Twój głos. Po zakończeniu tekst wpisuje się w pole, w którym akurat pracujesz. <b>Jeśli żadne pole nie jest aktywne</b>, tekst trafia do schowka — wklejasz go sam (<kbd>⌘V</kbd>). Błędy pokazują się jako krótki komunikat pod kulą.</p>
+<h3>Czyszczenie i słownik</h3>
+<ul>
+  <li><b>Czyść transkrypcje</b> (Ustawienia ▸ Dyktowanie) usuwa wypełniacze („yyy", „eee"), poprawia spacje i interpunkcję. Mówione komendy: „nowy akapit", „nowa linia", „otwórz nawias", „zamknij nawias".</li>
+  <li><b>Słownik</b> (sekcja w głównym oknie) uczy Paplę słów, które źle rozpoznaje — nazw własnych, żargonu. Możesz dodać słowo albo parę „gdy usłyszysz X, wpisz Y". Plik słownika otworzysz z menu aplikacji <i>Papla ▸ Pokaż plik słownika</i> (widoczne, gdy główne okno jest na wierzchu).</li>
+</ul>
+<h3>Historia</h3>
+<p>Sekcja <b>Transkrypcje</b> w głównym oknie zapisuje każde podyktowane zdanie z czasem, z wyszukiwarką i przyciskiem „Kopiuj".</p>
+
+<h2>6. Chwytanie tekstu</h2>
+<p>Domyślny skrót: <kbd>⌃⌥⌘4</kbd>. Ekran przyciemnia się — przeciągnij prostokąt wokół tekstu, który chcesz zdobyć. Zaokrąglona ramka z delikatnie płynącym blaskiem pokazuje zaznaczenie. <kbd>Esc</kbd> anuluje.</p>
+<ul>
+  <li><b>Tekst</b> trafia do schowka (opcjonalnie od razu wkleja się w aktywne pole). Rozpoznawanie ma wymuszony polski — dzięki temu ogonki nie giną.</li>
+  <li><b>Kod QR</b> (a także Aztec, DataMatrix, PDF417): zamiast tekstu do schowka trafia <b>wartość kodu</b> — np. adres strony.</li>
+  <li>Z menu paska górnego możesz też użyć <b>Chwyć obszar…</b> i <b>Chwyć cały ekran</b>.</li>
+</ul>
+<p>Ustawienia (<b>Ustawienia ▸ Chwytanie</b>): własny skrót, język główny i dodatkowy (np. polski + angielski), dokładność rozpoznawania, łączenie wyrazów dzielonych na końcu wiersza, <b>zamiana długiego myślnika „—" na zwykły „-"</b>, automatyczne wklejanie i włączanie/wyłączanie ruchomego blasku ramki. Historia wszystkich chwytów jest w sekcji <b>Chwytanie</b> głównego okna.</p>
+
+<h2>7. Wyszukiwarka i schowek</h2>
+<p>Domyślny skrót: <kbd>⌃⌥⌘V</kbd> — otwiera pływające okno w stylu wyszukiwarki systemowej. Zapamiętuje wszystko, co skopiujesz zwykłym <kbd>⌘C</kbd>.</p>
+<h3>Kategorie</h3>
+<table>
+  <tr><th>Filtr</th><th>Co zawiera</th></tr>
+  <tr><td>Wszystko</td><td>Wszystko poniżej, od najnowszego.</td></tr>
+  <tr><td>Tekst / Kod</td><td>Skopiowany tekst; fragmenty rozpoznane jako kod, komendy terminala.</td></tr>
+  <tr><td>Linki</td><td>Adresy stron i e-mail.</td></tr>
+  <tr><td>Obrazy</td><td>Skopiowane obrazy i pliki graficzne — z prawdziwą miniaturą.</td></tr>
+  <tr><td>Zrzuty</td><td>Zrzuty ekranu i nagrania ekranu zrobione wbudowaną funkcją macOS (<kbd>⌘⇧3</kbd>, <kbd>⌘⇧4</kbd>, <kbd>⌘⇧5</kbd>) — z miniaturami; nagrania mają ikonę odtwarzania.</td></tr>
+  <tr><td>Kolory</td><td>Kolory z próbnika oraz skopiowane zapisy typu <code>#FF8800</code>, <code>rgb(…)</code>.</td></tr>
+  <tr><td>Pliki</td><td>Skopiowane pliki — z podglądem jak w Finderze (PDF, dokumenty, wideo).</td></tr>
+</table>
+<h3>Obsługa z klawiatury</h3>
+<table>
+  <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>przesuwanie zaznaczenia</td></tr>
+  <tr><td>wpisywanie</td><td>filtruje listę na żywo</td></tr>
+  <tr><td><kbd>↩</kbd></td><td>kopiuje zaznaczony element do schowka i zamyka okno</td></tr>
+  <tr><td><kbd>⌘V</kbd></td><td>wkleja zaznaczony element od razu w aplikację, w której pracowałeś</td></tr>
+  <tr><td><kbd>⌘1</kbd> … <kbd>⌘9</kbd></td><td>wkleja odpowiedni element z listy jednym skrótem</td></tr>
+  <tr><td><kbd>⌘⌫</kbd></td><td>usuwa element z historii</td></tr>
+  <tr><td><kbd>Esc</kbd> lub klik poza oknem</td><td>zamyka wyszukiwarkę</td></tr>
+  <tr><td>prawy przycisk na elemencie</td><td>Kopiuj / Wklej / Pokaż w Finderze / Usuń</td></tr>
+  <tr><td>zębatka w rogu</td><td>otwiera Paplę na ustawieniach</td></tr>
+</table>
+<div class="tip">Usunięcie zrzutu ekranu z listy (<i>„Ukryj na liście"</i>) <b>nie kasuje pliku</b> z dysku — tylko chowa go w Papli.</div>
+<h3>Zamiana długiego myślnika przy wklejaniu</h3>
+<p>W <b>Ustawienia ▸ Schowek ▸ Wklejanie</b> możesz włączyć zamianę „—" i „–" na zwykły „-". Działa dopiero <b>w chwili wklejania</b> (<kbd>⌘V</kbd> w dowolnej aplikacji albo wklejenie z wyszukiwarki) — zwykłe kopiowanie zostaje nietknięte, a zaraz po wklejeniu schowek wraca do oryginału. Formatowanie tekstu (pogrubienia, czcionki) zostaje. Wymaga uprawnienia Dostępność.</p>
+<h3>Prywatność schowka</h3>
+<p>Treści skopiowane z menedżerów haseł (1Password, Bitwarden, Hasła, Keychain, KeePassXC i innych) oraz oznaczone przez aplikacje jako poufne <b>nigdy nie są zapisywane</b>. Historię możesz wyłączyć, ograniczyć (limit 100–2000 pozycji) lub wyczyścić w <b>Ustawienia ▸ Schowek</b>. Opcja „Zapamiętuj też obrazy" decyduje, czy Papla trzyma kopie skopiowanych zrzutów/obrazów; pliki graficzne są w kategorii Obrazy niezależnie od niej.</p>
+<h3>Wygląd okna</h3>
+<p>Okno wyszukiwarki ma natywny wygląd macOS (szkło Liquid Glass, kolory systemowe, Twój systemowy akcent). W <b>Ustawienia ▸ Schowek ▸ Wygląd wyszukiwarki</b> wybierz: <b>Systemowy</b> (podąża za trybem Maca), <b>Jasny</b> lub <b>Ciemny</b>.</p>
+
+<h2>8. Próbnik kolorów</h2>
+<p>Domyślny skrót: <kbd>⌃⌥⌘C</kbd>. Pojawia się systemowa pipeta z lupą — kliknij dowolny piksel na ekranie. Kolor:</p>
+<ul>
+  <li>trafia do schowka w wybranym zapisie: <b>HEX</b> (<code>#FF8800</code>), <b>RGB</b> (<code>rgb(255, 136, 0)</code>) lub <b>HSL</b> (<code>hsl(32, 100%, 50%)</code>),</li>
+  <li>zapisuje się w osobnej historii — sekcja <b>Kolory</b> w głównym oknie, gdzie każdy kolor skopiujesz w dowolnym z trzech zapisów,</li>
+  <li>widać go też w wyszukiwarce, w kategoriach Kolory i Wszystko.</li>
+</ul>
+<p>Ustawienia (<b>Ustawienia ▸ Kolory</b>): skrót, zapis, limit historii, czyszczenie historii.</p>
+
+<h2>9. Ustawienia</h2>
+<p>Ustawienia są w głównym oknie (sekcja <b>Ustawienia</b>) i w oknie <kbd>⌘,</kbd>. Podzielone na zakładki:</p>
+<table>
+  <tr><th>Zakładka</th><th>Zawartość</th></tr>
+  <tr><td>Dyktowanie</td><td>klawisz dyktowania, sposób wyzwalania, czyszczenie transkrypcji</td></tr>
+  <tr><td>Chwytanie</td><td>skrót, języki OCR, dokładność, opcje tekstu i pola zaznaczenia</td></tr>
+  <tr><td>Schowek</td><td>skrót wyszukiwarki, historia i limit, zrzuty ekranu, wygląd okna, zamiana myślników przy wklejaniu</td></tr>
+  <tr><td>Kolory</td><td>skrót pipety, zapis koloru, historia kolorów</td></tr>
+  <tr><td>Wygląd</td><td>uruchamianie przy logowaniu, pozycja i margines kuli (podgląd na żywo), rozpiętość reakcji na głos, trzy kolory kuli (wspólne dla całej appki), dźwięki (głośność, wybór dźwięku startu i końca)</td></tr>
+</table>
+<div class="tip"><b>Zmiana skrótu:</b> kliknij <b>Zmień</b>, naciśnij nową kombinację (musi zawierać modyfikator: ⌘, ⌥, ⌃ albo ⇧ — wyjątek to klawisze F1–F20). <kbd>Esc</kbd> anuluje. W trakcie nagrywania skróty Papli są wstrzymane, więc możesz ustawić kombinację, która jest już używana.</div>
+
+<h2>10. Skróty — ściągawka</h2>
+<table>
+  <tr><th>Funkcja</th><th>Domyślny skrót</th><th>Gdzie zmienić</th></tr>
+  <tr><td>Dyktowanie</td><td><kbd>prawy ⌥</kbd></td><td>Ustawienia ▸ Dyktowanie</td></tr>
+  <tr><td>Chwytanie tekstu</td><td><kbd>⌃⌥⌘4</kbd></td><td>Ustawienia ▸ Chwytanie</td></tr>
+  <tr><td>Wyszukiwarka / schowek</td><td><kbd>⌃⌥⌘V</kbd></td><td>Ustawienia ▸ Schowek</td></tr>
+  <tr><td>Próbnik kolorów</td><td><kbd>⌃⌥⌘C</kbd></td><td>Ustawienia ▸ Kolory</td></tr>
+  <tr><td>Ustawienia okna</td><td><kbd>⌘,</kbd></td><td>—</td></tr>
+</table>
+
+<h2>11. Rozwiązywanie problemów</h2>
+<h3>Skróty w ogóle nie reagują</h3>
+<p>Najczęściej brakuje uprawnienia <b>Dostępność</b> (albo macOS je „zapomniał" po aktualizacji). Usuń Paplę z listy (−), dodaj ponownie (+), zamknij Paplę i uruchom od nowa. W menu paska górnego są przyciski <b>Nadaj uprawnienia: Ułatwienia dostępu… / Mikrofon… / Nagrywanie ekranu…</b> — otwierają od razu właściwe miejsce w Ustawieniach systemowych („Ułatwienia dostępu" to to samo co „Dostępność").</p>
+<h3>Dyktowanie: „nic się nie dzieje" / błąd modelu</h3>
+<p>Sprawdź, czy model mowy jest pobrany (menu ▸ „Model mowy zainstalowany ✓") i czy Papla ma dostęp do <b>Mikrofonu</b>. Pierwsze dyktowanie po uruchomieniu może potrwać kilka sekund, bo model wczytuje się z dysku.</p>
+<h3>Tekst nie wpisuje się w pole</h3>
+<p>Kliknij w pole tekstowe przed dyktowaniem. Jeśli żadne pole nie jest aktywne, tekst ląduje w schowku — wklej go <kbd>⌘V</kbd>. W kilku aplikacjach (np. Electron, przeglądarki) Papla wkleja tekst skrótem; schowek wraca potem do poprzedniej zawartości.</p>
+<h3>Chwytanie: „nie znalazłem tekstu" albo brakuje ogonków</h3>
+<p>Włącz uprawnienie <b>Nagrywanie ekranu</b>. Ustaw język główny na polski i tryb „Dokładna" (Ustawienia ▸ Chwytanie). Zaznacz obszar większy niż sam napis.</p>
+<h3>W wyszukiwarce nie ma zrzutów ekranu</h3>
+<p>Sprawdź, czy opcja „Pokazuj zrzuty i nagrania ekranu" jest włączona i czy macOS dał Papli dostęp do folderu <b>Pulpit</b>. Papla szuka zrzutów w folderze ustawionym w macOS (aplikacja Zrzut ekranu ▸ Opcje ▸ Zapisz w) oraz na Pulpicie. Lista odświeża się przy każdym otwarciu wyszukiwarki.</p>
+<h3>Nie widzę obrazów w kategorii „Obrazy"</h3>
+<p>Skopiowane <i>pliki</i> graficzne są tam zawsze. Obrazy skopiowane bez pliku (np. zrzut do schowka <kbd>⌃⌘⇧4</kbd>) wymagają włączenia „Zapamiętuj też obrazy" w Ustawienia ▸ Schowek.</p>
+<h3>Skrót zamiast działać w Papli robi coś innego</h3>
+<p>Ta sama kombinacja może być zajęta przez inną aplikację lub macOS. Ustaw inną w odpowiedniej zakładce ustawień.</p>
+
+<h2>12. Dane i prywatność</h2>
+<ul>
+  <li>Historie (transkrypcje, chwyty, schowek, kolory) i słownik są w <code>~/Library/Application Support/MurmurYouTube/</code> — nigdy w chmurze i nigdy poza Twoim Makiem. Usunięcie tego folderu kasuje wszystkie historie.</li>
+  <li>Model rozpoznawania mowy jest w <code>~/Library/Application Support/FluidAudio/</code>.</li>
+  <li>Papla nie wysyła Twoich danych nigdzie; jedyne połączenie sieciowe to jednorazowe pobranie modelu mowy.</li>
+  <li>Pełne odinstalowanie: zamknij Paplę, przeciągnij ją z Programów do Kosza, usuń powyższe foldery i (jeśli włączone) pozycję w Ustawieniach systemowych ▸ Ogólne ▸ Rzeczy otwierane podczas logowania.</li>
+</ul>
+
+<h2>Dla dociekliwych</h2>
+<p>Kod źródłowy jest w repozytorium git (folder <code>Papla-repo</code>). Budowanie: <code>make install</code> w folderze projektu (potrzebny Xcode); testy: <code>swift test</code>. Szczegóły w pliku <code>README.md</code>.</p>
+
+</body>
+</html>

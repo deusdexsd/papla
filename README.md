@@ -16,7 +16,7 @@ Cztery niezależne funkcje, każda z własnym skrótem, historią i zakładką w
 - **Schowek / wyszukiwarka Papli** — skrót otwiera pływające okno w stylu Spotlight z
   historią wszystkiego, co skopiowałeś (⌘C): tekst, linki, obrazy, kolory, kod, pliki —
   z prawdziwymi miniaturami (obrazy, a dla plików podgląd QuickLook jak w Finderze) i
-  kolorami wybranymi pipetą. Natywny wygląd (szkło Liquid Glass, kolory systemowe), tryb
+  kolorami wybranymi pipetą oraz zrzutami i nagraniami ekranu z macOS (kategoria „Zrzuty"). Natywny wygląd (szkło Liquid Glass, kolory systemowe), tryb
   systemowy / jasny / ciemny. Wyszukiwarka + filtry kategorii, ⌘1–⌘9 do wklejania, zębatka
   otwiera ustawienia Papli.
   Zwykłe kopiowanie zostaje nietknięte; opcjonalnie **przy wklejaniu** (⌘V w dowolnej
@@ -24,6 +24,8 @@ Cztery niezależne funkcje, każda z własnym skrótem, historią i zakładką w
   oryginału. Treści z menedżerów haseł nigdy nie są zapisywane.
 - **Próbnik kolorów** — systemowa pipeta pod własnym skrótem; kolor trafia do schowka
   (HEX / RGB / HSL) i do osobnej historii kolorów.
+
+Pełna instrukcja obsługi: [docs/instrukcja.html](docs/instrukcja.html) (wersja PDF do wydruku).
 
 ## Wymagania
 
@@ -60,5 +62,5 @@ uruchom appkę od nowa. Podpisanie certyfikatem Developer ID (99 USD/rok) to za�
 ## Struktura
 
 `Sources/MurmurYouTube/`: `Core` (hotkey, wstawianie tekstu), `Transcription` (Parakeet),
-`Formatting`, `Grab` (OCR), `Clipboard` (historia, panel, wklejanie), `Colors` (pipeta),
+`Formatting`, `Grab` (OCR), `Clipboard` (historia, panel, wklejanie, indeks zrzutów), `Colors` (pipeta),
 `UI`, `Support`. Osobny target `MurmurDictionary` (słownik poprawek) z testami w `Tests/`.
