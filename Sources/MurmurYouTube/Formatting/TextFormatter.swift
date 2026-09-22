@@ -57,8 +57,12 @@ struct RuleBasedFormatter: TextFormatter {
     ///     no space: "iksde iksde" → "XDXD".
     /// Mixing both forms in a row works too ("iksdede iksde" → "XDDXD") — each word is scored
     /// independently by its own length, then the scores are concatenated in order.
+    ///
+    /// Parakeet treats "iksde" as an ordinary word and sometimes guesses it deserves trailing
+    /// punctuation — without consuming that comma here too, "XD" came out as "XD," even at the
+    /// end of the utterance. The comma is matched (so it's replaced away) but never counted.
     private func applyXDTokens(to text: String) -> String {
-        guard let regex = try? NSRegularExpression(pattern: "(?i)(?:\\b(?:iks|eks)(?:de)+\\b[ \\t]*)+")
+        guard let regex = try? NSRegularExpression(pattern: "(?i)(?:\\b(?:iks|eks)(?:de)+\\b,?[ \\t]*)+")
         else { return text }
 
         let ns = text as NSString
@@ -70,8 +74,11 @@ struct RuleBasedFormatter: TextFormatter {
             let replacement = whole
                 .split(whereSeparator: { $0 == " " || $0 == "\t" })
                 .map { token -> String in
-                    // "iks"/"eks" are 3 letters, each "de" repeat adds 2 more.
-                    let dCount = max(1, (token.count - 3) / 2)
+                    // "iks"/"eks" are 3 letters, each "de" repeat adds 2 more — counted over
+                    // letters only, so a trailing comma swept up by the regex above (or any
+                    // other stray punctuation) can't throw the count off.
+                    let letterCount = token.filter(\.isLetter).count
+                    let dCount = max(1, (letterCount - 3) / 2)
                     return "X" + String(repeating: "D", count: dCount)
                 }
                 .joined()

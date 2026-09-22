@@ -106,23 +106,28 @@ final class DictationController {
         return started && translateStarted
     }
 
-    /// In `.hold` mode a press always starts a fresh recording (the matching release ends
-    /// it). In `.toggle` mode the same key both starts and stops: a press while idle starts,
-    /// a press while active stops — so it doubles as the "I changed my mind" cancel too.
+    /// In `.hold` mode a press always starts a fresh recording, and only a release of the
+    /// *starting* key ends it — pressing the other trigger while still holding the first one
+    /// down just flips `wantsTranslate` for whenever you do let go, since there's no release
+    /// event on that other trigger to hang "stop" off of.
     ///
-    /// Either mode, a press on the *other* trigger while a recording is already running never
-    /// starts or stops anything — it just flips `wantsTranslate` for the recording in flight,
-    /// so you can decide mid-sentence that this one should (or shouldn't) be translated.
+    /// In `.toggle` mode there's no physical hold to preserve, so it's simpler and — per
+    /// David, after actually using both — more useful: **whichever trigger you press to stop
+    /// decides the outcome.** Start with the normal shortcut, then realize you want English —
+    /// just press the translate shortcut once; it ends the recording *and* translates it, no
+    /// need to flip first and then separately press the original shortcut again.
     private func handleKeyPress(trigger: Trigger) {
-        if state.isActive {
-            if trigger != startingTrigger {
-                wantsTranslate.toggle()
-            } else if Settings.shared.triggerMode == .toggle {
-                endDictation()
-            }
+        guard state.isActive else {
+            beginDictation(trigger: trigger)
             return
         }
-        beginDictation(trigger: trigger)
+        switch Settings.shared.triggerMode {
+        case .hold:
+            if trigger != startingTrigger { wantsTranslate.toggle() }
+        case .toggle:
+            wantsTranslate = (trigger == .translate)
+            endDictation()
+        }
     }
 
     /// Ignored entirely in `.toggle` mode, and in `.hold` mode ignored for whichever trigger
