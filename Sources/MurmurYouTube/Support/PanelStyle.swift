@@ -23,17 +23,17 @@ struct PanelStyle {
 }
 
 /// Liquid Glass for a floating panel; nothing for a view embedded in Papla's own window (it
-/// sits on Papla's own dark surface there instead). Clipping to the same rounded shape keeps
-/// content from poking out of it.
+/// sits on Papla's own dark surface there instead). `glassEffect(_:in:)` already shapes *and*
+/// clips the content to the given shape on its own — pairing it with a separate `.clipShape`
+/// of the same rounded rect was two independent edges drawn on top of each other, which is
+/// what read as a "double corner" instead of one clean rounded one.
 struct GlassIfPanel: ViewModifier {
     let isPanel: Bool
     let radius: CGFloat
 
     func body(content: Content) -> some View {
         if isPanel {
-            content
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
         } else {
             content
         }

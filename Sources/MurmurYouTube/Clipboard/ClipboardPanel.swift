@@ -11,7 +11,7 @@ import SwiftUI
 final class ClipboardPanel: NSPanel {
     private weak var controller: ClipboardController?
 
-    static let size = CGSize(width: 680, height: 560)
+    static let size = CGSize(width: 760, height: 560)
 
     init(controller: ClipboardController) {
         self.controller = controller

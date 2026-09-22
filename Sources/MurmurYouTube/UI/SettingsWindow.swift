@@ -583,6 +583,19 @@ struct SettingsContent: View {
             }
         }
 
+        panel(label: "Widoczne w wyszukiwarce") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 6)], alignment: .leading, spacing: 6) {
+                ForEach(ClipboardKind.allCases, id: \.self) { kind in
+                    Toggle(isOn: kindVisibilityBinding(kind)) {
+                        Silkscreen(text: kind.chipTitle)
+                    }
+                    .toggleStyle(.switch)
+                }
+            }
+            note("Wyłączenie kategorii tylko chowa ją z wyszukiwarki — jej właściwa historia "
+                + "(schowek, kolory, transkrypcje…) zostaje nietknięta.")
+        }
+
         panel(label: "Zrzuty ekranu") {
             Toggle(isOn: Binding(
                 get: { settings.screenshotsEnabled },
@@ -981,6 +994,16 @@ struct SettingsContent: View {
         ShortcutRecorder.stop(recorderToken)
         recorderToken = nil
         isRecordingGrabShortcut = false
+    }
+
+    private func kindVisibilityBinding(_ kind: ClipboardKind) -> Binding<Bool> {
+        Binding(
+            get: { settings.clipboardVisibleKinds.contains(kind) },
+            set: { isOn in
+                if isOn { settings.clipboardVisibleKinds.insert(kind) }
+                else { settings.clipboardVisibleKinds.remove(kind) }
+            }
+        )
     }
 
     private func panel<Content: View>(

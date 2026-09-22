@@ -404,6 +404,13 @@ final class Settings {
         didSet { defaults.set(clipboardTranslateAddsToHistory, forKey: Keys.clipboardTranslateAddsToHistory) }
     }
 
+    /// Which `ClipboardKind`s actually show up in the search panel — everything, by default.
+    /// Turning one off (say, Kod) just hides it there; the underlying history it comes from
+    /// (clipboard, colour picker, dictation…) is untouched and still fully intact.
+    var clipboardVisibleKinds: Set<ClipboardKind> {
+        didSet { defaults.set(clipboardVisibleKinds.map(\.rawValue), forKey: Keys.clipboardVisibleKinds) }
+    }
+
     /// Rewrites "—" and "–" as "-" at the moment of *pasting* (⌘V anywhere, and pasting from
     /// the history panel). Copying itself is never touched. Needs Accessibility, like every
     /// other global shortcut here.
@@ -466,6 +473,7 @@ final class Settings {
         static let translateAccentSecondary = "translateAccentSecondary"
         static let translateAccentTertiary = "translateAccentTertiary"
         static let clipboardTranslateAddsToHistory = "clipboardTranslateAddsToHistory"
+        static let clipboardVisibleKinds = "clipboardVisibleKinds"
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let soundStart = "soundStart"
@@ -550,6 +558,11 @@ final class Settings {
         screenshotsEnabled = defaults.object(forKey: Keys.screenshotsEnabled) as? Bool ?? true
         clipboardAppearance = PanelAppearance(rawValue: defaults.string(forKey: Keys.clipboardAppearance) ?? "") ?? .system
         clipboardTranslateAddsToHistory = defaults.object(forKey: Keys.clipboardTranslateAddsToHistory) as? Bool ?? true
+        if let saved = defaults.stringArray(forKey: Keys.clipboardVisibleKinds) {
+            clipboardVisibleKinds = Set(saved.compactMap(ClipboardKind.init(rawValue:)))
+        } else {
+            clipboardVisibleKinds = Set(ClipboardKind.allCases)
+        }
         pasteStraightenDashes = defaults.object(forKey: Keys.pasteStraightenDashes) as? Bool ?? false
         colorMaxItems = defaults.object(forKey: Keys.colorMaxItems) as? Int ?? 200
         colorFormat = ColorFormat(rawValue: defaults.string(forKey: Keys.colorFormat) ?? "") ?? .hex

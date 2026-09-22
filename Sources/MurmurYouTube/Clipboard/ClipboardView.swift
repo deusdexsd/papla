@@ -59,8 +59,10 @@ struct ClipboardView: View {
 
     private var visible: [ClipboardItem] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let visibleKinds = Settings.shared.clipboardVisibleKinds
         return allItems.filter { item in
-            (filter == nil || item.kind == filter)
+            visibleKinds.contains(item.kind)
+                && (filter == nil || item.kind == filter)
                 && (needle.isEmpty || item.searchableText.prefix(5_000).localizedStandardContains(needle))
         }
     }
@@ -146,7 +148,7 @@ struct ClipboardView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: DS.Space.snug) {
                 FilterChip(title: "Wszystko", isOn: filter == nil, style: style) { filter = nil }
-                ForEach(ClipboardKind.allCases, id: \.self) { kind in
+                ForEach(ClipboardKind.allCases.filter { Settings.shared.clipboardVisibleKinds.contains($0) }, id: \.self) { kind in
                     FilterChip(title: kind.chipTitle, isOn: filter == kind, style: style) {
                         filter = filter == kind ? nil : kind
                     }
@@ -412,7 +414,7 @@ private struct ClipboardRow: View {
                         ? .system(size: 13, design: .monospaced)
                         : DS.Font.body)
                     .foregroundStyle(titleColor)
-                    .lineLimit(2)
+                    .lineLimit(item.kind == .transcription ? 4 : 2)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(subtitle)
