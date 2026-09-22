@@ -29,6 +29,13 @@ final class TimerPanel: NSPanel {
         hasShadow = true
 
         contentView = NSHostingView(rootView: TimerView(controller: controller))
+
+        // See `ClipboardPanel` — clips the window's own layer to the same radius the SwiftUI
+        // glass shape uses, so nothing the glass material renders can peek past it as a
+        // second corner.
+        contentView?.wantsLayer = true
+        contentView?.layer?.cornerRadius = PanelStyle.cornerRadius
+        contentView?.layer?.masksToBounds = true
     }
 
     override var canBecomeKey: Bool { true }

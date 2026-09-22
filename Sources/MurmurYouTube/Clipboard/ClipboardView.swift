@@ -27,7 +27,7 @@ struct ClipboardView: View {
     @FocusState private var searchFocused: Bool
 
     private var style: PanelStyle { PanelStyle(native: isPanel) }
-    private let cornerRadius: CGFloat = 26
+    private let cornerRadius: CGFloat = PanelStyle.cornerRadius
 
     private var allItems: [ClipboardItem] {
         let format = Settings.shared.colorFormat

@@ -17,7 +17,7 @@ struct TimerView: View {
 
     private enum Mode { case duration, alarm }
     private let style = PanelStyle(native: true)
-    private let cornerRadius: CGFloat = 26
+    private let cornerRadius: CGFloat = PanelStyle.cornerRadius
 
     private var durationSeconds: TimeInterval {
         TimeInterval(hours * 3600 + minutes * 60 + seconds)

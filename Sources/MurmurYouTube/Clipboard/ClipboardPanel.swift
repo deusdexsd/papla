@@ -33,6 +33,15 @@ final class ClipboardPanel: NSPanel {
 
         appearance = Settings.shared.clipboardAppearance.nsAppearance
         contentView = NSHostingView(rootView: ClipboardView(controller: controller, isPanel: true))
+
+        // Belt and braces on top of the SwiftUI `glassEffect` shape: without this, the
+        // window's own backing layer is a plain rectangle, and anything the glass material
+        // renders even a hair past its nominal rounded shape (blur sampling, antialiasing)
+        // shows as a second, sharper corner poking out beyond the visually rounded one.
+        // Clipping the actual layer to the same radius makes that geometrically impossible.
+        contentView?.wantsLayer = true
+        contentView?.layer?.cornerRadius = PanelStyle.cornerRadius
+        contentView?.layer?.masksToBounds = true
     }
 
     override var canBecomeKey: Bool { true }

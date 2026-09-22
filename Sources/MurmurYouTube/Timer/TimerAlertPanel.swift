@@ -30,6 +30,13 @@ final class TimerAlertPanel: NSPanel {
         hasShadow = true
 
         contentView = NSHostingView(rootView: TimerAlertView(controller: controller))
+
+        // See `ClipboardPanel` — clips the window's own layer to the same radius the SwiftUI
+        // glass shape uses, so nothing the glass material renders can peek past it as a
+        // second corner.
+        contentView?.wantsLayer = true
+        contentView?.layer?.cornerRadius = PanelStyle.cornerRadius
+        contentView?.layer?.masksToBounds = true
     }
 
     override var canBecomeKey: Bool { true }
@@ -90,7 +97,6 @@ private struct TimerAlertView: View {
             .keyboardShortcut(.defaultAction)
         }
         .padding(22)
-        .frame(width: TimerAlertPanel.size.width, height: TimerAlertPanel.size.height)
-        .modifier(GlassIfPanel(isPanel: true, radius: 26))
+        .modifier(GlassIfPanel(isPanel: true, radius: PanelStyle.cornerRadius))
     }
 }

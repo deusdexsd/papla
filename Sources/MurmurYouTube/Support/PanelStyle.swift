@@ -8,6 +8,11 @@ import SwiftUI
 /// keeps Papla's own dark "brand" look instead.
 @MainActor
 struct PanelStyle {
+    /// Every floating panel's corner radius, shared so the SwiftUI glass shape and the
+    /// window's own AppKit-level layer mask (set in each `NSPanel` subclass) always agree —
+    /// a mismatch between the two is exactly what read as a "double corner".
+    static let cornerRadius: CGFloat = 26
+
     let native: Bool
 
     // Explicit AppKit system colours rather than SwiftUI's hierarchical `.secondary`: they
