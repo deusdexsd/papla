@@ -10,6 +10,7 @@ struct SettingsWindow: View {
     @Bindable var grabController: GrabController
     @Bindable var clipboardController: ClipboardController
     @Bindable var colorController: ColorController
+    @Bindable var timerController: TimerController
 
     var body: some View {
         ZStack {
@@ -18,7 +19,8 @@ struct SettingsWindow: View {
                 controller: controller,
                 grabController: grabController,
                 clipboardController: clipboardController,
-                colorController: colorController
+                colorController: colorController,
+                timerController: timerController
             )
         }
         .frame(width: 560, height: 640)
@@ -30,7 +32,7 @@ struct SettingsWindow: View {
 /// feature. A small tab row up top, the same `TransportKey` idiom the rest of the app uses
 /// for switching sections, keeps them apart without needing three separate windows.
 private enum SettingsTab: String, CaseIterable, Identifiable {
-    case dictation, grab, clipboard, colors, appearance
+    case dictation, grab, clipboard, colors, timer, appearance
 
     var id: String { rawValue }
     var title: String {
@@ -39,6 +41,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .grab: "Chwytanie"
         case .clipboard: "Schowek"
         case .colors: "Kolory"
+        case .timer: "Minutnik"
         case .appearance: "Wygląd"
         }
     }
@@ -52,6 +55,7 @@ struct SettingsContent: View {
     @Bindable var grabController: GrabController
     @Bindable var clipboardController: ClipboardController
     @Bindable var colorController: ColorController
+    @Bindable var timerController: TimerController
     @State private var settings = Settings.shared
     @State private var tab: SettingsTab = .dictation
 
@@ -79,6 +83,7 @@ struct SettingsContent: View {
                     case .grab: grabPanels
                     case .clipboard: clipboardPanels
                     case .colors: colorPanels
+                    case .timer: timerPanels
                     case .appearance: appearancePanels
                     }
                 }
@@ -704,6 +709,33 @@ struct SettingsContent: View {
             } message: {
                 Text("Tej operacji nie można cofnąć.")
             }
+        }
+    }
+
+    // MARK: - Minutnik
+
+    @ViewBuilder
+    private var timerPanels: some View {
+        panel(label: "Skrót") {
+            ShortcutRow(label: "Otwórz", shortcut: $settings.timerShortcut) {
+                timerController.reloadHotkey()
+            }
+            note("Otwiera małe okienko: „za” (odliczanie, np. „10m”, „1h30m”) albo „o” "
+                + "(konkretna godzina, ewentualnie inny dzień — domyślnie dziś). Aktywne "
+                + "minutniki i budziki widać na liście pod polem, z możliwością anulowania.")
+        }
+
+        panel(label: "Dźwięk alarmu") {
+            Picker("Dźwięk", selection: $settings.alarmSound) {
+                ForEach(SystemSound.allCases, id: \.self) { sound in
+                    Text(sound.displayName).tag(sound)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            note("Gra kilka razy pod rząd, żeby dało się to usłyszeć z drugiego pokoju — "
+                + "nie ścisza go przełącznik dźwięku dyktowania, bo cichy alarm mija się z celem. "
+                + "Do tego zawsze wyskakuje też systemowe powiadomienie.")
         }
     }
 

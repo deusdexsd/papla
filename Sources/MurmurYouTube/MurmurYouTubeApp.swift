@@ -14,7 +14,8 @@ struct MurmurYouTubeApp: App {
                 controller: delegate.controller,
                 grabController: delegate.grabController,
                 clipboardController: delegate.clipboardController,
-                colorController: delegate.colorController
+                colorController: delegate.colorController,
+                timerController: delegate.timerController
             )
         }
         .defaultSize(width: 860, height: 620)
@@ -35,7 +36,8 @@ struct MurmurYouTubeApp: App {
                 controller: delegate.controller,
                 grabController: delegate.grabController,
                 clipboardController: delegate.clipboardController,
-                colorController: delegate.colorController
+                colorController: delegate.colorController,
+                timerController: delegate.timerController
             )
         }
 
@@ -47,6 +49,7 @@ struct MurmurYouTubeApp: App {
                 grabController: delegate.grabController,
                 clipboardController: delegate.clipboardController,
                 colorController: delegate.colorController,
+                timerController: delegate.timerController,
                 openWindow: openWindow
             )
         } label: {
@@ -61,6 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let grabController = GrabController()
     let clipboardController = ClipboardController()
     let colorController = ColorController()
+    let timerController = TimerController()
     private var hud: HUDPanel?
     private var grabHud: GrabHUDPanel?
 
@@ -77,6 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let armed = [
             controller.activate(), grabController.activate(),
             clipboardController.activate(), colorController.activate(),
+            timerController.activate(),
         ]
         if armed.contains(false) {
             Permissions.promptForAccessibility()
@@ -115,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         grabController.deactivate()
         clipboardController.deactivate()
         colorController.deactivate()
+        timerController.deactivate()
     }
 
     /// Shows and hides the HUD in step with the controller's state.
@@ -159,6 +165,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             grabController.activate()
             clipboardController.activate()
             colorController.activate()
+            timerController.activate()
             Log.app.info("Accessibility granted — hotkeys armed")
         }
     }
@@ -185,6 +192,7 @@ private struct MenuContent: View {
     @Bindable var grabController: GrabController
     @Bindable var clipboardController: ClipboardController
     @Bindable var colorController: ColorController
+    @Bindable var timerController: TimerController
     let openWindow: OpenWindowAction
     @State private var settings = Settings.shared
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
@@ -289,6 +297,11 @@ private struct MenuContent: View {
 
         Text("Próbnik kolorów — \(settings.colorPickerShortcut.displayName)")
         Button("Wybierz kolor z ekranu") { colorController.pick() }
+
+        Divider()
+
+        Text("Minutnik — \(settings.timerShortcut.displayName)")
+        Button("Nowy minutnik / budzik…") { timerController.showPanel() }
 
         Divider()
 

@@ -22,6 +22,7 @@ struct MainWindow: View {
     @Bindable var grabController: GrabController
     @Bindable var clipboardController: ClipboardController
     @Bindable var colorController: ColorController
+    @Bindable var timerController: TimerController
 
     @State private var section: Section = .transcriptions
     @State private var router = WindowRouter.shared
@@ -69,7 +70,8 @@ struct MainWindow: View {
                                 controller: controller,
                                 grabController: grabController,
                                 clipboardController: clipboardController,
-                                colorController: colorController
+                                colorController: colorController,
+                                timerController: timerController
                             )
                         }
                     }

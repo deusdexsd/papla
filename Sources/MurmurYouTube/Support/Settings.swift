@@ -421,6 +421,20 @@ final class Settings {
         didSet { defaults.set(colorFormat.rawValue, forKey: Keys.colorFormat) }
     }
 
+    // MARK: Minutnik (timer / budzik)
+
+    /// Opens the quick-entry popup — its own shortcut, like every other Papla trigger.
+    var timerShortcut: CustomShortcut {
+        didSet { encode(timerShortcut, forKey: Keys.timerShortcut) }
+    }
+
+    /// Played on a loop (see `Sounds.playAlarm`) when a timer or alarm fires — a distinct
+    /// pick from the short dictation start/end chimes, since this one needs to actually be
+    /// noticed from another room.
+    var alarmSound: SystemSound {
+        didSet { defaults.set(alarmSound.rawValue, forKey: Keys.alarmSound) }
+    }
+
     /// What's actually armed right now for dictation — the recorded custom shortcut if
     /// there is one, otherwise the modifier checklist.
     var triggerDisplayName: String {
@@ -474,6 +488,8 @@ final class Settings {
         static let screenshotsEnabled = "screenshotsEnabled"
         static let colorMaxItems = "colorMaxItems"
         static let colorFormat = "colorFormat"
+        static let timerShortcut = "timerShortcut"
+        static let alarmSound = "alarmSound"
     }
 
     private init() {
@@ -530,6 +546,8 @@ final class Settings {
         pasteStraightenDashes = defaults.object(forKey: Keys.pasteStraightenDashes) as? Bool ?? false
         colorMaxItems = defaults.object(forKey: Keys.colorMaxItems) as? Int ?? 200
         colorFormat = ColorFormat(rawValue: defaults.string(forKey: Keys.colorFormat) ?? "") ?? .hex
+        timerShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.timerShortcut) ?? .defaultTimerShortcut
+        alarmSound = SystemSound(rawValue: defaults.string(forKey: Keys.alarmSound) ?? "") ?? .sosumi
     }
 
     private func encode<T: Encodable>(_ value: T?, forKey key: String) {

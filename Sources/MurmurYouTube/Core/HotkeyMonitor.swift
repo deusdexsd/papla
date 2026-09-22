@@ -106,6 +106,13 @@ struct CustomShortcut: Codable, Equatable, Sendable {
         keyGlyph: "T"
     )
 
+    /// ⌃⌥⌘M — the Minutnik quick-entry popup ("M" jak minutnik).
+    static let defaultTimerShortcut = CustomShortcut(
+        modifierFlags: CGEventFlags([.maskControl, .maskAlternate, .maskCommand]).rawValue,
+        keyCode: Int64(kVK_ANSI_M),
+        keyGlyph: "M"
+    )
+
     var displayName: String {
         let flags = CGEventFlags(rawValue: modifierFlags)
         var symbols = ""
