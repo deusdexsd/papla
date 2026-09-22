@@ -1,4 +1,5 @@
 import SwiftUI
+@preconcurrency import Translation
 
 /// Settings, per the brief. Opens on ⌘, via the standard `Settings` scene (so the system
 /// wires up the menu item and the shortcut) as a thin wrapper around `SettingsContent`,
@@ -203,14 +204,16 @@ struct SettingsContent: View {
                 .pickerStyle(.menu)
             }
             .padding(.top, DS.Space.snug)
+            TranslationPrepareRow(target: settings.translateTargetLanguage)
+                .padding(.top, DS.Space.base)
             note("Naciśnij ten skrót zamiast zwykłego, żeby to, co powiesz, zostało "
                 + "przetłumaczone i wklejone w wybranym języku. Możesz go też nacisnąć w "
                 + "trakcie zwykłego dyktowania — dogrywa albo zdejmuje tłumaczenie dla tej "
                 + "wypowiedzi, bez przerywania nagrywania; start i stop dalej robi tylko "
                 + "klawisz dyktowania. Orb zmienia kolor, gdy tłumaczenie jest uzbrojone — "
                 + "kolory poniżej w Wygląd ▸ Kolory tłumaczenia. Działa lokalnie na Macu "
-                + "(Apple Translation), przy pierwszym użyciu danej pary języków system "
-                + "pobierze pakiet.")
+                + "(Apple Translation) — wiersz powyżej pobiera pakiet danej pary języków "
+                + "raz, tutaj, żeby dyktowanie nigdy nie czekało na pobranie w tle.")
         }
 
         panel(label: "Emoji") {
@@ -959,6 +962,38 @@ struct SettingsContent: View {
     }
 }
 
+
+/// A real, visible `.translationTask` — unlike `Translator`'s offscreen one-shot window, this
+/// one is actually on screen, so if the system needs to show its own "pobierz pakiet
+/// językowy" sheet for a language pair used for the first time, it has somewhere to anchor
+/// it. Without this, that sheet has nowhere to appear and the *offscreen* translation just
+/// hangs forever waiting for a confirmation the user can never see. Visiting Ustawienia once
+/// per target language, before dictating with it, gets the download out of the way here.
+private struct TranslationPrepareRow: View {
+    let target: TranslateLanguage
+    @State private var status = "Sprawdzam…"
+    @State private var isWorking = true
+
+    var body: some View {
+        HStack(spacing: DS.Space.snug) {
+            if isWorking { ProgressView().controlSize(.small) }
+            Text(status).font(DS.Font.label).foregroundStyle(DS.Color.inkSecondary)
+        }
+        .translationTask(
+            source: Locale.Language(identifier: "pl"),
+            target: Locale.Language(identifier: target.rawValue)
+        ) { session in
+            isWorking = true
+            do {
+                try await session.prepareTranslation()
+                status = "Pakiet gotowy — tłumaczenie działa offline"
+            } catch {
+                status = "Nie udało się przygotować pakietu: \(error.localizedDescription)"
+            }
+            isWorking = false
+        }
+    }
+}
 
 /// One labelled, re-recordable shortcut. Owns its own recording state, so any number of
 /// these can sit on a screen without sharing (and fighting over) a single recorder flag.
