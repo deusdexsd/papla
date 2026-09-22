@@ -287,7 +287,8 @@ final class DictationController {
                 disabledKeywords: Settings.shared.emojiDisabledKeywords,
                 customEntries: Settings.shared.customEmojiEntries,
                 atSentenceEnd: Settings.shared.emojiAtSentenceEnd,
-                suppressPeriod: Settings.shared.emojiSuppressPeriod
+                suppressPeriod: Settings.shared.emojiSuppressPeriod,
+                softeningEnabled: Settings.shared.emojiSofteningEnabled
             )
 
             var output = enriched

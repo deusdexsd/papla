@@ -11,9 +11,36 @@ enum EmojiEnricher {
     /// whole words (so "kotek" doesn't fire on "kotelnia"). `id` is what `Settings.
     /// emojiDisabledKeywords` stores — stable even if the emoji itself is ever swapped.
     struct Entry: Identifiable, Codable, Equatable, Sendable {
+        enum Placement: String, Codable, Sendable {
+            /// Right after the trigger word — "kocham ❤️ cię".
+            case inline
+            /// Always at the end of the sentence the trigger appeared in, regardless of the
+            /// `atSentenceEnd` setting — for a *softener*, the emoji is commenting on the whole
+            /// clause, not the one word that happened to trip it.
+            case sentenceEnd
+        }
+
         var id: String { phrase }
         let phrase: String
         let emoji: String
+        var placement: Placement = .inline
+
+        enum CodingKeys: String, CodingKey { case phrase, emoji, placement }
+
+        init(phrase: String, emoji: String, placement: Placement = .inline) {
+            self.phrase = phrase
+            self.emoji = emoji
+            self.placement = placement
+        }
+
+        /// Manual conformance so entries saved before `placement` existed still decode —
+        /// a missing key just falls back to `.inline`, the old (only) behavior.
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            phrase = try container.decode(String.self, forKey: .phrase)
+            emoji = try container.decode(String.self, forKey: .emoji)
+            placement = try container.decodeIfPresent(Placement.self, forKey: .placement) ?? .inline
+        }
     }
 
     /// Ordered roughly by how often each would actually come up in speech — not that it
@@ -81,6 +108,40 @@ enum EmojiEnricher {
         Entry(phrase: "gwiazda", emoji: "⭐️"),
     ]
 
+    /// A tone-softening layer, opt-in via `Settings.emojiSofteningEnabled` — modeled on how
+    /// David actually writes to people: a correction, a limitation, or a personal admission
+    /// gets one small emoji at the very end of that sentence to take the edge off ("Log
+    /// logowi nie równy 😃", "to po Twojej stronie leży przygotowanie pytań 😃", "real
+    /// logistical puzzle 😅", "fajniej jest jak... 🙈"). Detecting *tone* rather than *topic*
+    /// is inherently fuzzier than the content dictionary above, so treat this as a starting
+    /// heuristic — disable individual triggers, or add sharper ones, in Ustawienia.
+    static let softeningEntries: [Entry] = [
+        // A correction or a stated limitation — "that's not how it works, don't worry".
+        Entry(phrase: "nie jest", emoji: "😃", placement: .sentenceEnd),
+        Entry(phrase: "nie są", emoji: "😃", placement: .sentenceEnd),
+        Entry(phrase: "nie ma", emoji: "😃", placement: .sentenceEnd),
+        Entry(phrase: "to nie", emoji: "😃", placement: .sentenceEnd),
+        Entry(phrase: "nie musi", emoji: "😃", placement: .sentenceEnd),
+        // An expectation placed on the other person.
+        Entry(phrase: "po twojej stronie", emoji: "😃", placement: .sentenceEnd),
+        Entry(phrase: "musisz", emoji: "😃", placement: .sentenceEnd),
+        // Admitting something is genuinely hard — a self-deprecating laugh, not a real "😱".
+        Entry(phrase: "wyzwanie", emoji: "😅", placement: .sentenceEnd),
+        Entry(phrase: "ciężko", emoji: "😅", placement: .sentenceEnd),
+        Entry(phrase: "trudne", emoji: "😅", placement: .sentenceEnd),
+        // Thinking out loud / genuinely unsure.
+        Entry(phrase: "zastanawiam się", emoji: "🤔", placement: .sentenceEnd),
+        Entry(phrase: "nie wiem czy", emoji: "🤔", placement: .sentenceEnd),
+        Entry(phrase: "testuję", emoji: "🤔", placement: .sentenceEnd),
+        // A personal preference or bias, offered a little shyly.
+        Entry(phrase: "fajniej", emoji: "🙈", placement: .sentenceEnd),
+        Entry(phrase: "wolałbym", emoji: "🙈", placement: .sentenceEnd),
+        Entry(phrase: "wolę", emoji: "🙈", placement: .sentenceEnd),
+        // Frustration defused with a laugh rather than left to sting.
+        Entry(phrase: "kurwa", emoji: "XD", placement: .sentenceEnd),
+        Entry(phrase: "cholera", emoji: "XD", placement: .sentenceEnd),
+    ]
+
     /// - Parameters:
     ///   - text: already-cleaned, already-corrected text — this runs last in the pipeline.
     ///   - intensity: 0…5, from `Settings.emojiIntensity`. 0 short-circuits to a no-op.
@@ -88,8 +149,11 @@ enum EmojiEnricher {
     ///   - customEntries: `Settings.customEmojiEntries` — tried before the built-in table, so
     ///     a custom phrase can shadow a stock one.
     ///   - atSentenceEnd: place the emoji at the end of the sentence the trigger word was in,
-    ///     rather than right after the word itself.
+    ///     rather than right after the word itself. `softeningEntries` always place at the
+    ///     sentence end regardless of this flag — that's the whole point of a softener.
     ///   - suppressPeriod: drop a "." that would otherwise sit immediately next to the emoji.
+    ///   - softeningEnabled: also match `softeningEntries` — content keywords still win when
+    ///     both a topic word and a softener match the same sentence.
     /// - Returns: `text` with at most `intensity` emoji added, one per sentence, in reading
     ///   order, each trigger phrase matched at most once.
     static func apply(
@@ -98,14 +162,18 @@ enum EmojiEnricher {
         disabledKeywords: Set<String>,
         customEntries: [Entry] = [],
         atSentenceEnd: Bool = false,
-        suppressPeriod: Bool = false
+        suppressPeriod: Bool = false,
+        softeningEnabled: Bool = false
     ) -> String {
         guard intensity > 0, !text.isEmpty else { return text }
 
-        // Custom entries first (so they can shadow a built-in phrase), longest phrase first
-        // within each group so multi-word phrases are tried before a shorter word inside them.
+        // Custom entries first (so they can shadow a built-in phrase), then content keywords,
+        // softeners last (a topic word beats a tone word when both match the same sentence).
+        // Longest phrase first within each group so multi-word phrases are tried before a
+        // shorter word inside them.
         let candidates = (customEntries.sorted { $0.phrase.count > $1.phrase.count })
             + (entries.sorted { $0.phrase.count > $1.phrase.count })
+            + (softeningEnabled ? softeningEntries.sorted { $0.phrase.count > $1.phrase.count } : [])
 
         var consumed = Set<String>()
         var used = 0
@@ -134,7 +202,8 @@ enum EmojiEnricher {
             used += 1
             output.append(insert(
                 entry.emoji, into: sentence, matchRange: matchRange,
-                atSentenceEnd: atSentenceEnd, suppressPeriod: suppressPeriod
+                atSentenceEnd: atSentenceEnd || entry.placement == .sentenceEnd,
+                suppressPeriod: suppressPeriod
             ))
         }
 

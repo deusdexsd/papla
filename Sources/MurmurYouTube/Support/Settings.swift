@@ -224,6 +224,13 @@ final class Settings {
         didSet { encode(customEmojiEntries, forKey: Keys.customEmojiEntries) }
     }
 
+    /// Off (default): only the content dictionary above. On: also matches
+    /// `EmojiEnricher.softeningEntries` — a corrective, a limitation, or a personal admission
+    /// gets a soft emoji at the end of that sentence, the way David actually writes to people.
+    var emojiSofteningEnabled: Bool {
+        didSet { defaults.set(emojiSofteningEnabled, forKey: Keys.emojiSofteningEnabled) }
+    }
+
     // MARK: Sound
 
     /// Master on/off for both the dictation tick and the grab chime.
@@ -434,6 +441,7 @@ final class Settings {
         static let emojiAtSentenceEnd = "emojiAtSentenceEnd"
         static let emojiSuppressPeriod = "emojiSuppressPeriod"
         static let customEmojiEntries = "customEmojiEntries"
+        static let emojiSofteningEnabled = "emojiSofteningEnabled"
         static let translateAccentPrimary = "translateAccentPrimary"
         static let translateAccentSecondary = "translateAccentSecondary"
         static let translateAccentTertiary = "translateAccentTertiary"
@@ -480,6 +488,7 @@ final class Settings {
         emojiAtSentenceEnd = defaults.object(forKey: Keys.emojiAtSentenceEnd) as? Bool ?? false
         emojiSuppressPeriod = defaults.object(forKey: Keys.emojiSuppressPeriod) as? Bool ?? false
         customEmojiEntries = Settings.decode([EmojiEnricher.Entry].self, defaults, Keys.customEmojiEntries) ?? []
+        emojiSofteningEnabled = defaults.object(forKey: Keys.emojiSofteningEnabled) as? Bool ?? false
         triggerMode = DictationTriggerMode(rawValue: defaults.string(forKey: Keys.triggerMode) ?? "") ?? .hold
         cleanupEnabled = defaults.object(forKey: Keys.cleanupEnabled) as? Bool ?? true
 

@@ -63,6 +63,7 @@ struct SettingsContent: View {
     @State private var isConfirmingColorClear = false
     @State private var newEmojiPhrase = ""
     @State private var newEmojiGlyph = ""
+    @State private var newEmojiAtSentenceEnd = false
 
     private static let noneLanguage = "none"
 
@@ -250,6 +251,54 @@ struct SettingsContent: View {
 
                 customEmojiEditor
                     .padding(.top, DS.Space.base)
+
+                Toggle(isOn: $settings.emojiSofteningEnabled) {
+                    Silkscreen(text: "Zmiękczaj korekty i zastrzeżenia (Twój styl)")
+                }
+                .toggleStyle(.checkbox)
+                .padding(.top, DS.Space.base)
+                note("Zdanie z przeczeniem, zastrzeżeniem albo przyznaniem się do czegoś "
+                    + "(\"to nie jest…\", \"po Twojej stronie…\", \"fajniej jest…\") dostaje "
+                    + "jedno emoji na końcu, tak jak sam to robisz w wiadomościach. To rozpoznawanie "
+                    + "tonu, nie tematu — więc bywa mniej trafne niż słownik powyżej; wyłącz "
+                    + "pojedyncze wyzwalacze poniżej, jeśli któryś strzela za często.")
+
+                if settings.emojiSofteningEnabled {
+                    softeningFilterGrid
+                        .padding(.top, DS.Space.snug)
+                }
+            }
+        }
+    }
+
+    private var softeningFilterGrid: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 130), spacing: DS.Space.tight)],
+            alignment: .leading,
+            spacing: DS.Space.tight
+        ) {
+            ForEach(EmojiEnricher.softeningEntries) { entry in
+                let isOn = !settings.emojiDisabledKeywords.contains(entry.id)
+                Button {
+                    if isOn {
+                        settings.emojiDisabledKeywords.insert(entry.id)
+                    } else {
+                        settings.emojiDisabledKeywords.remove(entry.id)
+                    }
+                } label: {
+                    Text("\(entry.emoji) \(entry.phrase)")
+                        .font(DS.Font.body)
+                        .lineLimit(1)
+                        .padding(.horizontal, DS.Space.snug)
+                        .padding(.vertical, 5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
+                                .fill(isOn ? Brand.accent.opacity(0.14) : DS.Color.seam)
+                        )
+                        .opacity(isOn ? 1 : 0.4)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -264,6 +313,11 @@ struct SettingsContent: View {
                 HStack(spacing: DS.Space.snug) {
                     Text("\(entry.emoji) \(entry.phrase)")
                         .font(DS.Font.body)
+                    if entry.placement == .sentenceEnd {
+                        Text("na końcu zdania")
+                            .font(DS.Font.caption)
+                            .foregroundStyle(DS.Color.inkSecondary)
+                    }
                     Spacer()
                     Button {
                         settings.customEmojiEntries.removeAll { $0.id == entry.id }
@@ -291,6 +345,13 @@ struct SettingsContent: View {
                     .disabled(newEmojiPhrase.trimmingCharacters(in: .whitespaces).isEmpty || newEmojiGlyph.isEmpty)
             }
             .padding(.top, DS.Space.tight)
+
+            Toggle(isOn: $newEmojiAtSentenceEnd) {
+                Silkscreen(text: "Ta fraza na końcu zdania, nie zaraz po niej")
+            }
+            .toggleStyle(.checkbox)
+            .padding(.top, DS.Space.hair)
+
             note("Sprawdzane przed stałym słownikiem, więc możesz nadpisać jego emoji "
                 + "podając to samo słowo.")
         }
@@ -301,9 +362,13 @@ struct SettingsContent: View {
         let emoji = newEmojiGlyph.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !phrase.isEmpty, !emoji.isEmpty else { return }
         settings.customEmojiEntries.removeAll { $0.phrase == phrase }
-        settings.customEmojiEntries.append(EmojiEnricher.Entry(phrase: phrase, emoji: emoji))
+        settings.customEmojiEntries.append(EmojiEnricher.Entry(
+            phrase: phrase, emoji: emoji,
+            placement: newEmojiAtSentenceEnd ? .sentenceEnd : .inline
+        ))
         newEmojiPhrase = ""
         newEmojiGlyph = ""
+        newEmojiAtSentenceEnd = false
     }
 
     private var emojiFilterGrid: some View {
