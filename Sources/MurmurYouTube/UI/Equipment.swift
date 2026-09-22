@@ -6,30 +6,15 @@ import SwiftUI
 
 // MARK: - Surfaces
 
-/// A glass card — the panel surface everything sits on. Soft shadow, a hairline edge, a
-/// faint top highlight; no grain, no fasteners.
+/// A glass card — the panel surface everything sits on. Same Liquid Glass material as the
+/// clipboard search bar and Minutnik popup (`GlassIfPanel`), so a settings panel and a
+/// floating popup read as the same product instead of two different visual languages.
 struct BrushedPanel: View {
     var radius: CGFloat = DS.Radius.panel
 
     var body: some View {
-        DS.Color.panel
-            .clipShape(.rect(cornerRadius: radius))
-            .overlay(
-                RoundedRectangle(cornerRadius: radius)
-                    .strokeBorder(DS.Color.panelHighlight, lineWidth: DS.Border.bevel)
-                    .blendMode(.plusLighter)
-                    .opacity(0.5)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: radius)
-                    .strokeBorder(DS.Color.seam, lineWidth: DS.Border.seam)
-            )
-            .shadow(
-                color: DS.Shadow.panel.color,
-                radius: DS.Shadow.panel.radius,
-                x: DS.Shadow.panel.x,
-                y: DS.Shadow.panel.y
-            )
+        Color.clear
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
 

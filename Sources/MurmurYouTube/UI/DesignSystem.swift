@@ -20,42 +20,49 @@ enum DS {
     @MainActor
     enum Color {
         /// The window's outer ground.
-        static let chassis = face(light: 0xF3F3F7, dark: 0x0A0A0F)
+        static let chassis = native(.windowBackgroundColor)
 
         /// A grouped panel/card surface, lifted slightly off the chassis.
-        static let panel = face(light: 0xFFFFFF, dark: 0x15151D)
+        static let panel = native(.controlBackgroundColor)
 
-        /// Subtle top-edge highlight on a card — a hint of glass catching light, not a bevel.
-        static let panelHighlight = face(light: 0xFFFFFF, dark: 0x2A2A38)
+        /// Subtle top-edge highlight on a card — kept as its own token even though it now
+        /// resolves the same as `seam`, so `BrushedPanel` doesn't need to change if this ever
+        /// needs to diverge again.
+        static let panelHighlight = native(.separatorColor)
 
         /// Bottom-edge shade on a card.
-        static let panelShade = face(light: 0xE8E8EF, dark: 0x000000)
+        static let panelShade = native(.separatorColor)
 
         /// Recessed wells — where lists sit, set into the panel.
-        static let well = face(light: 0xF6F6FA, dark: 0x101016)
+        static let well = native(.underPageBackgroundColor)
 
-        /// A dark readout surface — always dark regardless of face, the way a terminal or a
-        /// code block stays dark so text can be lit against it.
-        static let deck = face(light: 0x18181F, dark: 0x0D0D12)
+        /// A readout surface — was "always dark regardless of face" under the old brand look;
+        /// now the same native control surface as everything else, so it stops reading as a
+        /// separate dark widget dropped into an otherwise light/dark-adaptive window.
+        static let deck = native(.controlBackgroundColor)
 
         /// Button/control surface, one step up from the panel.
-        static let cap = face(light: 0xF6F6FA, dark: 0x1C1C26)
+        static let cap = native(.controlColor)
 
-        /// A quiet divider — barely there, the way glass panels meet without a hard seam.
-        static let seam = face(light: 0xE3E3EA, dark: 0x232330)
+        /// A quiet divider — the system's own hairline.
+        static let seam = native(.separatorColor)
 
         // Text
         /// Primary readable text.
-        static let ink = face(light: 0x15151C, dark: 0xF0EFF5)
+        static let ink = native(.labelColor)
         /// Supporting text — timings, counts, secondary rows.
-        static let inkSecondary = face(light: 0x6B6B78, dark: 0x8E8DA0)
+        static let inkSecondary = native(.secondaryLabelColor)
         /// A panel section label. Same family as `inkSecondary`, kept as its own token so a
         /// future change to one doesn't silently drag the other.
-        static let silkscreen = face(light: 0x6B6B78, dark: 0x9695A8)
-        /// Text on a dark readout well, regardless of face.
-        static let inkOnDeck = swatch(0xEDEBF2)
+        static let silkscreen = native(.secondaryLabelColor)
+        /// Text on a readout surface — was fixed near-white for contrast against an
+        /// always-dark deck; now `deck` itself is native/adaptive, so this just follows suit.
+        static let inkOnDeck = native(.labelColor)
 
-        // Accent — the orb's own palette, reused as the app's only accent family.
+        // Accent — the orb's own palette, reused as the app's only accent family. Left
+        // untouched by the native-chrome pass on purpose: this is Papla's own product
+        // identity (the dictation HUD/orb), not window chrome, and the search bar it's being
+        // matched to doesn't touch it either.
         /// The record indicator. Warm red is still the one universal "this is recording"
         /// signal; it stays outside the orb's blue/violet/cyan family on purpose.
         static let record = swatch(0xE04A3F)
@@ -67,20 +74,24 @@ enum DS {
         static var selection: SwiftUI.Color { Brand.accent }
         static var selectionEdge: SwiftUI.Color { Brand.accent }
         static var focusRing: SwiftUI.Color { Brand.accent }
-        /// Row under the pointer, before selection.
-        static let hover = face(light: 0xEDEDF3, dark: 0x1F1F2A)
+        /// Row under the pointer, before selection — the same formula the search bar's own
+        /// row hover uses.
+        static let hover = native(.labelColor).opacity(0.06)
 
         // Status — used sparingly, for the dictionary's own signals (on/off, a correction
         // that fired). Not UI chrome.
-        static let statusGood = swatch(0x4FBE7A)
-        static let statusWarning = swatch(0xE0A93E)
-        static let statusBad = swatch(0xE0574A)
+        static let statusGood = native(.systemGreen)
+        static let statusWarning = native(.systemYellow)
+        static let statusBad = native(.systemRed)
 
         // MARK: Face resolution
 
+        private static func native(_ color: NSColor) -> SwiftUI.Color { SwiftUI.Color(nsColor: color) }
         private static func swatch(_ hex: UInt32) -> SwiftUI.Color { SwiftUI.Color(hex: hex) }
 
-        /// Resolves to the light or dark value for the current appearance.
+        /// Resolves to the light or dark value for the current appearance. Only `record`'s
+        /// idle state still uses this — everything that used to be a hand-picked light/dark
+        /// pair is a native semantic color now.
         private static func face(light: UInt32, dark: UInt32) -> SwiftUI.Color {
             SwiftUI.Color(nsColor: NSColor(name: nil) { appearance in
                 let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
@@ -105,25 +116,25 @@ enum DS {
 
     // MARK: - Type
 
-    /// A clean system grotesk. The old design used a tracked-uppercase "silkscreen" look for
-    /// panel labels; kept as a lighter touch here (small-caps-ish tracking, not full
-    /// uppercase-and-tiny) since there's no equipment face to print onto anymore.
+    /// Plain system type — the same fonts the search bar and Minutnik popup use, dropping the
+    /// old tracked-rounded "silkscreen" look so labels read as ordinary macOS UI text rather
+    /// than a distinct equipment face.
     enum Font {
-        static let silkscreen = SwiftUI.Font.system(size: 11, weight: .semibold, design: .rounded)
-        static let silkscreenLarge = SwiftUI.Font.system(size: 13, weight: .semibold, design: .rounded)
+        static let silkscreen = SwiftUI.Font.system(size: 11, weight: .semibold)
+        static let silkscreenLarge = SwiftUI.Font.system(size: 13, weight: .semibold)
 
         static let caption = SwiftUI.Font.system(size: 10, weight: .regular)
         static let label = SwiftUI.Font.system(size: 11, weight: .regular)
         static let body = SwiftUI.Font.system(size: 13, weight: .regular)
         static let bodyEmphasis = SwiftUI.Font.system(size: 13, weight: .medium)
-        static let title = SwiftUI.Font.system(size: 17, weight: .semibold, design: .rounded)
+        static let title = SwiftUI.Font.system(size: 17, weight: .semibold)
 
         /// Readouts and timings. Monospaced so digits don't shift as they tick.
         static let counter = SwiftUI.Font.system(size: 13, design: .monospaced).monospacedDigit()
         static let counterLarge = SwiftUI.Font.system(size: 26, weight: .medium, design: .monospaced)
             .monospacedDigit()
 
-        static let silkscreenTracking: CGFloat = 0.3
+        static let silkscreenTracking: CGFloat = 0
     }
 
     // MARK: - Spacing
@@ -160,12 +171,13 @@ enum DS {
 
     // MARK: - Elevation
 
-    /// Soft, glowing shadows — depth from light, not from a machined edge.
+    /// Subtle — the same restrained depth native macOS controls use, not a "raised hardware
+    /// key" look.
     enum Shadow {
-        static let raised = Spec(color: .black.opacity(0.18), radius: 8, x: 0, y: 2)
-        static let pressed = Spec(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
-        static let panel = Spec(color: .black.opacity(0.16), radius: 18, x: 0, y: 6)
-        static let window = Spec(color: .black.opacity(0.35), radius: 40, x: 0, y: 14)
+        static let raised = Spec(color: .black.opacity(0.10), radius: 3, x: 0, y: 1)
+        static let pressed = Spec(color: .black.opacity(0.06), radius: 1, x: 0, y: 0.5)
+        static let panel = Spec(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+        static let window = Spec(color: .black.opacity(0.20), radius: 24, x: 0, y: 8)
 
         struct Spec {
             let color: SwiftUI.Color
