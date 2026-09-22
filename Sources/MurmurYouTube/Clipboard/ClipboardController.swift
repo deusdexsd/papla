@@ -96,6 +96,13 @@ final class ClipboardController {
         NotificationCenter.default.post(name: .openPaplaWindow, object: nil)
     }
 
+    /// The timer badge pinned next to the search field: closes the search and opens
+    /// Minutnik's own quick-entry popup.
+    func openTimer() {
+        hidePanel()
+        NotificationCenter.default.post(name: .openTimerPanel, object: nil)
+    }
+
     // MARK: - Items
 
     /// Puts an item back on the system pasteboard and bumps it to the top of the history.

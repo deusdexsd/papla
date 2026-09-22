@@ -35,6 +35,7 @@ struct ClipboardView: View {
     @State private var store = ClipboardStore.shared
     @State private var colorStore = ColorStore.shared
     @State private var screenshots = ScreenshotIndex.shared
+    @State private var timerStore = TimerStore.shared
     @State private var query = ""
     @State private var filter: ClipboardKind?
     @State private var selection: UUID?
@@ -145,6 +146,7 @@ struct ClipboardView: View {
                 }
                 .buttonStyle(.plain)
             }
+            TimerBadge(nextTimer: timerStore.entries.first, style: style) { controller.openTimer() }
         }
         .padding(.horizontal, DS.Space.roomy + 6)
         .padding(.top, DS.Space.roomy + 2)
@@ -587,5 +589,43 @@ private struct FilterChip: View {
         }
         .buttonStyle(.plain)
         .focusEffectDisabled()
+    }
+}
+
+// MARK: - Timer badge
+
+/// Pinned in the search bar: a bare clock when nothing's running, the soonest countdown once
+/// something is — so Minutnik is visible from the panel you actually have open most, instead
+/// of only from its own separate shortcut.
+private struct TimerBadge: View {
+    let nextTimer: TimerEntry?
+    let style: PanelStyle
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            if let nextTimer {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    HStack(spacing: 4) {
+                        Image(systemName: nextTimer.isAlarm ? "alarm.fill" : "timer")
+                        Text(remaining(nextTimer.fireDate))
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                    }
+                }
+            } else {
+                Image(systemName: "timer")
+            }
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(nextTimer == nil ? style.tertiary : style.accent)
+        .help(nextTimer == nil ? "Ustaw minutnik" : "Minutnik działa — kliknij, żeby zobaczyć")
+    }
+
+    private func remaining(_ fireDate: Date) -> String {
+        let seconds = max(0, Int(fireDate.timeIntervalSinceNow))
+        let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
     }
 }
