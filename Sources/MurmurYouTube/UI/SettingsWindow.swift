@@ -720,9 +720,10 @@ struct SettingsContent: View {
             ShortcutRow(label: "Otwórz", shortcut: $settings.timerShortcut) {
                 timerController.reloadHotkey()
             }
-            note("Otwiera małe okienko: „za” (odliczanie, np. „10m”, „1h30m”) albo „o” "
-                + "(konkretna godzina, ewentualnie inny dzień — domyślnie dziś). Aktywne "
-                + "minutniki i budziki widać na liście pod polem, z możliwością anulowania.")
+            note("Otwiera małe okienko: „za” (odliczanie, godziny/minuty/sekundy) albo „o” "
+                + "(konkretna godzina, ewentualnie inny dzień — domyślnie dziś). To samo okienko "
+                + "otwiera zegar przy polu wyszukiwania w Papli. Aktywne minutniki i budziki "
+                + "widać na liście pod polem, z możliwością anulowania.")
         }
 
         panel(label: "Dźwięk alarmu") {
@@ -733,9 +734,18 @@ struct SettingsContent: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            note("Gra kilka razy pod rząd, żeby dało się to usłyszeć z drugiego pokoju — "
-                + "nie ścisza go przełącznik dźwięku dyktowania, bo cichy alarm mija się z celem. "
-                + "Do tego zawsze wyskakuje też systemowe powiadomienie.")
+            note("Gdy minutnik lub budzik dojdzie do zera, dzwoni bez przerwy, na okienku z "
+                + "przyciskiem „Wyłącz”, dopóki go nie potwierdzisz — nie ścisza go przełącznik "
+                + "dźwięku dyktowania, bo cichy alarm mija się z celem. Do tego zawsze wyskakuje "
+                + "też systemowe powiadomienie.")
+        }
+
+        panel(label: "Pasek menu") {
+            Toggle(isOn: $settings.showTimerInMenuBar) {
+                Silkscreen(text: "Pokazuj odliczanie obok ikony Papli")
+            }
+            note("Widać najbliższy aktywny minutnik cały czas, nie tylko po otwarciu "
+                + "wyszukiwarki.")
         }
     }
 

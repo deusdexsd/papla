@@ -2,6 +2,13 @@ import AppKit
 import Foundation
 import UserNotifications
 
+extension Notification.Name {
+    /// Posted when a `TimerEntry` fires — `object` is the fired `TimerEntry`. `TimerController`
+    /// owns what happens on screen and in sound from here; `TimerStore` stays a plain data
+    /// layer that doesn't know about panels or `NSSound`.
+    static let timerDidFire = Notification.Name("ai.pivotstudio.papla.timerDidFire")
+}
+
 /// One running countdown or scheduled alarm.
 struct TimerEntry: Identifiable, Codable, Equatable {
     var id = UUID()
@@ -77,7 +84,7 @@ final class TimerStore {
         entries.removeAll { $0.id == entry.id }
         fireTasks[entry.id] = nil
         save()
-        Sounds.playAlarm()
+        NotificationCenter.default.post(name: .timerDidFire, object: entry)
     }
 
     private func scheduleNotification(for entry: TimerEntry) {

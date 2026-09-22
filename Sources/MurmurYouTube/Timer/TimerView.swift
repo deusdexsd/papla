@@ -2,110 +2,121 @@ import SwiftUI
 
 /// The Minutnik popup's content: pick "za" (a duration, counting down) or "o" (a specific
 /// time, optionally a different day) and set it going; the list underneath shows whatever's
-/// already running with a live countdown, cancel with one click.
+/// already running with a live countdown, cancel with one click. Styled to match the clipboard
+/// search panel exactly — same `PanelStyle`/Liquid Glass — since it's the same kind of floating
+/// popup and should read as one product with it, not as Papla's own separate "brand" look.
 struct TimerView: View {
     let controller: TimerController
     @State private var store = TimerStore.shared
     @State private var mode: Mode = .duration
-    @State private var durationText = "10m"
+    @State private var hours = 0
+    @State private var minutes = 10
+    @State private var seconds = 0
     @State private var alarmTime = Date()
     @State private var label = ""
-    @State private var errorMessage: String?
 
     private enum Mode { case duration, alarm }
+    private let style = PanelStyle(native: true)
+    private let cornerRadius: CGFloat = 26
+
+    private var durationSeconds: TimeInterval {
+        TimeInterval(hours * 3600 + minutes * 60 + seconds)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.base) {
-            HStack {
-                Silkscreen(text: "Minutnik", large: true, color: DS.Color.ink)
-                Spacer()
-                Button {
-                    controller.hidePanel()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(DS.Color.inkSecondary)
-                }
-                .buttonStyle(.plain)
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            header
 
-            HStack(spacing: DS.Space.snug) {
-                TransportKey(title: "Za", isEngaged: mode == .duration, engagedColor: Brand.accent) {
-                    mode = .duration
-                }
-                TransportKey(title: "O", isEngaged: mode == .alarm, engagedColor: Brand.accent) {
-                    mode = .alarm
-                }
+            Picker("", selection: $mode) {
+                Text("Za").tag(Mode.duration)
+                Text("O").tag(Mode.alarm)
             }
+            .labelsHidden()
+            .pickerStyle(.segmented)
 
             if mode == .duration {
-                DeckWindow {
-                    TextField("np. 10m, 1h30m, 90s", text: $durationText)
-                        .textFieldStyle(.plain)
-                        .foregroundStyle(DS.Color.inkOnDeck)
-                        .padding(.horizontal, DS.Space.base)
-                        .padding(.vertical, DS.Space.snug)
-                }
+                DurationStepperField(hours: $hours, minutes: $minutes, seconds: $seconds, style: style)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 4)
             } else {
                 DatePicker("", selection: $alarmTime, displayedComponents: [.date, .hourAndMinute])
                     .labelsHidden()
                     .datePickerStyle(.field)
             }
 
-            DeckWindow {
-                TextField("na co (opcjonalnie)", text: $label)
-                    .textFieldStyle(.plain)
-                    .foregroundStyle(DS.Color.inkOnDeck)
-                    .padding(.horizontal, DS.Space.base)
-                    .padding(.vertical, DS.Space.snug)
-            }
+            TextField("na co (opcjonalnie)", text: $label)
+                .textFieldStyle(.roundedBorder)
 
-            if let errorMessage {
-                Text(errorMessage).font(DS.Font.label).foregroundStyle(DS.Color.statusBad)
-            }
-
-            TransportKey(title: mode == .duration ? "Start" : "Ustaw", engagedColor: Brand.accent) {
+            Button {
                 start()
+            } label: {
+                Text(mode == .duration ? "Start" : "Ustaw")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(mode == .duration && durationSeconds <= 0)
 
             if !store.entries.isEmpty {
-                Rectangle().fill(DS.Color.seam).frame(height: 1).padding(.vertical, DS.Space.tight)
-                Silkscreen(text: "Aktywne")
+                Rectangle().fill(style.hairline).frame(height: 1).padding(.vertical, 2)
+                Text("Aktywne")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(style.secondary)
                 activeList
             }
+
+            Spacer(minLength: 0)
         }
-        .padding(DS.Space.panel)
+        .padding(20)
         .frame(width: TimerPanel.size.width, height: TimerPanel.size.height, alignment: .top)
-        .background { BrushedPanel() }
-        .onAppear { durationText = "10m"; label = ""; errorMessage = nil }
+        .modifier(GlassIfPanel(isPanel: true, radius: cornerRadius))
+        .onAppear { hours = 0; minutes = 10; seconds = 0; label = "" }
+    }
+
+    private var header: some View {
+        HStack {
+            Text("Minutnik")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(style.primary)
+            Spacer()
+            Button {
+                controller.hidePanel()
+            } label: {
+                Image(systemName: "xmark.circle.fill").foregroundStyle(style.tertiary)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var activeList: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             ScrollView {
-                VStack(alignment: .leading, spacing: DS.Space.tight) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(store.entries) { entry in
                         HStack {
                             Image(systemName: entry.isAlarm ? "alarm" : "timer")
-                                .foregroundStyle(Brand.accent)
+                                .foregroundStyle(style.accent)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(entry.label.isEmpty ? "Minutnik" : entry.label)
-                                    .font(DS.Font.body)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(style.primary)
                                 Text(remaining(entry.fireDate))
-                                    .font(DS.Font.caption)
-                                    .foregroundStyle(DS.Color.inkSecondary)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(style.secondary)
+                                    .monospacedDigit()
                             }
                             Spacer()
                             Button {
                                 store.cancel(entry)
                             } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(DS.Color.inkSecondary)
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(style.tertiary)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                 }
             }
-            .frame(maxHeight: 140)
+            .frame(maxHeight: 130)
         }
     }
 
@@ -116,16 +127,12 @@ struct TimerView: View {
     }
 
     private func start() {
-        errorMessage = nil
         let fireDate: Date
         let isAlarm: Bool
         switch mode {
         case .duration:
-            guard let seconds = Self.parseDuration(durationText), seconds > 0 else {
-                errorMessage = "Nie rozumiem tego czasu — spróbuj np. „10m” albo „1h30m”."
-                return
-            }
-            fireDate = Date().addingTimeInterval(seconds)
+            guard durationSeconds > 0 else { return }
+            fireDate = Date().addingTimeInterval(durationSeconds)
             isAlarm = false
         case .alarm:
             // "domyślnie dzisiaj" — but a time already in the past today obviously means
@@ -136,43 +143,44 @@ struct TimerView: View {
         TimerStore.shared.add(label: label.trimmingCharacters(in: .whitespaces), fireDate: fireDate, isAlarm: isAlarm)
         controller.hidePanel()
     }
+}
 
-    /// Lenient: "10m", "1h30m", "90s", "10 min", "2 godziny", "1:30" (mm:ss), a bare number
-    /// (assumed minutes — "10" means "za 10 minut", the overwhelmingly common case).
-    private static func parseDuration(_ input: String) -> TimeInterval? {
-        let trimmed = input.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !trimmed.isEmpty else { return nil }
+/// Three native `Stepper`s (godz./min./sek.) instead of typing something like "1h30m" into a
+/// text field — no format to remember, no parsing to get wrong.
+private struct DurationStepperField: View {
+    @Binding var hours: Int
+    @Binding var minutes: Int
+    @Binding var seconds: Int
+    let style: PanelStyle
 
-        if trimmed.contains(":") {
-            let parts = trimmed.split(separator: ":").compactMap { Double($0) }
-            guard !parts.isEmpty else { return nil }
-            let seconds: Double
-            switch parts.count {
-            case 3: seconds = parts[0] * 3600 + parts[1] * 60 + parts[2]
-            case 2: seconds = parts[0] * 60 + parts[1]
-            default: seconds = parts[0] * 60
-            }
-            return seconds > 0 ? seconds : nil
+    var body: some View {
+        HStack(spacing: 14) {
+            component("godz.", value: $hours, range: 0...23)
+            separator
+            component("min.", value: $minutes, range: 0...59)
+            separator
+            component("sek.", value: $seconds, range: 0...59)
         }
+    }
 
-        guard let regex = try? NSRegularExpression(pattern: "([0-9]+(?:[.,][0-9]+)?)\\s*([a-ząćęłńóśźż]*)") else { return nil }
-        let ns = trimmed as NSString
-        var total: Double = 0
-        var matched = false
-        for match in regex.matches(in: trimmed, range: NSRange(location: 0, length: ns.length)) {
-            guard let numRange = Range(match.range(at: 1), in: trimmed) else { continue }
-            let numStr = trimmed[numRange].replacingOccurrences(of: ",", with: ".")
-            guard let value = Double(numStr) else { continue }
-            let unit = Range(match.range(at: 2), in: trimmed).map { String(trimmed[$0]) } ?? ""
-            matched = true
-            if unit.hasPrefix("h") || unit.hasPrefix("godz") {
-                total += value * 3600
-            } else if unit.hasPrefix("s") || unit.hasPrefix("sek") {
-                total += value
-            } else {
-                total += value * 60 // "m"/"min"/bare number
+    private var separator: some View {
+        Text(":")
+            .font(.system(size: 22, weight: .light, design: .rounded))
+            .foregroundStyle(style.tertiary)
+            .padding(.top, -12)
+    }
+
+    private func component(_ caption: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        VStack(spacing: 3) {
+            Stepper(value: value, in: range) {
+                Text(String(format: "%02d", value.wrappedValue))
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(style.primary)
             }
+            Text(caption)
+                .font(.system(size: 10))
+                .foregroundStyle(style.tertiary)
         }
-        return matched && total > 0 ? total : nil
     }
 }

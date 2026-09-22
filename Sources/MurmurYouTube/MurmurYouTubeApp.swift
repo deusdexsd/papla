@@ -171,19 +171,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// The menu bar glyph — a tiny static take on the same orb, lit while dictating.
+/// The menu bar glyph — a tiny static take on the same orb, lit while dictating. Optionally
+/// grows a live countdown for the soonest running Minutnik, per "Pokazuj minutnik w pasku
+/// menu" in Ustawienia — off by default, since most people only care while the search panel
+/// (which already shows this) is open.
 private struct OrbMenuBarIcon: View {
     let isActive: Bool
     @Environment(\.openWindow) private var openWindow
+    @State private var timerStore = TimerStore.shared
+    @State private var settings = Settings.shared
 
     var body: some View {
-        Image(systemName: isActive ? "circle.hexagongrid.fill" : "circle.hexagongrid")
-            // The one view that always exists (the menu bar item itself), hence the one place
-            // that can act on "open Papla's window" requests from anywhere in the app.
-            .onReceive(NotificationCenter.default.publisher(for: .openPaplaWindow)) { _ in
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
+        HStack(spacing: 4) {
+            Image(systemName: isActive ? "circle.hexagongrid.fill" : "circle.hexagongrid")
+            if settings.showTimerInMenuBar, let next = timerStore.entries.first {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    Text(remaining(next.fireDate)).monospacedDigit()
+                }
             }
+        }
+        // The one view that always exists (the menu bar item itself), hence the one place
+        // that can act on "open Papla's window" requests from anywhere in the app.
+        .onReceive(NotificationCenter.default.publisher(for: .openPaplaWindow)) { _ in
+            openWindow(id: "main")
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    private func remaining(_ fireDate: Date) -> String {
+        let seconds = max(0, Int(fireDate.timeIntervalSinceNow))
+        let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
     }
 }
 

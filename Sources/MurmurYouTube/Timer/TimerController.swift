@@ -12,8 +12,15 @@ final class TimerController {
     private var panel: TimerPanel?
     private(set) var isPanelVisible = false
 
+    private var alertPanel: TimerAlertPanel?
+    /// Entries currently ringing, oldest first — normally just one, but a second timer firing
+    /// while the first hasn't been dismissed yet is shown on the same popup rather than
+    /// stacking two ringing windows on top of each other.
+    private(set) var firedEntries: [TimerEntry] = []
+
     init() {
         observeOpenRequests()
+        observeFireEvents()
     }
 
     /// - Returns: `false` if the hotkey tap couldn't be installed (missing Accessibility).
@@ -52,5 +59,28 @@ final class TimerController {
         guard isPanelVisible else { return }
         isPanelVisible = false
         panel?.dismiss()
+    }
+
+    // MARK: - Firing
+
+    private func observeFireEvents() {
+        NotificationCenter.default.addObserver(forName: .timerDidFire, object: nil, queue: .main) { [weak self] note in
+            guard let entry = note.object as? TimerEntry else { return }
+            MainActor.assumeIsolated { self?.presentFired(entry) }
+        }
+    }
+
+    private func presentFired(_ entry: TimerEntry) {
+        firedEntries.append(entry)
+        Sounds.startAlarmLoop()
+        if alertPanel == nil { alertPanel = TimerAlertPanel(controller: self) }
+        alertPanel?.present()
+    }
+
+    /// The fire popup's "Wyłącz" button.
+    func dismissFiredAlert() {
+        firedEntries = []
+        Sounds.stopAlarmLoop()
+        alertPanel?.dismiss()
     }
 }

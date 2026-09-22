@@ -428,11 +428,17 @@ final class Settings {
         didSet { encode(timerShortcut, forKey: Keys.timerShortcut) }
     }
 
-    /// Played on a loop (see `Sounds.playAlarm`) when a timer or alarm fires — a distinct
+    /// Played on a loop (see `Sounds.startAlarmLoop`) when a timer or alarm fires — a distinct
     /// pick from the short dictation start/end chimes, since this one needs to actually be
     /// noticed from another room.
     var alarmSound: SystemSound {
         didSet { defaults.set(alarmSound.rawValue, forKey: Keys.alarmSound) }
+    }
+
+    /// Shows the soonest running Minutnik's countdown in the menu bar, next to the orb —
+    /// off by default since most people only care while the search panel is already open.
+    var showTimerInMenuBar: Bool {
+        didSet { defaults.set(showTimerInMenuBar, forKey: Keys.showTimerInMenuBar) }
     }
 
     /// What's actually armed right now for dictation — the recorded custom shortcut if
@@ -490,6 +496,7 @@ final class Settings {
         static let colorFormat = "colorFormat"
         static let timerShortcut = "timerShortcut"
         static let alarmSound = "alarmSound"
+        static let showTimerInMenuBar = "showTimerInMenuBar"
     }
 
     private init() {
@@ -548,6 +555,7 @@ final class Settings {
         colorFormat = ColorFormat(rawValue: defaults.string(forKey: Keys.colorFormat) ?? "") ?? .hex
         timerShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.timerShortcut) ?? .defaultTimerShortcut
         alarmSound = SystemSound(rawValue: defaults.string(forKey: Keys.alarmSound) ?? "") ?? .sosumi
+        showTimerInMenuBar = defaults.object(forKey: Keys.showTimerInMenuBar) as? Bool ?? false
     }
 
     private func encode<T: Encodable>(_ value: T?, forKey key: String) {
