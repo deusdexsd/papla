@@ -61,6 +61,8 @@ struct SettingsContent: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var isConfirmingClipboardClear = false
     @State private var isConfirmingColorClear = false
+    @State private var newEmojiPhrase = ""
+    @State private var newEmojiGlyph = ""
 
     private static let noneLanguage = "none"
 
@@ -200,10 +202,14 @@ struct SettingsContent: View {
                 .pickerStyle(.menu)
             }
             .padding(.top, DS.Space.snug)
-            note("Osobny skrót od zwykłego dyktowania — naciśnij go zamiast tamtego, żeby "
-                + "to, co powiesz po polsku, zostało od razu przetłumaczone i wklejone w "
-                + "wybranym języku. Tłumaczenie działa lokalnie na Macu (Apple Translation), "
-                + "przy pierwszym użyciu danej pary języków system pobierze pakiet.")
+            note("Naciśnij ten skrót zamiast zwykłego, żeby to, co powiesz, zostało "
+                + "przetłumaczone i wklejone w wybranym języku. Możesz go też nacisnąć w "
+                + "trakcie zwykłego dyktowania — dogrywa albo zdejmuje tłumaczenie dla tej "
+                + "wypowiedzi, bez przerywania nagrywania; start i stop dalej robi tylko "
+                + "klawisz dyktowania. Orb zmienia kolor, gdy tłumaczenie jest uzbrojone — "
+                + "kolory poniżej w Wygląd ▸ Kolory tłumaczenia. Działa lokalnie na Macu "
+                + "(Apple Translation), przy pierwszym użyciu danej pary języków system "
+                + "pobierze pakiet.")
         }
 
         panel(label: "Emoji") {
@@ -226,10 +232,78 @@ struct SettingsContent: View {
                   + "poniżej — nigdy przez model językowy.")
 
             if settings.emojiIntensity > 0 {
+                Toggle(isOn: $settings.emojiAtSentenceEnd) {
+                    Silkscreen(text: "Emoji na końcu zdania, nie zaraz po słowie")
+                }
+                .toggleStyle(.checkbox)
+                .padding(.top, DS.Space.base)
+
+                Toggle(isOn: $settings.emojiSuppressPeriod) {
+                    Silkscreen(text: "Nie stawiaj kropki obok emoji")
+                }
+                .toggleStyle(.checkbox)
+                .padding(.top, DS.Space.snug)
+                note("Emoji zamiast kropki, nie kropka i emoji obok siebie.")
+
                 emojiFilterGrid
+                    .padding(.top, DS.Space.base)
+
+                customEmojiEditor
                     .padding(.top, DS.Space.base)
             }
         }
+    }
+
+    private var customEmojiEditor: some View {
+        VStack(alignment: .leading, spacing: DS.Space.tight) {
+            Silkscreen(text: "Własne słowa-klucze")
+                .font(DS.Font.label)
+                .foregroundStyle(DS.Color.inkSecondary)
+
+            ForEach(settings.customEmojiEntries) { entry in
+                HStack(spacing: DS.Space.snug) {
+                    Text("\(entry.emoji) \(entry.phrase)")
+                        .font(DS.Font.body)
+                    Spacer()
+                    Button {
+                        settings.customEmojiEntries.removeAll { $0.id == entry.id }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(DS.Color.inkSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            HStack(spacing: DS.Space.snug) {
+                TextField("słowo lub fraza", text: $newEmojiPhrase)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, DS.Space.snug)
+                    .padding(.vertical, 5)
+                    .background(DS.Color.well, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                TextField("🙂", text: $newEmojiGlyph)
+                    .textFieldStyle(.plain)
+                    .frame(width: 44)
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 5)
+                    .background(DS.Color.well, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                TransportKey(title: "Dodaj") { addCustomEmoji() }
+                    .disabled(newEmojiPhrase.trimmingCharacters(in: .whitespaces).isEmpty || newEmojiGlyph.isEmpty)
+            }
+            .padding(.top, DS.Space.tight)
+            note("Sprawdzane przed stałym słownikiem, więc możesz nadpisać jego emoji "
+                + "podając to samo słowo.")
+        }
+    }
+
+    private func addCustomEmoji() {
+        let phrase = newEmojiPhrase.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let emoji = newEmojiGlyph.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !phrase.isEmpty, !emoji.isEmpty else { return }
+        settings.customEmojiEntries.removeAll { $0.phrase == phrase }
+        settings.customEmojiEntries.append(EmojiEnricher.Entry(phrase: phrase, emoji: emoji))
+        newEmojiPhrase = ""
+        newEmojiGlyph = ""
     }
 
     private var emojiFilterGrid: some View {
@@ -456,6 +530,19 @@ struct SettingsContent: View {
                 + ". Przy pierwszym użyciu macOS zapyta o dostęp do folderu Pulpit.")
         }
 
+        panel(label: "Tłumaczenie w wyszukiwarce") {
+            Toggle(isOn: $settings.clipboardTranslateAddsToHistory) {
+                Silkscreen(text: "Dodaj tłumaczenie do historii")
+            }
+            .toggleStyle(.switch)
+            note(settings.clipboardTranslateAddsToHistory
+                ? "„Tłumacz i kopiuj” z menu kontekstowego dokłada tłumaczenie jako nowy "
+                  + "wpis nad oryginałem — widzisz je od razu w liście, panel nie zamyka "
+                  + "się w trakcie tłumaczenia."
+                : "„Tłumacz i kopiuj” tylko podmienia zawartość schowka — bez dopisywania "
+                  + "niczego do historii.")
+        }
+
         panel(label: "Wygląd wyszukiwarki") {
             HStack(spacing: DS.Space.snug) {
                 ForEach(PanelAppearance.allCases, id: \.self) { appearance in
@@ -637,6 +724,27 @@ struct SettingsContent: View {
             }
             note("Trzy kolory, które krążą w orbie i podświetlają zaznaczone przyciski w "
                 + "całej appce — łącznie z poświatą pola zaznaczenia przy chwytaniu tekstu.")
+        }
+
+        panel(label: "Kolory tłumaczenia") {
+            HStack(spacing: DS.Space.roomy) {
+                colorSwatch("Pierwszy", binding: Binding(
+                    get: { settings.translateAccentPrimary.color },
+                    set: { settings.translateAccentPrimary = RGBColor($0) }
+                ))
+                colorSwatch("Drugi", binding: Binding(
+                    get: { settings.translateAccentSecondary.color },
+                    set: { settings.translateAccentSecondary = RGBColor($0) }
+                ))
+                colorSwatch("Trzeci", binding: Binding(
+                    get: { settings.translateAccentTertiary.color },
+                    set: { settings.translateAccentTertiary = RGBColor($0) }
+                ))
+                Spacer()
+                TransportKey(title: "Domyślne") { settings.resetTranslateAccentColors() }
+            }
+            note("Ten sam orb, ale w innych kolorach, gdy nagranie ma zostać przetłumaczone "
+                + "— żeby dało się od razu, bez czytania, rozpoznać który tryb właśnie działa.")
         }
 
         panel(label: "Dźwięk") {

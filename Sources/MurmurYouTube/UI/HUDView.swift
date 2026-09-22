@@ -13,6 +13,12 @@ enum Brand {
     static let error = Color(red: 1.0, green: 0.42, blue: 0.38)
     static let errorWarm = Color(red: 1.0, green: 0.64, blue: 0.32)
 
+    /// The orb's palette while "dyktuj i przetłumacz" is armed — a different set of three so
+    /// it reads at a glance which mode is running, no text needed.
+    static var accentTranslate: Color { Settings.shared.translateAccentPrimary.color }
+    static var accentTranslateWarm: Color { Settings.shared.translateAccentSecondary.color }
+    static var accentTranslateCool: Color { Settings.shared.translateAccentTertiary.color }
+
     static var gradient: LinearGradient {
         LinearGradient(colors: [accent, accentWarm], startPoint: .leading, endPoint: .trailing)
     }
@@ -21,6 +27,12 @@ enum Brand {
     static let defaultPrimary = RGBColor(r: 0.42, g: 0.55, b: 1.0)
     static let defaultSecondary = RGBColor(r: 0.76, g: 0.47, b: 1.0)
     static let defaultTertiary = RGBColor(r: 0.40, g: 0.85, b: 0.92)
+
+    /// Green/amber, deliberately far from the blue/violet default so the two are never
+    /// mistaken for each other even at a glance.
+    static let defaultTranslatePrimary = RGBColor(r: 0.30, g: 0.78, b: 0.48)
+    static let defaultTranslateSecondary = RGBColor(r: 0.96, g: 0.78, b: 0.25)
+    static let defaultTranslateTertiary = RGBColor(r: 0.35, g: 0.85, b: 0.70)
 }
 
 /// The floating indicator while you hold the key: just the orb, no card, no pill, no bar
@@ -39,7 +51,10 @@ struct HUDView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            SiriOrb(energy: energy, isAnimating: isAnimating, isError: isError, size: Self.orbSize)
+            SiriOrb(
+                energy: energy, isAnimating: isAnimating, isError: isError,
+                isTranslating: controller.wantsTranslate, size: Self.orbSize
+            )
 
             if isError {
                 Text(errorMessage)
@@ -98,6 +113,9 @@ struct SiriOrb: View {
     var energy: CGFloat
     var isAnimating: Bool
     var isError: Bool = false
+    /// True while the recording in flight is armed to be translated — swaps in
+    /// `Brand.accentTranslate*` instead of the usual palette.
+    var isTranslating: Bool = false
     var size: CGFloat = 44
 
     var body: some View {
@@ -117,6 +135,7 @@ struct SiriOrb: View {
 
     private var palette: [Color] {
         if isError { return [Brand.error, Brand.errorWarm, Brand.errorWarm] }
+        if isTranslating { return [Brand.accentTranslate, Brand.accentTranslateWarm, Brand.accentTranslateCool] }
         return [Brand.accent, Brand.accentWarm, Brand.accentCool]
     }
 

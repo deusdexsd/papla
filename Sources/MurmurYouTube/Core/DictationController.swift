@@ -44,11 +44,22 @@ final class DictationController {
     private let translateHotkey = HotkeyMonitor()
     private let capture = AudioCapture()
 
-    /// Which trigger started the recording currently in flight — decided once, at
-    /// `beginDictation()`, from which hotkey fired. Determines whether `endDictation()` runs
-    /// the translation pass before injecting.
     private enum Trigger { case normal, translate }
-    private var activeTrigger: Trigger = .normal
+
+    /// Which trigger *started* the recording in flight — decided once, at `beginDictation()`.
+    /// In `.hold` mode, only a release of this one's own key stops the recording; pressing the
+    /// other trigger mid-recording never does, it only flips `wantsTranslate` (see
+    /// `handleKeyPress`). In `.toggle` mode it's what a second press of the *same* trigger
+    /// needs to match to stop things.
+    private var startingTrigger: Trigger = .normal
+
+    /// Whether the recording in flight (or about to start) should be translated before
+    /// injecting — read by `endDictation()`, and by the HUD to pick its color palette. Starts
+    /// out matching whichever trigger began the recording, but can be flipped mid-recording by
+    /// pressing the *other* trigger — "ten sam skrót plus jeszcze jeden klawisz", not two
+    /// fully independent start/stop shortcuts.
+    private(set) var wantsTranslate = false
+
     private let makeEngine: @Sendable () -> any TranscriptionEngine
 
     /// Injected only by tests; production reads the setting per-utterance below.
@@ -98,27 +109,28 @@ final class DictationController {
     /// In `.hold` mode a press always starts a fresh recording (the matching release ends
     /// it). In `.toggle` mode the same key both starts and stops: a press while idle starts,
     /// a press while active stops — so it doubles as the "I changed my mind" cancel too.
+    ///
+    /// Either mode, a press on the *other* trigger while a recording is already running never
+    /// starts or stops anything — it just flips `wantsTranslate` for the recording in flight,
+    /// so you can decide mid-sentence that this one should (or shouldn't) be translated.
     private func handleKeyPress(trigger: Trigger) {
-        // A press on the *other* trigger while a recording is already active is ignored
-        // outright — `.hold` mode aside, letting the second shortcut hijack an in-flight
-        // recording (started with, say, the normal trigger) and reclassify it as a
-        // translation partway through would be surprising and undoable from the keyboard.
-        switch Settings.shared.triggerMode {
-        case .hold:
-            beginDictation(trigger: trigger)
-        case .toggle:
-            if state.isActive {
-                if activeTrigger == trigger { endDictation() }
-            } else {
-                beginDictation(trigger: trigger)
+        if state.isActive {
+            if trigger != startingTrigger {
+                wantsTranslate.toggle()
+            } else if Settings.shared.triggerMode == .toggle {
+                endDictation()
             }
+            return
         }
+        beginDictation(trigger: trigger)
     }
 
-    /// Ignored entirely in `.toggle` mode — releasing the key mid-sentence must not stop
-    /// the recording, that's the whole point of the mode.
+    /// Ignored entirely in `.toggle` mode, and in `.hold` mode ignored for whichever trigger
+    /// *didn't* start the recording — releasing the key you used to flip translation on or off
+    /// mid-sentence must not stop the recording, only the one still being held from the start
+    /// does that.
     private func handleKeyRelease(trigger: Trigger) {
-        guard Settings.shared.triggerMode == .hold, activeTrigger == trigger else { return }
+        guard Settings.shared.triggerMode == .hold, trigger == startingTrigger else { return }
         endDictation()
     }
 
@@ -152,7 +164,8 @@ final class DictationController {
 
     private func beginDictation(trigger: Trigger) {
         guard case .idle = state else { return }
-        activeTrigger = trigger
+        startingTrigger = trigger
+        wantsTranslate = trigger == .translate
         state = .starting
         transcript = ""
         holdStarted = Date()
@@ -248,6 +261,7 @@ final class DictationController {
             guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 state = .idle
                 transcript = ""
+                wantsTranslate = false
                 return
             }
 
@@ -270,11 +284,14 @@ final class DictationController {
             let enriched = EmojiEnricher.apply(
                 to: corrected,
                 intensity: Settings.shared.emojiIntensity,
-                disabledKeywords: Settings.shared.emojiDisabledKeywords
+                disabledKeywords: Settings.shared.emojiDisabledKeywords,
+                customEntries: Settings.shared.customEmojiEntries,
+                atSentenceEnd: Settings.shared.emojiAtSentenceEnd,
+                suppressPeriod: Settings.shared.emojiSuppressPeriod
             )
 
             var output = enriched
-            if activeTrigger == .translate {
+            if wantsTranslate {
                 do {
                     output = try await Translator.translate(enriched, to: Settings.shared.translateTargetLanguage)
                 } catch {
@@ -288,7 +305,7 @@ final class DictationController {
 
             state = .idle
             transcript = ""
-            activeTrigger = .normal
+            wantsTranslate = false
         }
     }
 
@@ -308,7 +325,7 @@ final class DictationController {
         state = .idle
         transcript = ""
         level = 0
-        activeTrigger = .normal
+        wantsTranslate = false
     }
 
     private func teardown() async {
@@ -363,6 +380,7 @@ final class DictationController {
         consumeTask = nil
         state = .error(message)
         level = 0
+        wantsTranslate = false
 
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(3))

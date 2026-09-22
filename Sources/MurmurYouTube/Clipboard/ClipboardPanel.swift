@@ -42,6 +42,7 @@ final class ClipboardPanel: NSPanel {
     /// lingering on screen with a search field nobody is typing into.
     override func resignKey() {
         super.resignKey()
+        guard controller?.isTranslating != true else { return }
         controller?.hidePanel()
     }
 

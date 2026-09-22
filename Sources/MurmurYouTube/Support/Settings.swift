@@ -205,6 +205,25 @@ final class Settings {
         didSet { defaults.set(Array(emojiDisabledKeywords), forKey: Keys.emojiDisabledKeywords) }
     }
 
+    /// Off (default): the emoji lands right after the word that triggered it. On: it moves to
+    /// the end of the sentence that word appeared in — closer to how people actually text.
+    var emojiAtSentenceEnd: Bool {
+        didSet { defaults.set(emojiAtSentenceEnd, forKey: Keys.emojiAtSentenceEnd) }
+    }
+
+    /// When an emoji lands right where a "." would otherwise be — the end of a sentence, or a
+    /// trigger word that was itself the last word — this drops that period instead of leaving
+    /// both. "Emoji to tak naprawdę jest zamiast kropki."
+    var emojiSuppressPeriod: Bool {
+        didSet { defaults.set(emojiSuppressPeriod, forKey: Keys.emojiSuppressPeriod) }
+    }
+
+    /// User-added phrase→emoji pairs, tried before the built-in dictionary (so a custom entry
+    /// can override a stock one by reusing its phrase).
+    var customEmojiEntries: [EmojiEnricher.Entry] {
+        didSet { encode(customEmojiEntries, forKey: Keys.customEmojiEntries) }
+    }
+
     // MARK: Sound
 
     /// Master on/off for both the dictation tick and the grab chime.
@@ -264,6 +283,25 @@ final class Settings {
         accentPrimary = Brand.defaultPrimary
         accentSecondary = Brand.defaultSecondary
         accentTertiary = Brand.defaultTertiary
+    }
+
+    /// The orb's three colors while a "dyktuj i przetłumacz" recording is in flight — a
+    /// visibly different palette than plain dictation, so you can tell at a glance which one
+    /// is running without reading anything.
+    var translateAccentPrimary: RGBColor {
+        didSet { encode(translateAccentPrimary, forKey: Keys.translateAccentPrimary) }
+    }
+    var translateAccentSecondary: RGBColor {
+        didSet { encode(translateAccentSecondary, forKey: Keys.translateAccentSecondary) }
+    }
+    var translateAccentTertiary: RGBColor {
+        didSet { encode(translateAccentTertiary, forKey: Keys.translateAccentTertiary) }
+    }
+
+    func resetTranslateAccentColors() {
+        translateAccentPrimary = Brand.defaultTranslatePrimary
+        translateAccentSecondary = Brand.defaultTranslateSecondary
+        translateAccentTertiary = Brand.defaultTranslateTertiary
     }
 
     // MARK: Chwytanie tekstu (grab-text OCR)
@@ -351,6 +389,14 @@ final class Settings {
         didSet { defaults.set(clipboardAppearance.rawValue, forKey: Keys.clipboardAppearance) }
     }
 
+    /// What "Tłumacz i kopiuj" in the search panel does with the result, beyond always
+    /// putting it on the pasteboard. On (default): the translation is also filed as a new
+    /// history entry, right above the original, so you can see it without the panel closing.
+    /// Off: copy only, panel behaves like any other copy action.
+    var clipboardTranslateAddsToHistory: Bool {
+        didSet { defaults.set(clipboardTranslateAddsToHistory, forKey: Keys.clipboardTranslateAddsToHistory) }
+    }
+
     /// Rewrites "—" and "–" as "-" at the moment of *pasting* (⌘V anywhere, and pasting from
     /// the history panel). Copying itself is never touched. Needs Accessibility, like every
     /// other global shortcut here.
@@ -385,6 +431,13 @@ final class Settings {
         static let translateTargetLanguage = "translateTargetLanguage"
         static let emojiIntensity = "emojiIntensity"
         static let emojiDisabledKeywords = "emojiDisabledKeywords"
+        static let emojiAtSentenceEnd = "emojiAtSentenceEnd"
+        static let emojiSuppressPeriod = "emojiSuppressPeriod"
+        static let customEmojiEntries = "customEmojiEntries"
+        static let translateAccentPrimary = "translateAccentPrimary"
+        static let translateAccentSecondary = "translateAccentSecondary"
+        static let translateAccentTertiary = "translateAccentTertiary"
+        static let clipboardTranslateAddsToHistory = "clipboardTranslateAddsToHistory"
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let soundStart = "soundStart"
@@ -424,6 +477,9 @@ final class Settings {
         translateTargetLanguage = TranslateLanguage(rawValue: defaults.string(forKey: Keys.translateTargetLanguage) ?? "") ?? .english
         emojiIntensity = (defaults.object(forKey: Keys.emojiIntensity) as? Int ?? 0).clamped(0, 5)
         emojiDisabledKeywords = Set(defaults.stringArray(forKey: Keys.emojiDisabledKeywords) ?? [])
+        emojiAtSentenceEnd = defaults.object(forKey: Keys.emojiAtSentenceEnd) as? Bool ?? false
+        emojiSuppressPeriod = defaults.object(forKey: Keys.emojiSuppressPeriod) as? Bool ?? false
+        customEmojiEntries = Settings.decode([EmojiEnricher.Entry].self, defaults, Keys.customEmojiEntries) ?? []
         triggerMode = DictationTriggerMode(rawValue: defaults.string(forKey: Keys.triggerMode) ?? "") ?? .hold
         cleanupEnabled = defaults.object(forKey: Keys.cleanupEnabled) as? Bool ?? true
 
@@ -439,6 +495,9 @@ final class Settings {
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary
         accentSecondary = Settings.decode(RGBColor.self, defaults, Keys.accentSecondary) ?? Brand.defaultSecondary
         accentTertiary = Settings.decode(RGBColor.self, defaults, Keys.accentTertiary) ?? Brand.defaultTertiary
+        translateAccentPrimary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentPrimary) ?? Brand.defaultTranslatePrimary
+        translateAccentSecondary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentSecondary) ?? Brand.defaultTranslateSecondary
+        translateAccentTertiary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentTertiary) ?? Brand.defaultTranslateTertiary
 
         grabShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.grabShortcut) ?? .defaultGrabShortcut
         grabPrimaryLanguage = defaults.string(forKey: Keys.grabPrimaryLanguage) ?? "pl-PL"
@@ -458,6 +517,7 @@ final class Settings {
         clipboardKeepImages = defaults.object(forKey: Keys.clipboardKeepImages) as? Bool ?? true
         screenshotsEnabled = defaults.object(forKey: Keys.screenshotsEnabled) as? Bool ?? true
         clipboardAppearance = PanelAppearance(rawValue: defaults.string(forKey: Keys.clipboardAppearance) ?? "") ?? .system
+        clipboardTranslateAddsToHistory = defaults.object(forKey: Keys.clipboardTranslateAddsToHistory) as? Bool ?? true
         pasteStraightenDashes = defaults.object(forKey: Keys.pasteStraightenDashes) as? Bool ?? false
         colorMaxItems = defaults.object(forKey: Keys.colorMaxItems) as? Int ?? 200
         colorFormat = ColorFormat(rawValue: defaults.string(forKey: Keys.colorFormat) ?? "") ?? .hex

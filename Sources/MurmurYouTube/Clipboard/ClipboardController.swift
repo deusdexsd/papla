@@ -15,6 +15,11 @@ final class ClipboardController {
     private(set) var presentation = 0
     private(set) var isPanelVisible = false
 
+    /// True while a "Tłumacz…" action started from the panel is in flight. The panel checks
+    /// this before auto-hiding on `resignKey` — translation is async, and selecting it from a
+    /// context menu must not make the whole panel disappear before the result comes back.
+    var isTranslating = false
+
     // MARK: - Lifecycle
 
     /// - Returns: `false` if a tap couldn't be installed (missing Accessibility).

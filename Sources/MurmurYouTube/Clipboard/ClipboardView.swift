@@ -186,8 +186,8 @@ struct ClipboardView: View {
                         .contextMenu {
                             Button("Kopiuj") { copyOnly(item) }
                             if isPanel { Button("Wklej") { controller.paste(item) } }
-                            if isForeignLanguageText(item) {
-                                Button("Tłumacz na polski i kopiuj") { translateAndCopy(item) }
+                            if let direction = translateDirection(for: item) {
+                                Button(direction.label) { translate(item, to: direction.target) }
                             }
                             if let path = item.filePaths?.first {
                                 Button("Pokaż w Finderze") {
@@ -288,34 +288,50 @@ struct ClipboardView: View {
         }
     }
 
-    /// Whether a "Tłumacz na polski" action makes sense for this row: plain text (not code —
-    /// running a language detector on a code snippet is meaningless and it would false-positive
-    /// constantly) whose detected dominant language isn't Polish. Short snippets are skipped —
-    /// `NLLanguageRecognizer` is unreliable under a few words and would flicker the menu item
-    /// on and off between two- and three-word copies of the same language.
-    private func isForeignLanguageText(_ item: ClipboardItem) -> Bool {
+    /// What translate direction (if any) makes sense for this row: Polish text offers
+    /// translating *out*, to `Settings.translateTargetLanguage`; anything else detected as
+    /// non-Polish offers translating *in*, to Polish. Only plain text/links (not code — a
+    /// language detector on a code snippet is meaningless and false-positives constantly).
+    /// Short snippets are skipped — `NLLanguageRecognizer` is unreliable under a few words and
+    /// would flicker the menu item between languages on near-identical short copies.
+    private func translateDirection(for item: ClipboardItem) -> (label: String, target: Locale.Language)? {
         guard item.kind == .text || item.kind == .link,
               let text = item.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               text.count >= 12
-        else { return false }
+        else { return nil }
 
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
-        guard let language = recognizer.dominantLanguage else { return false }
-        return language != .polish
+        guard let language = recognizer.dominantLanguage else { return nil }
+
+        if language == .polish {
+            let target = Settings.shared.translateTargetLanguage
+            return ("Tłumacz na \(target.displayName.lowercased()) i kopiuj", Locale.Language(identifier: target.rawValue))
+        }
+        return ("Tłumacz na polski i kopiuj", Locale.Language(identifier: "pl"))
     }
 
-    /// Translates a copied item to Polish and puts the *result* on the clipboard — the entry
-    /// itself is left untouched (this is a one-off action, not a rewrite of history).
-    private func translateAndCopy(_ item: ClipboardItem) {
+    /// Translates a copied item and puts the *result* on the clipboard — the original entry is
+    /// left untouched. Per `Settings.clipboardTranslateAddsToHistory`, the translation also
+    /// gets filed as its own history entry above the original, so it's visible in the panel
+    /// rather than only landing invisibly on the pasteboard. `controller.isTranslating` holds
+    /// the panel open for the duration — selecting this from the context menu must not close
+    /// it before the result is even back.
+    private func translate(_ item: ClipboardItem, to target: Locale.Language) {
         guard let text = item.text else { return }
         flashedID = item.id
+        controller.isTranslating = true
         Task {
+            defer { controller.isTranslating = false }
             do {
-                let translated = try await Translator.translate(text, from: nil, to: Locale.Language(identifier: "pl"))
+                let translated = try await Translator.translate(text, from: nil, to: target)
                 let pasteboard = NSPasteboard.general
                 pasteboard.clearContents()
                 pasteboard.setString(translated, forType: .string)
+                ClipboardMonitor.shared.adopt()
+                if Settings.shared.clipboardTranslateAddsToHistory {
+                    store.add(ClipboardItem(date: Date(), kind: .text, text: translated, appName: "Tłumaczenie"))
+                }
             } catch {
                 Log.app.error("clipboard translate failed: \(error.localizedDescription, privacy: .public)")
             }
