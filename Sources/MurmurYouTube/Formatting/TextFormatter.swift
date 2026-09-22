@@ -21,12 +21,21 @@ struct RuleBasedFormatter: TextFormatter {
     /// powiedział.
     private static let fillers = ["yyy", "eee", "ee", "yy", "mhm", "hm", "ym"]
 
-    /// Spoken punctuation people actually use mid-dictation.
+    /// Spoken punctuation people actually use mid-dictation. The two "iksde" entries are
+    /// deliberately literal, explicit tokens rather than something inferred from tone — a
+    /// swear word alone can't tell a genuinely angry "kurwa" from a joking one, so instead of
+    /// guessing, saying "iksde" out loud inserts exactly "XD"; say it twice and you get "XD
+    /// XD" for free, since this is a plain per-occurrence replacement, not a repeat-counter.
+    /// "małe iksde" (checked first, or "iksde" would eat it first) gives the quieter "xd".
     private static let spokenPunctuation: [(String, String)] = [
         ("nowy akapit", "\n\n"),
         ("nowa linia", "\n"),
         ("otwórz nawias", " ("),
         ("zamknij nawias", ") "),
+        ("małe iksde", "xd"),
+        ("małe eksde", "xd"),
+        ("iksde", "XD"),
+        ("eksde", "XD"),
     ]
 
     func format(_ raw: String) async -> String {

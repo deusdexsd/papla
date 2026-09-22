@@ -137,9 +137,10 @@ enum EmojiEnricher {
         Entry(phrase: "fajniej", emoji: "🙈", placement: .sentenceEnd),
         Entry(phrase: "wolałbym", emoji: "🙈", placement: .sentenceEnd),
         Entry(phrase: "wolę", emoji: "🙈", placement: .sentenceEnd),
-        // Frustration defused with a laugh rather than left to sting.
-        Entry(phrase: "kurwa", emoji: "XD", placement: .sentenceEnd),
-        Entry(phrase: "cholera", emoji: "XD", placement: .sentenceEnd),
+        // Deliberately no profanity→"XD" entry: the same swear word covers a genuinely angry
+        // "kurwa" and a joking one, and text alone can't tell them apart — a false positive
+        // on real anger would be worse than never firing. Say "iksde"/"małe iksde" out loud
+        // instead (see `RuleBasedFormatter.spokenPunctuation`) when you actually want it.
     ]
 
     /// - Parameters:
