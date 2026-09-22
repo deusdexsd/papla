@@ -21,12 +21,10 @@ struct RuleBasedFormatter: TextFormatter {
     /// powiedział.
     private static let fillers = ["yyy", "eee", "ee", "yy", "mhm", "hm", "ym"]
 
-    /// Spoken punctuation people actually use mid-dictation. The two "iksde" entries are
-    /// deliberately literal, explicit tokens rather than something inferred from tone — a
-    /// swear word alone can't tell a genuinely angry "kurwa" from a joking one, so instead of
-    /// guessing, saying "iksde" out loud inserts exactly "XD"; say it twice and you get "XD
-    /// XD" for free, since this is a plain per-occurrence replacement, not a repeat-counter.
-    /// "małe iksde" (checked first, or "iksde" would eat it first) gives the quieter "xd".
+    /// Spoken punctuation people actually use mid-dictation. "małe iksde"/"małe eksde" are
+    /// checked here, before `applyXDTokens` — a plain "iksde"/"eksde", with or without
+    /// repeats, is that function's job (see its doc comment for why "XD" is a literal spoken
+    /// token at all, rather than something inferred from tone).
     private static let spokenPunctuation: [(String, String)] = [
         ("nowy akapit", "\n\n"),
         ("nowa linia", "\n"),
@@ -34,8 +32,6 @@ struct RuleBasedFormatter: TextFormatter {
         ("zamknij nawias", ") "),
         ("małe iksde", "xd"),
         ("małe eksde", "xd"),
-        ("iksde", "XD"),
-        ("eksde", "XD"),
     ]
 
     func format(_ raw: String) async -> String {
@@ -44,11 +40,44 @@ struct RuleBasedFormatter: TextFormatter {
 
         text = stripFillers(from: text)
         text = applySpokenPunctuation(to: text)
+        text = applyXDTokens(to: text)
         text = collapseWhitespace(in: text)
         text = capitalizeSentences(in: text)
         text = ensureTerminalPunctuation(in: text)
 
         return text
+    }
+
+    /// A swear word alone can't tell a genuinely angry "kurwa" from a joking one, so instead
+    /// of guessing tone, "XD" is a literal spoken token: say "iksde" (or "eksde") and it
+    /// becomes exactly "XD". The two ways people actually escalate it while typing both work,
+    /// because Polish reads "iksde" as the letters X-D one syllable each:
+    ///   - Stretch the "de" *within one word* → more D's on one X: "iksdededede" → "XDDDD".
+    ///   - Repeat "iksde" as *separate words* → each becomes its own "XD", glued together with
+    ///     no space: "iksde iksde" → "XDXD".
+    /// Mixing both forms in a row works too ("iksdede iksde" → "XDDXD") — each word is scored
+    /// independently by its own length, then the scores are concatenated in order.
+    private func applyXDTokens(to text: String) -> String {
+        guard let regex = try? NSRegularExpression(pattern: "(?i)(?:\\b(?:iks|eks)(?:de)+\\b[ \\t]*)+")
+        else { return text }
+
+        let ns = text as NSString
+        var result = text
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: ns.length))
+
+        for match in matches.reversed() {
+            let whole = ns.substring(with: match.range)
+            let replacement = whole
+                .split(whereSeparator: { $0 == " " || $0 == "\t" })
+                .map { token -> String in
+                    // "iks"/"eks" are 3 letters, each "de" repeat adds 2 more.
+                    let dCount = max(1, (token.count - 3) / 2)
+                    return "X" + String(repeating: "D", count: dCount)
+                }
+                .joined()
+            result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+        }
+        return result
     }
 
     private func stripFillers(from text: String) -> String {
