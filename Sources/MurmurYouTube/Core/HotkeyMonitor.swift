@@ -99,6 +99,13 @@ struct CustomShortcut: Codable, Equatable, Sendable {
         keyGlyph: "C"
     )
 
+    /// ⌃⌥⌘T — dictate-and-translate, the second trigger next to normal dictation.
+    static let defaultTranslateShortcut = CustomShortcut(
+        modifierFlags: CGEventFlags([.maskControl, .maskAlternate, .maskCommand]).rawValue,
+        keyCode: Int64(kVK_ANSI_T),
+        keyGlyph: "T"
+    )
+
     var displayName: String {
         let flags = CGEventFlags(rawValue: modifierFlags)
         var symbols = ""

@@ -184,6 +184,89 @@ struct SettingsContent: View {
             note("Usuwa wypełniacze, poprawia spacje i interpunkcję. Poprawki ze "
                 + "słownika działają niezależnie od tego ustawienia.")
         }
+
+        panel(label: "Dyktuj i tłumacz") {
+            ShortcutRow(label: "Skrót", shortcut: $settings.translateShortcut) {
+                controller.reloadHotkey()
+            }
+            HStack(spacing: DS.Space.base) {
+                Silkscreen(text: "Na język")
+                Picker("Na język", selection: $settings.translateTargetLanguage) {
+                    ForEach(TranslateLanguage.allCases, id: \.self) { language in
+                        Text(language.displayName).tag(language)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+            }
+            .padding(.top, DS.Space.snug)
+            note("Osobny skrót od zwykłego dyktowania — naciśnij go zamiast tamtego, żeby "
+                + "to, co powiesz po polsku, zostało od razu przetłumaczone i wklejone w "
+                + "wybranym języku. Tłumaczenie działa lokalnie na Macu (Apple Translation), "
+                + "przy pierwszym użyciu danej pary języków system pobierze pakiet.")
+        }
+
+        panel(label: "Emoji") {
+            HStack(spacing: DS.Space.snug) {
+                ForEach(0...5, id: \.self) { level in
+                    TransportKey(
+                        title: "\(level)",
+                        isEngaged: settings.emojiIntensity == level,
+                        engagedColor: Brand.accent
+                    ) {
+                        settings.emojiIntensity = level
+                    }
+                }
+            }
+            note(settings.emojiIntensity == 0
+                ? "Wyłączone — transkrypcja zostaje dokładnie taka, jak ją wypowiedziałeś."
+                : "Do \(settings.emojiIntensity) "
+                  + polishPlural(settings.emojiIntensity, one: "emoji", few: "emoji", many: "emoji")
+                  + " na wypowiedź, dobierane po konkretnych słowach ze stałego słownika "
+                  + "poniżej — nigdy przez model językowy.")
+
+            if settings.emojiIntensity > 0 {
+                emojiFilterGrid
+                    .padding(.top, DS.Space.base)
+            }
+        }
+    }
+
+    private var emojiFilterGrid: some View {
+        VStack(alignment: .leading, spacing: DS.Space.tight) {
+            Silkscreen(text: "Słowa-klucze")
+                .font(DS.Font.label)
+                .foregroundStyle(DS.Color.inkSecondary)
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 110), spacing: DS.Space.tight)],
+                alignment: .leading,
+                spacing: DS.Space.tight
+            ) {
+                ForEach(EmojiEnricher.entries) { entry in
+                    let isOn = !settings.emojiDisabledKeywords.contains(entry.id)
+                    Button {
+                        if isOn {
+                            settings.emojiDisabledKeywords.insert(entry.id)
+                        } else {
+                            settings.emojiDisabledKeywords.remove(entry.id)
+                        }
+                    } label: {
+                        Text("\(entry.emoji) \(entry.phrase)")
+                            .font(DS.Font.body)
+                            .lineLimit(1)
+                            .padding(.horizontal, DS.Space.snug)
+                            .padding(.vertical, 5)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
+                                    .fill(isOn ? Brand.accent.opacity(0.14) : DS.Color.seam)
+                            )
+                            .opacity(isOn ? 1 : 0.4)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     // MARK: - Chwytanie tekstu

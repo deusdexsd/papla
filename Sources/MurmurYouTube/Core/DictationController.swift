@@ -41,7 +41,14 @@ final class DictationController {
     private(set) var level: Float = 0
 
     private let hotkey = HotkeyMonitor()
+    private let translateHotkey = HotkeyMonitor()
     private let capture = AudioCapture()
+
+    /// Which trigger started the recording currently in flight — decided once, at
+    /// `beginDictation()`, from which hotkey fired. Determines whether `endDictation()` runs
+    /// the translation pass before injecting.
+    private enum Trigger { case normal, translate }
+    private var activeTrigger: Trigger = .normal
     private let makeEngine: @Sendable () -> any TranscriptionEngine
 
     /// Injected only by tests; production reads the setting per-utterance below.
@@ -74,43 +81,58 @@ final class DictationController {
     func activate() -> Bool {
         hotkey.trigger = Settings.shared.customShortcut.map(HotkeyMonitor.TriggerSpec.custom)
             ?? .modifiersOnly(Settings.shared.triggerKeys)
-        hotkey.onPress = { [weak self] in self?.handleKeyPress() }
-        hotkey.onRelease = { [weak self] in self?.handleKeyRelease() }
-        return hotkey.start()
+        hotkey.onPress = { [weak self] in self?.handleKeyPress(trigger: .normal) }
+        hotkey.onRelease = { [weak self] in self?.handleKeyRelease(trigger: .normal) }
+        let started = hotkey.start()
+
+        // A second, independent tap for "dyktuj i przetłumacz" — its own shortcut, watched
+        // alongside the normal one exactly like grab/clipboard/color already are.
+        translateHotkey.trigger = .custom(Settings.shared.translateShortcut)
+        translateHotkey.onPress = { [weak self] in self?.handleKeyPress(trigger: .translate) }
+        translateHotkey.onRelease = { [weak self] in self?.handleKeyRelease(trigger: .translate) }
+        let translateStarted = translateHotkey.start()
+
+        return started && translateStarted
     }
 
     /// In `.hold` mode a press always starts a fresh recording (the matching release ends
     /// it). In `.toggle` mode the same key both starts and stops: a press while idle starts,
     /// a press while active stops — so it doubles as the "I changed my mind" cancel too.
-    private func handleKeyPress() {
+    private func handleKeyPress(trigger: Trigger) {
+        // A press on the *other* trigger while a recording is already active is ignored
+        // outright — `.hold` mode aside, letting the second shortcut hijack an in-flight
+        // recording (started with, say, the normal trigger) and reclassify it as a
+        // translation partway through would be surprising and undoable from the keyboard.
         switch Settings.shared.triggerMode {
         case .hold:
-            beginDictation()
+            beginDictation(trigger: trigger)
         case .toggle:
             if state.isActive {
-                endDictation()
+                if activeTrigger == trigger { endDictation() }
             } else {
-                beginDictation()
+                beginDictation(trigger: trigger)
             }
         }
     }
 
     /// Ignored entirely in `.toggle` mode — releasing the key mid-sentence must not stop
     /// the recording, that's the whole point of the mode.
-    private func handleKeyRelease() {
-        guard Settings.shared.triggerMode == .hold else { return }
+    private func handleKeyRelease(trigger: Trigger) {
+        guard Settings.shared.triggerMode == .hold, activeTrigger == trigger else { return }
         endDictation()
     }
 
     func deactivate() {
         hotkey.stop()
+        translateHotkey.stop()
         cancelDictation()
     }
 
-    /// Re-arms the tap after the user picks a different push-to-talk key.
+    /// Re-arms the taps after the user picks a different push-to-talk key or shortcut.
     @discardableResult
     func reloadHotkey() -> Bool {
         hotkey.stop()
+        translateHotkey.stop()
         return activate()
     }
 
@@ -119,7 +141,7 @@ final class DictationController {
     /// Starts a recording from a Record button rather than the hotkey.
     func startButtonRecording() {
         guard case .idle = state else { return }
-        beginDictation()
+        beginDictation(trigger: .normal)
     }
 
     func stopButtonRecording() {
@@ -128,8 +150,9 @@ final class DictationController {
 
     // MARK: - Dictation
 
-    private func beginDictation() {
+    private func beginDictation(trigger: Trigger) {
         guard case .idle = state else { return }
+        activeTrigger = trigger
         state = .starting
         transcript = ""
         holdStarted = Date()
@@ -235,9 +258,28 @@ final class DictationController {
             // The dictionary runs last, and runs regardless of the cleanup setting. Biasing
             // only raises the odds of the right word; this is the pass that guarantees it,
             // so it must not be something the user can accidentally switch off.
-            let (output, corrections) = DictionaryStore.shared.corrector.apply(to: cleaned)
+            let (corrected, corrections) = DictionaryStore.shared.corrector.apply(to: cleaned)
             if !corrections.isEmpty {
                 Log.speech.info("dictionary · \(corrections.count, privacy: .public) correction(s) applied")
+            }
+
+            // Emoji are matched against the *Polish* text, so this runs before translation
+            // regardless of trigger — translating an already-inserted emoji is a no-op for
+            // Apple's translator (it passes non-text glyphs through), translating first would
+            // just mean matching against English words the dictionary was never built for.
+            let enriched = EmojiEnricher.apply(
+                to: corrected,
+                intensity: Settings.shared.emojiIntensity,
+                disabledKeywords: Settings.shared.emojiDisabledKeywords
+            )
+
+            var output = enriched
+            if activeTrigger == .translate {
+                do {
+                    output = try await Translator.translate(enriched, to: Settings.shared.translateTargetLanguage)
+                } catch {
+                    Log.speech.error("translation failed, injecting Polish original: \(error.localizedDescription, privacy: .public)")
+                }
             }
 
             recordRun(text: output, corrections: corrections)
@@ -246,6 +288,7 @@ final class DictationController {
 
             state = .idle
             transcript = ""
+            activeTrigger = .normal
         }
     }
 
@@ -265,6 +308,7 @@ final class DictationController {
         state = .idle
         transcript = ""
         level = 0
+        activeTrigger = .normal
     }
 
     private func teardown() async {

@@ -120,7 +120,11 @@ final class ScreenshotIndex {
     nonisolated private static func isScreenCapture(_ url: URL) -> Bool {
         if getxattr(url.path, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) >= 0 { return true }
         let name = url.lastPathComponent.lowercased()
-        return ["zrzut ekranu", "nagranie ekranu", "screenshot", "screen shot", "screen recording"]
+        // macOS's actual Polish naming is "Nagranie z ekranu …" for recordings — note the
+        // "z" — not "Nagranie ekranu". The xattr is the primary signal; these prefixes are
+        // only the fallback for files that lost it (e.g. an iCloud-synced Desktop round-trip
+        // stripping extended attributes), so they need to match what Finder really writes.
+        return ["zrzut ekranu", "nagranie z ekranu", "nagranie ekranu", "screenshot", "screen shot", "screen recording"]
             .contains { name.hasPrefix($0) }
     }
 

@@ -42,6 +42,32 @@ enum DictationTriggerMode: String, CaseIterable, Sendable {
     }
 }
 
+/// A language Papla can translate dictated or copied text into. Polish is always the
+/// source — these are the fixed set of targets exposed in Ustawienia, a curated subset of
+/// what Apple's on-device Translation framework actually supports (its full catalogue is
+/// much longer, but a bounded picker beats a giant unlabeled list).
+enum TranslateLanguage: String, CaseIterable, Sendable {
+    case english = "en"
+    case german = "de"
+    case spanish = "es"
+    case french = "fr"
+    case italian = "it"
+    case ukrainian = "uk"
+    case portuguese = "pt"
+
+    var displayName: String {
+        switch self {
+        case .english: "Angielski"
+        case .german: "Niemiecki"
+        case .spanish: "Hiszpański"
+        case .french: "Francuski"
+        case .italian: "Włoski"
+        case .ukrainian: "Ukraiński"
+        case .portuguese: "Portugalski"
+        }
+    }
+}
+
 /// Light / dark / follow-the-system for the floating search panel.
 enum PanelAppearance: String, CaseIterable, Sendable {
     case system, light, dark
@@ -145,6 +171,38 @@ final class Settings {
     /// Run the cleanup pass before injecting. Off = raw engine output.
     var cleanupEnabled: Bool {
         didSet { defaults.set(cleanupEnabled, forKey: Keys.cleanupEnabled) }
+    }
+
+    // MARK: Tłumaczenie
+
+    /// A second, independent trigger next to normal dictation: hold/toggle it instead, and
+    /// the finished utterance is translated before it's injected — everything else about the
+    /// recording (cleanup, dictionary, emoji) runs exactly the same first.
+    var translateShortcut: CustomShortcut {
+        didSet { encode(translateShortcut, forKey: Keys.translateShortcut) }
+    }
+
+    var translateTargetLanguage: TranslateLanguage {
+        didSet { defaults.set(translateTargetLanguage.rawValue, forKey: Keys.translateTargetLanguage) }
+    }
+
+    // MARK: Emoji
+
+    /// 0 = never add emoji (default). 1…5 = how freely `EmojiEnricher` inserts them — higher
+    /// allows more matches through per utterance, it does not change *which* emoji a word
+    /// maps to (that's the fixed dictionary).
+    var emojiIntensity: Int {
+        didSet {
+            let clamped = emojiIntensity.clamped(0, 5)
+            if clamped != emojiIntensity { emojiIntensity = clamped; return }
+            defaults.set(emojiIntensity, forKey: Keys.emojiIntensity)
+        }
+    }
+
+    /// Dictionary keywords (see `EmojiEnricher.entries`) the user turned off — their emoji is
+    /// never inserted even at max intensity, but the trigger word is left untouched otherwise.
+    var emojiDisabledKeywords: Set<String> {
+        didSet { defaults.set(Array(emojiDisabledKeywords), forKey: Keys.emojiDisabledKeywords) }
     }
 
     // MARK: Sound
@@ -323,6 +381,10 @@ final class Settings {
         static let customShortcut = "customShortcut"
         static let triggerMode = "triggerMode"
         static let cleanupEnabled = "cleanupEnabled"
+        static let translateShortcut = "translateShortcut"
+        static let translateTargetLanguage = "translateTargetLanguage"
+        static let emojiIntensity = "emojiIntensity"
+        static let emojiDisabledKeywords = "emojiDisabledKeywords"
         static let soundEnabled = "soundEnabled"
         static let soundVolume = "soundVolume"
         static let soundStart = "soundStart"
@@ -358,6 +420,10 @@ final class Settings {
             .compactMap(PushToTalkKey.init(rawValue:))
         triggerKeys = savedKeys.isEmpty ? [.rightOption] : Set(savedKeys)
         customShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.customShortcut)
+        translateShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.translateShortcut) ?? .defaultTranslateShortcut
+        translateTargetLanguage = TranslateLanguage(rawValue: defaults.string(forKey: Keys.translateTargetLanguage) ?? "") ?? .english
+        emojiIntensity = (defaults.object(forKey: Keys.emojiIntensity) as? Int ?? 0).clamped(0, 5)
+        emojiDisabledKeywords = Set(defaults.stringArray(forKey: Keys.emojiDisabledKeywords) ?? [])
         triggerMode = DictationTriggerMode(rawValue: defaults.string(forKey: Keys.triggerMode) ?? "") ?? .hold
         cleanupEnabled = defaults.object(forKey: Keys.cleanupEnabled) as? Bool ?? true
 
@@ -409,4 +475,8 @@ final class Settings {
         guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(T.self, from: data)
     }
+}
+
+private extension Int {
+    func clamped(_ lower: Int, _ upper: Int) -> Int { Swift.min(Swift.max(self, lower), upper) }
 }

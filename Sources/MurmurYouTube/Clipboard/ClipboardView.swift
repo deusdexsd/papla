@@ -1,4 +1,5 @@
 import AppKit
+import NaturalLanguage
 import SwiftUI
 
 /// The colours the view draws with. The floating search panel is meant to look like a native
@@ -185,6 +186,9 @@ struct ClipboardView: View {
                         .contextMenu {
                             Button("Kopiuj") { copyOnly(item) }
                             if isPanel { Button("Wklej") { controller.paste(item) } }
+                            if isForeignLanguageText(item) {
+                                Button("Tłumacz na polski i kopiuj") { translateAndCopy(item) }
+                            }
                             if let path = item.filePaths?.first {
                                 Button("Pokaż w Finderze") {
                                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
@@ -279,6 +283,42 @@ struct ClipboardView: View {
         controller.copy(item)
         flashedID = item.id
         Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            if flashedID == item.id { flashedID = nil }
+        }
+    }
+
+    /// Whether a "Tłumacz na polski" action makes sense for this row: plain text (not code —
+    /// running a language detector on a code snippet is meaningless and it would false-positive
+    /// constantly) whose detected dominant language isn't Polish. Short snippets are skipped —
+    /// `NLLanguageRecognizer` is unreliable under a few words and would flicker the menu item
+    /// on and off between two- and three-word copies of the same language.
+    private func isForeignLanguageText(_ item: ClipboardItem) -> Bool {
+        guard item.kind == .text || item.kind == .link,
+              let text = item.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              text.count >= 12
+        else { return false }
+
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(text)
+        guard let language = recognizer.dominantLanguage else { return false }
+        return language != .polish
+    }
+
+    /// Translates a copied item to Polish and puts the *result* on the clipboard — the entry
+    /// itself is left untouched (this is a one-off action, not a rewrite of history).
+    private func translateAndCopy(_ item: ClipboardItem) {
+        guard let text = item.text else { return }
+        flashedID = item.id
+        Task {
+            do {
+                let translated = try await Translator.translate(text, from: nil, to: Locale.Language(identifier: "pl"))
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(translated, forType: .string)
+            } catch {
+                Log.app.error("clipboard translate failed: \(error.localizedDescription, privacy: .public)")
+            }
             try? await Task.sleep(for: .seconds(1.2))
             if flashedID == item.id { flashedID = nil }
         }
