@@ -35,7 +35,7 @@ struct TimerView: View {
             .pickerStyle(.segmented)
 
             if mode == .duration {
-                DurationStepperField(hours: $hours, minutes: $minutes, seconds: $seconds, style: style)
+                DurationDigitField(hours: $hours, minutes: $minutes, seconds: $seconds, style: style)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 4)
             } else {
@@ -44,7 +44,7 @@ struct TimerView: View {
                     .datePickerStyle(.field)
             }
 
-            TextField("na co (opcjonalnie)", text: $label)
+            TextField("Na co (opcjonalnie)", text: $label)
                 .textFieldStyle(.roundedBorder)
 
             Button {
@@ -68,7 +68,6 @@ struct TimerView: View {
             Spacer(minLength: 0)
         }
         .padding(20)
-        .frame(width: TimerPanel.size.width, height: TimerPanel.size.height, alignment: .top)
         .modifier(GlassIfPanel(isPanel: true, radius: cornerRadius))
         .onAppear { hours = 0; minutes = 10; seconds = 0; label = "" }
     }
@@ -145,42 +144,44 @@ struct TimerView: View {
     }
 }
 
-/// Three native `Stepper`s (godz./min./sek.) instead of typing something like "1h30m" into a
-/// text field — no format to remember, no parsing to get wrong.
-private struct DurationStepperField: View {
+/// Three big, plainly typeable digit boxes (godz:min:sek) instead of either a "1h30m"-style
+/// text format to remember, or clicking a stepper 45 times to reach 45 minutes — type the
+/// number directly, same as any clock app's timer entry.
+private struct DurationDigitField: View {
     @Binding var hours: Int
     @Binding var minutes: Int
     @Binding var seconds: Int
     let style: PanelStyle
 
     var body: some View {
-        HStack(spacing: 14) {
-            component("godz.", value: $hours, range: 0...23)
-            separator
-            component("min.", value: $minutes, range: 0...59)
-            separator
-            component("sek.", value: $seconds, range: 0...59)
+        HStack(spacing: 6) {
+            digitBox(value: $hours, range: 0...23)
+            colon
+            digitBox(value: $minutes, range: 0...59)
+            colon
+            digitBox(value: $seconds, range: 0...59)
         }
     }
 
-    private var separator: some View {
+    private var colon: some View {
         Text(":")
-            .font(.system(size: 22, weight: .light, design: .rounded))
+            .font(.system(size: 30, weight: .light, design: .rounded))
             .foregroundStyle(style.tertiary)
-            .padding(.top, -12)
     }
 
-    private func component(_ caption: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
-        VStack(spacing: 3) {
-            Stepper(value: value, in: range) {
-                Text(String(format: "%02d", value.wrappedValue))
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(style.primary)
+    private func digitBox(value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        TextField("", value: value, format: .number)
+            .textFieldStyle(.plain)
+            .font(.system(size: 30, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(style.primary)
+            .multilineTextAlignment(.center)
+            .frame(width: 56)
+            .padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(style.chipOff))
+            .onChange(of: value.wrappedValue) { _, newValue in
+                let clamped = min(max(newValue, range.lowerBound), range.upperBound)
+                if clamped != newValue { value.wrappedValue = clamped }
             }
-            Text(caption)
-                .font(.system(size: 10))
-                .foregroundStyle(style.tertiary)
-        }
     }
 }
