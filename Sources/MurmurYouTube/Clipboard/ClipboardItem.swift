@@ -6,7 +6,7 @@ import Observation
 import QuickLookThumbnailing
 
 enum ClipboardKind: String, Codable, CaseIterable, Sendable {
-    case text, link, image, screenshot, color, code, file
+    case text, link, image, screenshot, color, code, file, transcription
 
     /// Plural, for the filter chips.
     var chipTitle: String {
@@ -18,6 +18,7 @@ enum ClipboardKind: String, Codable, CaseIterable, Sendable {
         case .color: "Kolory"
         case .code: "Kod"
         case .file: "Pliki"
+        case .transcription: "Transkrypcje"
         }
     }
 
@@ -31,6 +32,7 @@ enum ClipboardKind: String, Codable, CaseIterable, Sendable {
         case .color: "Kolor"
         case .code: "Kod"
         case .file: "Plik"
+        case .transcription: "Transkrypcja"
         }
     }
 
@@ -43,6 +45,7 @@ enum ClipboardKind: String, Codable, CaseIterable, Sendable {
         case .color: "paintpalette"
         case .code: "chevron.left.forwardslash.chevron.right"
         case .file: "doc"
+        case .transcription: "waveform"
         }
     }
 }
@@ -72,6 +75,9 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
         case .image: "i:" + (imageDigest ?? id.uuidString)
         case .file: "f:" + (filePaths ?? []).joined(separator: "\n")
         case .screenshot: "s:" + (filePaths ?? []).joined(separator: "\n")
+        // Never inserted through `ClipboardStore.add`, so this is never actually compared —
+        // the id alone (unique per `DictationRun`) is enough to satisfy the switch.
+        case .transcription: "r:" + id.uuidString
         }
     }
 
@@ -85,13 +91,17 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
     var fromScreenshot: Bool?
     var isVideo: Bool?
 
+    /// Likewise for entries built from `RunStore` (dictation history) — copying and deleting
+    /// route to `RunLog` instead of the clipboard's.
+    var fromTranscription: Bool?
+
     /// "Nagranie" for a screen recording, otherwise the kind's own name.
     var kindTitle: String { kind == .screenshot && isVideo == true ? "Nagranie" : kind.title }
 
     /// Everything the search field matches against.
     var searchableText: String {
         switch kind {
-        case .text, .link, .code: text ?? ""
+        case .text, .link, .code, .transcription: text ?? ""
         case .color: [text, colorHex].compactMap { $0 }.joined(separator: " ")
         case .file: (filePaths ?? []).map { ($0 as NSString).lastPathComponent }.joined(separator: " ")
         case .screenshot:
@@ -105,7 +115,7 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
     /// The row's main line.
     var headline: String {
         switch kind {
-        case .text, .link, .code:
+        case .text, .link, .code, .transcription:
             (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         case .color:
             text ?? colorHex ?? ""

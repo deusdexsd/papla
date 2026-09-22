@@ -6,8 +6,10 @@ import SwiftUI
 /// floating panel (`isPanel`, keyboard-driven, closes after an action) and the "Schowek"
 /// section of the main window (mouse-first, stays open).
 ///
-/// Colours picked with the eyedropper live in their own history (`ColorStore`) but are shown
-/// here too, under "Kolory" and "Wszystko", as virtual entries.
+/// Colours picked with the eyedropper live in their own history (`ColorStore`), and every
+/// dictation in its own (`RunStore`) — both are shown here too, under their own filter chip
+/// and "Wszystko", as virtual entries, so this one search bar reaches everything Papla's ever
+/// produced instead of needing three separate windows.
 struct ClipboardView: View {
     let controller: ClipboardController
     var isPanel = false
@@ -15,6 +17,7 @@ struct ClipboardView: View {
     @State private var store = ClipboardStore.shared
     @State private var colorStore = ColorStore.shared
     @State private var screenshots = ScreenshotIndex.shared
+    @State private var runStore = RunStore.shared
     @State private var timerStore = TimerStore.shared
     @State private var query = ""
     @State private var filter: ClipboardKind?
@@ -43,9 +46,15 @@ struct ClipboardView: View {
                 fromScreenshot: true, isVideo: entry.isVideo
             )
         }
-        return picked.isEmpty && captures.isEmpty
+        let transcriptions = runStore.runs.map { run in
+            ClipboardItem(
+                id: run.id, date: run.date, kind: .transcription,
+                text: run.text, appName: "Papla", fromTranscription: true
+            )
+        }
+        return picked.isEmpty && captures.isEmpty && transcriptions.isEmpty
             ? store.items
-            : (store.items + picked + captures).sorted { $0.date > $1.date }
+            : (store.items + picked + captures + transcriptions).sorted { $0.date > $1.date }
     }
 
     private var visible: [ClipboardItem] {
@@ -243,12 +252,15 @@ struct ClipboardView: View {
         if isPanel { searchFocused = true }
     }
 
-    /// Colour entries live in `ColorStore`, everything else in the clipboard's.
+    /// Colour entries live in `ColorStore`, transcriptions in `RunStore`, everything else in
+    /// the clipboard's.
     private func remove(_ item: ClipboardItem) {
         if item.fromScreenshot == true {
             if let path = item.filePaths?.first { screenshots.hide(path: path) }
         } else if item.fromColorPicker == true {
             if let entry = colorStore.entries.first(where: { $0.id == item.id }) { colorStore.delete(entry) }
+        } else if item.fromTranscription == true {
+            if let run = runStore.runs.first(where: { $0.id == item.id }) { RunLog.delete(run) }
         } else {
             store.delete(item)
         }
@@ -277,7 +289,7 @@ struct ClipboardView: View {
     /// Short snippets are skipped — `NLLanguageRecognizer` is unreliable under a few words and
     /// would flicker the menu item between languages on near-identical short copies.
     private func translateDirection(for item: ClipboardItem) -> (label: String, target: Locale.Language)? {
-        guard item.kind == .text || item.kind == .link,
+        guard item.kind == .text || item.kind == .link || item.kind == .transcription,
               let text = item.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               text.count >= 12
         else { return nil }

@@ -128,11 +128,21 @@ final class ClipboardController {
             return
         }
 
+        // A past dictation: its own record already lives in `RunStore` — copying it out here
+        // doesn't also file a duplicate in the clipboard history.
+        if item.fromTranscription == true {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(item.text ?? "", forType: .string)
+            ClipboardMonitor.shared.adopt()
+            return
+        }
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
         switch item.kind {
-        case .text, .link, .code, .color:
+        case .text, .link, .code, .color, .transcription:
             var text = item.text ?? ""
             if Settings.shared.pasteStraightenDashes, item.kind != .link { text = DashTools.straighten(text) }
             pasteboard.setString(text, forType: .string)
