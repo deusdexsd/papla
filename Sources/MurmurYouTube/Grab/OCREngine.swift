@@ -7,24 +7,27 @@ import Vision
 /// worse than a short one that covers what actually shows up in a screen grab.
 struct OCRLanguage: Identifiable, Hashable, Sendable {
     let code: String // BCP-47, exactly what Vision expects.
-    let displayName: String
+    let polishName: String
+    let englishName: String
     var id: String { code }
 
-    static let polish = OCRLanguage(code: "pl-PL", displayName: "Polski")
-    static let english = OCRLanguage(code: "en-US", displayName: "Angielski")
+    @MainActor var displayName: String { t(polishName, englishName) }
+
+    static let polish = OCRLanguage(code: "pl-PL", polishName: "Polski", englishName: "Polish")
+    static let english = OCRLanguage(code: "en-US", polishName: "Angielski", englishName: "English")
 
     static let common: [OCRLanguage] = [
         .polish,
         .english,
-        OCRLanguage(code: "de-DE", displayName: "Niemiecki"),
-        OCRLanguage(code: "fr-FR", displayName: "Francuski"),
-        OCRLanguage(code: "es-ES", displayName: "Hiszpański"),
-        OCRLanguage(code: "it-IT", displayName: "Włoski"),
-        OCRLanguage(code: "uk-UA", displayName: "Ukraiński"),
-        OCRLanguage(code: "pt-BR", displayName: "Portugalski"),
+        OCRLanguage(code: "de-DE", polishName: "Niemiecki", englishName: "German"),
+        OCRLanguage(code: "fr-FR", polishName: "Francuski", englishName: "French"),
+        OCRLanguage(code: "es-ES", polishName: "Hiszpański", englishName: "Spanish"),
+        OCRLanguage(code: "it-IT", polishName: "Włoski", englishName: "Italian"),
+        OCRLanguage(code: "uk-UA", polishName: "Ukraiński", englishName: "Ukrainian"),
+        OCRLanguage(code: "pt-BR", polishName: "Portugalski", englishName: "Portuguese"),
     ]
 
-    static func name(for code: String) -> String {
+    @MainActor static func name(for code: String) -> String {
         common.first { $0.code == code }?.displayName ?? code
     }
 }
@@ -35,8 +38,8 @@ enum OCRError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noText: "Nie znalazłem żadnego tekstu w zaznaczonym obszarze."
-        case .visionFailed(let reason): "Rozpoznawanie tekstu nie powiodło się: \(reason)"
+        case .noText: tSync("Nie znalazłem żadnego tekstu w zaznaczonym obszarze.", "Couldn't find any text in the selected area.")
+        case .visionFailed(let reason): tSync("Rozpoznawanie tekstu nie powiodło się: \(reason)", "Text recognition failed: \(reason)")
         }
     }
 }

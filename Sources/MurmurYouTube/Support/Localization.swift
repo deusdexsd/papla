@@ -24,6 +24,13 @@ func t(_ polish: String, _ english: String) -> String {
     Settings.shared.appLanguage == .english ? english : polish
 }
 
+/// The same choice as `t`, readable from any thread — for `LocalizedError.errorDescription` and
+/// other nonisolated spots that can't hop to the main actor. Reads the persisted setting
+/// directly (English when nothing's been saved yet, matching `Settings`' own default).
+func tSync(_ polish: String, _ english: String) -> String {
+    UserDefaults.standard.string(forKey: "appLanguage") == "polish" ? polish : english
+}
+
 /// English has one plural form where Polish has three (`polishPlural`) — same call shape,
 /// used together as `t(polishPlural(n, ...), englishPlural(n, ...))`.
 func englishPlural(_ count: Int, one: String, other: String) -> String {

@@ -24,7 +24,7 @@ struct MurmurYouTubeApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .appInfo) {
-                Button("Pokaż plik słownika") {
+                Button(t("Pokaż plik słownika", "Show dictionary file")) {
                     NSWorkspace.shared.activateFileViewerSelecting([DictionaryStore.fileURL])
                 }
             }

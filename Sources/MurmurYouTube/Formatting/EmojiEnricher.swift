@@ -106,6 +106,68 @@ enum EmojiEnricher {
         Entry(phrase: "dziecko", emoji: "👶"),
         Entry(phrase: "serce", emoji: "❤️"),
         Entry(phrase: "gwiazda", emoji: "⭐️"),
+        // Inflected short forms (the suffix-matching below only kicks in for phrases of 5+
+        // letters, so 3–4 letter words need their common forms spelled out).
+        Entry(phrase: "kawę", emoji: "☕️"),
+        Entry(phrase: "kawy", emoji: "☕️"),
+        Entry(phrase: "piwa", emoji: "🍺"),
+        Entry(phrase: "filmu", emoji: "🎬"),
+        Entry(phrase: "psa", emoji: "🐶"),
+        Entry(phrase: "kota", emoji: "🐱"),
+        // Everyday reactions and small talk.
+        Entry(phrase: "brawo", emoji: "👏"),
+        Entry(phrase: "sukces", emoji: "🏆"),
+        Entry(phrase: "wygrałem", emoji: "🏆"),
+        Entry(phrase: "wygrałam", emoji: "🏆"),
+        Entry(phrase: "fajnie", emoji: "😎"),
+        Entry(phrase: "fajne", emoji: "😎"),
+        Entry(phrase: "świetne", emoji: "🔥"),
+        Entry(phrase: "rewelacja", emoji: "🔥"),
+        Entry(phrase: "cudownie", emoji: "😍"),
+        Entry(phrase: "piękne", emoji: "😍"),
+        Entry(phrase: "cześć", emoji: "👋"),
+        Entry(phrase: "hej", emoji: "👋"),
+        Entry(phrase: "witam", emoji: "👋"),
+        Entry(phrase: "pozdrawiam", emoji: "🙌"),
+        Entry(phrase: "dobranoc", emoji: "😴"),
+        Entry(phrase: "smacznego", emoji: "😋"),
+        Entry(phrase: "pyszne", emoji: "😋"),
+        Entry(phrase: "przepraszam", emoji: "🙏"),
+        Entry(phrase: "sorry", emoji: "🙏"),
+        Entry(phrase: "oczywiście", emoji: "👍"),
+        Entry(phrase: "zgoda", emoji: "🤝"),
+        Entry(phrase: "umowa", emoji: "🤝"),
+        Entry(phrase: "dobrze", emoji: "👍"),
+        Entry(phrase: "okej", emoji: "👌"),
+        Entry(phrase: "martwię się", emoji: "😟"),
+        Entry(phrase: "stres", emoji: "😰"),
+        Entry(phrase: "boję się", emoji: "😨"),
+        Entry(phrase: "chory", emoji: "🤒"),
+        Entry(phrase: "chora", emoji: "🤒"),
+        Entry(phrase: "choroba", emoji: "🤒"),
+        Entry(phrase: "lekarz", emoji: "🩺"),
+        Entry(phrase: "szpital", emoji: "🏥"),
+        Entry(phrase: "telefon", emoji: "📱"),
+        Entry(phrase: "komputer", emoji: "💻"),
+        Entry(phrase: "internet", emoji: "🌐"),
+        Entry(phrase: "wiadomość", emoji: "💬"),
+        Entry(phrase: "mail", emoji: "📧"),
+        Entry(phrase: "prezent", emoji: "🎁"),
+        Entry(phrase: "święta", emoji: "🎄"),
+        Entry(phrase: "ślub", emoji: "💍"),
+        Entry(phrase: "uśmiech", emoji: "😊"),
+        Entry(phrase: "śmiech", emoji: "😂"),
+        Entry(phrase: "dom", emoji: "🏠"),
+        Entry(phrase: "szkoła", emoji: "🏫"),
+        Entry(phrase: "słodkie", emoji: "🥰"),
+        Entry(phrase: "przytulam", emoji: "🤗"),
+        Entry(phrase: "wybuch", emoji: "💥"),
+        Entry(phrase: "sport", emoji: "🏃"),
+        Entry(phrase: "trening", emoji: "💪"),
+        Entry(phrase: "siłownia", emoji: "🏋️"),
+        Entry(phrase: "zdrowie", emoji: "💚"),
+        Entry(phrase: "godzina", emoji: "🕐"),
+        Entry(phrase: "jutro", emoji: "📆"),
     ]
 
     /// A tone-softening layer, opt-in via `Settings.emojiSofteningEnabled` — modeled on how
@@ -155,8 +217,7 @@ enum EmojiEnricher {
     ///   - suppressPeriod: drop a "." that would otherwise sit immediately next to the emoji.
     ///   - softeningEnabled: also match `softeningEntries` — content keywords still win when
     ///     both a topic word and a softener match the same sentence.
-    /// - Returns: `text` with at most `intensity` emoji added, one per sentence, in reading
-    ///   order, each trigger phrase matched at most once.
+    /// - Returns: `text` with emoji added, capped by a budget that grows with `intensity`.
     static func apply(
         to text: String,
         intensity: Int,
@@ -167,6 +228,14 @@ enum EmojiEnricher {
         softeningEnabled: Bool = false
     ) -> String {
         guard intensity > 0, !text.isEmpty else { return text }
+
+        // 1…5 used to mean exactly 1…5 emoji per dictation, at most one per sentence, each phrase
+        // once — at "5" a long, chatty message still came out with zero or one. The slider now
+        // maps onto a steeper budget, several emoji can land in one sentence, and at the top two
+        // levels the same phrase may fire again later in the text.
+        let budgets = [0, 2, 4, 7, 11, 16]
+        let budget = budgets[min(max(intensity, 0), 5)]
+        let allowRepeats = intensity >= 4
 
         // Custom entries first (so they can shadow a built-in phrase), then content keywords,
         // softeners last (a topic word beats a tone word when both match the same sentence).
@@ -181,34 +250,60 @@ enum EmojiEnricher {
         var output: [String] = []
 
         for sentence in splitIntoSentences(text) {
-            guard used < intensity else { output.append(sentence); continue }
+            guard used < budget else { output.append(sentence); continue }
 
-            var chosen: (entry: Entry, matchRange: NSRange)?
             let ns = sentence as NSString
+            var hits: [(entry: Entry, range: NSRange)] = []
+            var claimed: [NSRange] = []
+
             for entry in candidates {
-                guard !disabledKeywords.contains(entry.id), !consumed.contains(entry.phrase) else { continue }
-                let pattern = "(?i)\\b\(NSRegularExpression.escapedPattern(for: entry.phrase))\\b"
-                guard let regex = try? NSRegularExpression(pattern: pattern),
-                      let match = regex.firstMatch(in: sentence, range: NSRange(location: 0, length: ns.length))
+                guard used + hits.count < budget else { break }
+                guard !disabledKeywords.contains(entry.id),
+                      allowRepeats || !consumed.contains(entry.phrase),
+                      !hits.contains(where: { $0.entry.phrase == entry.phrase })
                 else { continue }
-                chosen = (entry, match.range)
-                break
+                guard let regex = matchRegex(for: entry.phrase) else { continue }
+                let match = regex.matches(in: sentence, range: NSRange(location: 0, length: ns.length))
+                    .first { candidate in !claimed.contains { NSIntersectionRange($0, candidate.range).length > 0 } }
+                guard let match else { continue }
+                claimed.append(match.range)
+                hits.append((entry, match.range))
             }
 
-            guard let (entry, matchRange) = chosen else {
-                output.append(sentence)
-                continue
+            guard !hits.isEmpty else { output.append(sentence); continue }
+            for hit in hits { consumed.insert(hit.entry.phrase) }
+            used += hits.count
+
+            var result = sentence
+            // Inline ones go in from the back of the sentence forward so earlier ranges stay valid.
+            let inline = hits.filter { !(atSentenceEnd || $0.entry.placement == .sentenceEnd) }
+                .sorted { $0.range.location > $1.range.location }
+            for hit in inline {
+                result = insert(hit.entry.emoji, into: result, matchRange: hit.range,
+                                atSentenceEnd: false, suppressPeriod: suppressPeriod)
             }
-            consumed.insert(entry.phrase)
-            used += 1
-            output.append(insert(
-                entry.emoji, into: sentence, matchRange: matchRange,
-                atSentenceEnd: atSentenceEnd || entry.placement == .sentenceEnd,
-                suppressPeriod: suppressPeriod
-            ))
+            // Everything that belongs at the sentence end is stacked into one trailing group.
+            let ending = hits.filter { atSentenceEnd || $0.entry.placement == .sentenceEnd }
+                .map(\.entry.emoji)
+            if !ending.isEmpty {
+                result = insert(ending.joined(), into: result, matchRange: NSRange(location: 0, length: 0),
+                                atSentenceEnd: true, suppressPeriod: suppressPeriod)
+            }
+            output.append(result)
         }
 
         return output.joined()
+    }
+
+    /// Whole-word, case-insensitive. Single-word phrases of 5+ letters also accept up to three
+    /// trailing letters, so "kocham" catches "kochamy" and "spotkanie" catches "spotkaniu" —
+    /// Polish inflects almost everything, and exact whole-word matching was missing most of what
+    /// actually got said. Shorter words stay exact ("kot" must not fire on "kotlet").
+    private static func matchRegex(for phrase: String) -> NSRegularExpression? {
+        let escaped = NSRegularExpression.escapedPattern(for: phrase)
+        let inflects = !phrase.contains(" ") && phrase.count >= 5
+        let suffix = inflects ? "\\p{L}{0,3}" : ""
+        return try? NSRegularExpression(pattern: "(?i)\\b\(escaped)\(suffix)\\b")
     }
 
     // MARK: - Sentence splitting

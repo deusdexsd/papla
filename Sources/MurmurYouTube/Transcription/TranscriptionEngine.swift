@@ -49,13 +49,13 @@ enum TranscriptionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .localeUnsupported(let locale):
-            return "Dyktowanie nie jest dostępne dla języka \(locale.identifier) na tym Macu."
+            return tSync("Dyktowanie nie jest dostępne dla języka \(locale.identifier) na tym Macu.", "Dictation isn't available for \(locale.identifier) on this Mac.")
         case .modelInstallFailed(let detail):
-            return "Nie udało się zainstalować modelu mowy: \(detail)"
+            return tSync("Nie udało się zainstalować modelu mowy: \(detail)", "Couldn't install the speech model: \(detail)")
         case .noAudioFormat:
-            return "Brak zgodnego formatu audio dla silnika mowy."
+            return tSync("Brak zgodnego formatu audio dla silnika mowy.", "No compatible audio format for the speech engine.")
         case .notRunning:
-            return "Silnik transkrypcji nie jest uruchomiony."
+            return tSync("Silnik transkrypcji nie jest uruchomiony.", "The transcription engine isn't running.")
         }
     }
 }

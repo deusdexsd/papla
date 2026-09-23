@@ -298,11 +298,13 @@ final class DictationController {
             )
 
             var output = enriched
+            var translationFailure: String?
             if wantsTranslate {
                 do {
                     output = try await Translator.translate(enriched, to: Settings.shared.translateTargetLanguage)
                 } catch {
                     Log.speech.error("translation failed, injecting Polish original: \(error.localizedDescription, privacy: .public)")
+                    translationFailure = error.localizedDescription
                 }
             }
 
@@ -313,6 +315,13 @@ final class DictationController {
             state = .idle
             transcript = ""
             wantsTranslate = false
+
+            // The original still got inserted (a dictation is never lost), but a silent
+            // fallback looked exactly like a successful translation — say so on the HUD.
+            if let translationFailure {
+                fail(t("Tłumaczenie nie zadziałało — wstawiłem oryginał. \(translationFailure)",
+                       "Translation failed — inserted the original instead. \(translationFailure)"))
+            }
         }
     }
 

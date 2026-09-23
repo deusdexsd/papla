@@ -55,9 +55,10 @@ struct GrabHUDView: View {
     private var message: String? {
         switch controller.state {
         case .idle, .selecting, .capturing: nil
-        case .recognizing: "Czytam tekst…"
+        case .recognizing: t("Czytam tekst…", "Reading text…")
         case .done(let characters):
-            "Skopiowano \(characters) " + polishPlural(characters, one: "znak", few: "znaki", many: "znaków")
+            t("Skopiowano \(characters) " + polishPlural(characters, one: "znak", few: "znaki", many: "znaków"),
+              "Copied \(characters) " + englishPlural(characters, one: "character", other: "characters"))
         case .error(let message): message
         }
     }

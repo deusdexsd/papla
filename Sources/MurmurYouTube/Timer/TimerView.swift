@@ -44,7 +44,7 @@ struct TimerView: View {
                     .datePickerStyle(.field)
             }
 
-            TextField(t("Na co (opcjonalnie)", "For what (optional)"), text: $label)
+            TextField("", text: $label, prompt: Text(t("Opis", "Description")).italic())
                 .textFieldStyle(.roundedBorder)
 
             Button {

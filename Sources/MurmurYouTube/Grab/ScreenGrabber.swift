@@ -10,11 +10,11 @@ enum ScreenGrabberError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noScreenRecordingAccess:
-            "Brak uprawnienia Nagrywanie ekranu. Włącz je w Ustawieniach systemowych."
+            tSync("Brak uprawnienia Nagrywanie ekranu. Włącz je w Ustawieniach systemowych.", "Screen Recording permission is missing. Turn it on in System Settings.")
         case .displayNotFound:
-            "Nie udało się znaleźć wybranego ekranu."
+            tSync("Nie udało się znaleźć wybranego ekranu.", "Couldn't find the selected display.")
         case .emptyRegion:
-            "Zaznaczony obszar jest zbyt mały."
+            tSync("Zaznaczony obszar jest zbyt mały.", "The selected area is too small.")
         }
     }
 }
