@@ -817,6 +817,20 @@ struct SettingsContent: View {
         .onAppear { HUDPreview.show() }
         .onDisappear { HUDPreview.hide() }
 
+        panel(label: t("Język", "Language")) {
+            Picker(t("Język aplikacji", "App language"), selection: $settings.appLanguage) {
+                ForEach(AppLanguage.allCases, id: \.self) { language in
+                    Text(language.displayName).tag(language)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            note(t("Zmienia tylko język interfejsu Papli — niezależny od języka systemu i od "
+                    + "tego, w jakim języku dyktujesz albo tłumaczysz.",
+                "Only changes Papla's own interface language — independent of your Mac's "
+                    + "system language, and of what language you dictate or translate into."))
+        }
+
         panel(label: "Wizualizacja") {
             Picker("Kształt", selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in

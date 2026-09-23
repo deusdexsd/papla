@@ -7,12 +7,13 @@ import SwiftUI
 enum HUDPosition: String, CaseIterable, Sendable {
     case top, bottom, left, right
 
+    @MainActor
     var displayName: String {
         switch self {
-        case .top: "Góra"
-        case .bottom: "Dół"
-        case .left: "Lewo"
-        case .right: "Prawo"
+        case .top: t("Góra", "Top")
+        case .bottom: t("Dół", "Bottom")
+        case .left: t("Lewo", "Left")
+        case .right: t("Prawo", "Right")
         }
     }
 }
@@ -26,18 +27,23 @@ enum DictationTriggerMode: String, CaseIterable, Sendable {
     /// longer dictations where holding a modifier the whole time is uncomfortable.
     case toggle
 
+    @MainActor
     var displayName: String {
         switch self {
-        case .hold: "Przytrzymaj"
-        case .toggle: "Przełącznik"
+        case .hold: t("Przytrzymaj", "Hold")
+        case .toggle: t("Przełącznik", "Toggle")
         }
     }
 
+    @MainActor
     var note: String {
         switch self {
-        case .hold: "Trzymasz klawisz i mówisz — puszczasz, żeby skończyć."
-        case .toggle: "Naciskasz raz, żeby zacząć, drugi raz, żeby skończyć. "
-            + "Klawisz możesz puścić w trakcie mówienia."
+        case .hold: t("Trzymasz klawisz i mówisz — puszczasz, żeby skończyć.",
+                       "Hold the key and speak — release it to finish.")
+        case .toggle: t("Naciskasz raz, żeby zacząć, drugi raz, żeby skończyć. "
+                + "Klawisz możesz puścić w trakcie mówienia.",
+                "Press once to start, again to finish. You can let go of "
+                + "the key in between — no need to hold it while you speak.")
         }
     }
 }
@@ -55,15 +61,16 @@ enum TranslateLanguage: String, CaseIterable, Sendable {
     case ukrainian = "uk"
     case portuguese = "pt"
 
+    @MainActor
     var displayName: String {
         switch self {
-        case .english: "Angielski"
-        case .german: "Niemiecki"
-        case .spanish: "Hiszpański"
-        case .french: "Francuski"
-        case .italian: "Włoski"
-        case .ukrainian: "Ukraiński"
-        case .portuguese: "Portugalski"
+        case .english: t("Angielski", "English")
+        case .german: t("Niemiecki", "German")
+        case .spanish: t("Hiszpański", "Spanish")
+        case .french: t("Francuski", "French")
+        case .italian: t("Włoski", "Italian")
+        case .ukrainian: t("Ukraiński", "Ukrainian")
+        case .portuguese: t("Portugalski", "Portuguese")
         }
     }
 }
@@ -76,10 +83,11 @@ enum HUDVisualizerStyle: String, CaseIterable, Sendable {
     /// closer to Tesla's own voice-command visualizer than a soft glowing sphere.
     case waveform
 
+    @MainActor
     var displayName: String {
         switch self {
-        case .orb: "Kula"
-        case .waveform: "Fala"
+        case .orb: t("Kula", "Orb")
+        case .waveform: t("Fala", "Waveform")
         }
     }
 }
@@ -88,11 +96,12 @@ enum HUDVisualizerStyle: String, CaseIterable, Sendable {
 enum PanelAppearance: String, CaseIterable, Sendable {
     case system, light, dark
 
+    @MainActor
     var displayName: String {
         switch self {
-        case .system: "Systemowy"
-        case .light: "Jasny"
-        case .dark: "Ciemny"
+        case .system: t("Systemowy", "System")
+        case .light: t("Jasny", "Light")
+        case .dark: t("Ciemny", "Dark")
         }
     }
 
@@ -294,6 +303,12 @@ final class Settings {
     /// the main window's level meter, the grab HUD).
     var hudVisualizerStyle: HUDVisualizerStyle {
         didSet { defaults.set(hudVisualizerStyle.rawValue, forKey: Keys.hudVisualizerStyle) }
+    }
+
+    /// The app's own UI language (see `AppLanguage`) — independent of the Mac's system
+    /// language, and of what language you dictate or translate into.
+    var appLanguage: AppLanguage {
+        didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
 
     // MARK: Colors
@@ -504,6 +519,7 @@ final class Settings {
         static let hudMargin = "hudMargin"
         static let orbSpread = "orbSpread"
         static let hudVisualizerStyle = "hudVisualizerStyle"
+        static let appLanguage = "appLanguage"
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
         static let accentTertiary = "accentTertiary"
@@ -555,6 +571,7 @@ final class Settings {
         hudMargin = defaults.object(forKey: Keys.hudMargin) as? Double ?? 48
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
+        appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .polish
 
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary
         accentSecondary = Settings.decode(RGBColor.self, defaults, Keys.accentSecondary) ?? Brand.defaultSecondary
