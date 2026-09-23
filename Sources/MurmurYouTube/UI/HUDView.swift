@@ -211,10 +211,16 @@ struct VisualizerView: View {
     }
 }
 
-/// A modern, mirrored equalizer bar — mic level scrolls through a short history buffer
-/// instead of driving one single shape, closer to the voice-command visualizer on a Tesla
-/// dash than a glowing sphere. Same `energy`/`isAnimating`/`isError`/`isTranslating` inputs
-/// as `SiriOrb`, so `VisualizerView` can swap between the two without either caller knowing.
+/// A borderless plasma streak, not a bar chart: no fixed start/end point, no frame the wave
+/// bumps up against. Amplitude is architecturally zero at both edges and maximal in the
+/// middle — the shape *is* the fade, not a mask applied to one — so it always reads as a
+/// glowing thread suspended in the interface rather than a chart with axes. Mic level scrolls
+/// through a short history buffer to draw a live contour; a soft blurred glow layer sits
+/// under a crisp particle layer for depth, echoing the same light-through-fog look as
+/// `SiriOrb`'s own glow. At rest it never goes fully flat — a slow, quiet undulation keeps it
+/// reading as alive rather than off. Same `energy`/`isAnimating`/`isError`/`isTranslating`
+/// inputs as `SiriOrb`, so `VisualizerView` can swap between the two without either caller
+/// knowing which one it got.
 struct WaveformVisualizer: View {
     var energy: CGFloat
     var isAnimating: Bool
@@ -222,8 +228,8 @@ struct WaveformVisualizer: View {
     var isTranslating: Bool = false
     var size: CGFloat = 44
 
-    private static let barCount = 24
-    @State private var samples = Array(repeating: CGFloat(0.06), count: barCount)
+    private static let sampleCount = 48
+    @State private var samples = Array(repeating: CGFloat(0), count: sampleCount)
 
     private var palette: [Color] {
         if isError { return [Brand.error, Brand.errorWarm] }
@@ -231,18 +237,13 @@ struct WaveformVisualizer: View {
         return [Brand.accent, Brand.accentCool]
     }
 
-    private var barWidth: CGFloat { size * 1.7 / CGFloat(Self.barCount) * 0.55 }
-
     var body: some View {
-        HStack(spacing: max(1, size * 0.02)) {
-            ForEach(0..<Self.barCount, id: \.self) { index in
-                Capsule()
-                    .fill(LinearGradient(colors: palette, startPoint: .top, endPoint: .bottom))
-                    .frame(width: barWidth, height: barHeight(at: index))
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isAnimating)) { timeline in
+            Canvas { context, canvasSize in
+                draw(into: &context, canvasSize: canvasSize, time: timeline.date.timeIntervalSinceReferenceDate)
             }
         }
-        .frame(width: size * 1.7, height: size)
-        .animation(.easeOut(duration: 0.1), value: samples)
+        .frame(width: size * 3.4, height: size * 0.85)
         .onChange(of: energy) { _, newValue in
             guard isAnimating else { return }
             samples.removeFirst()
@@ -250,17 +251,80 @@ struct WaveformVisualizer: View {
         }
         .onChange(of: isAnimating) { _, animating in
             guard !animating else { return }
-            samples = Array(repeating: 0.06, count: Self.barCount)
+            samples = Array(repeating: 0, count: Self.sampleCount)
         }
     }
 
-    /// A center-weighted envelope (bars taper down toward the edges) times the live sample
-    /// at that position — reads as a real equalizer instead of a flat row of identical bars.
-    private func barHeight(at index: Int) -> CGFloat {
-        let mid = CGFloat(Self.barCount - 1) / 2
-        let distance = mid == 0 ? 0 : abs(CGFloat(index) - mid) / mid
-        let envelope = 1 - distance * 0.6
-        let minHeight = size * 0.08
-        return minHeight + (size - minHeight) * samples[index] * envelope
+    /// 0 at both edges, 1 at the center — this is what guarantees "no point A or B": every
+    /// term below (the core line, the glow, the particle density) is multiplied by this, so
+    /// nothing the mic does can ever put a hard edge anywhere but the exact middle.
+    private func edgeEnvelope(_ unit: CGFloat) -> CGFloat {
+        let distanceFromCenter = abs(unit - 0.5) * 2
+        return max(0, 1 - pow(distanceFromCenter, 1.7))
+    }
+
+    private func draw(into context: inout GraphicsContext, canvasSize: CGSize, time: TimeInterval) {
+        let midY = canvasSize.height / 2
+        let n = samples.count
+        // Never truly silent: a slow, low breathing term so a quiet mic still reads as a
+        // living, softly waving line rather than a dead flat one.
+        let breathing = 0.05 + 0.035 * sin(time * 0.8)
+
+        func amplitude(at index: Int) -> CGFloat {
+            let unit = CGFloat(index) / CGFloat(n - 1)
+            let wobble = 1 + sin(time * 2.2 + Double(index) * 0.4) * 0.12
+            return (samples[index] + breathing) * edgeEnvelope(unit) * CGFloat(wobble)
+        }
+
+        var corePath = Path()
+        for i in 0..<n {
+            let unit = CGFloat(i) / CGFloat(n - 1)
+            let x = unit * canvasSize.width
+            let y = midY - amplitude(at: i) * canvasSize.height * 0.85
+            if i == 0 { corePath.move(to: CGPoint(x: x, y: y)) } else { corePath.addLine(to: CGPoint(x: x, y: y)) }
+        }
+
+        let gradient = Gradient(stops: [
+            .init(color: palette[0].opacity(0), location: 0),
+            .init(color: palette[0].opacity(0.95), location: 0.5),
+            .init(color: palette.count > 1 ? palette[1].opacity(0.95) : palette[0].opacity(0.95), location: 0.5),
+            .init(color: (palette.count > 1 ? palette[1] : palette[0]).opacity(0), location: 1),
+        ])
+        let start = CGPoint(x: 0, y: midY)
+        let end = CGPoint(x: canvasSize.width, y: midY)
+
+        // Deep, wide, blurred glow — the diffuse "fog" layer.
+        context.drawLayer { layer in
+            layer.addFilter(.blur(radius: size * 0.16))
+            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.16)
+        }
+        // A second, tighter glow pass for depth between the fog and the crisp line.
+        context.drawLayer { layer in
+            layer.addFilter(.blur(radius: size * 0.05))
+            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.07)
+        }
+        // The crisp, sharp core registering the actual micro-movement.
+        context.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.025)
+
+        // Volumetric dust: a scatter of tiny points hugging the line, denser and brighter
+        // near the center and on louder samples — the "3D particle cloud" around the core.
+        for i in 0..<n {
+            let unit = CGFloat(i) / CGFloat(n - 1)
+            let env = edgeEnvelope(unit)
+            guard env > 0.02 else { continue }
+            let amp = amplitude(at: i)
+            let x = unit * canvasSize.width
+            let y = midY - amp * canvasSize.height * 0.85
+            let particleCount = Int(1 + env * (2 + amp * 5))
+            for p in 0..<particleCount {
+                let seed = Double(i * 37 + p * 11)
+                let jx = x + CGFloat(sin(time * 1.7 + seed)) * size * 0.06 * env
+                let jy = y + CGFloat(cos(time * 2.3 + seed * 1.4)) * size * (0.04 + amp * 0.1) * env
+                let dotSize = size * (0.012 + amp * 0.02) * (0.6 + env * 0.4)
+                let opacity = (0.12 + amp * 0.5) * env
+                let dot = CGRect(x: jx - dotSize / 2, y: jy - dotSize / 2, width: dotSize, height: dotSize)
+                context.fill(Path(ellipseIn: dot), with: .color(palette[p % palette.count].opacity(opacity)))
+            }
+        }
     }
 }
