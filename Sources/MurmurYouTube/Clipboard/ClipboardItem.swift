@@ -9,30 +9,32 @@ enum ClipboardKind: String, Codable, CaseIterable, Sendable {
     case text, link, image, screenshot, color, code, file, transcription
 
     /// Plural, for the filter chips.
+    @MainActor
     var chipTitle: String {
         switch self {
-        case .text: "Tekst"
-        case .link: "Linki"
-        case .image: "Obrazy"
-        case .screenshot: "Zrzuty"
-        case .color: "Kolory"
-        case .code: "Kod"
-        case .file: "Pliki"
-        case .transcription: "Transkrypcje"
+        case .text: t("Tekst", "Text")
+        case .link: t("Linki", "Links")
+        case .image: t("Obrazy", "Images")
+        case .screenshot: t("Zrzuty", "Screenshots")
+        case .color: t("Kolory", "Colors")
+        case .code: t("Kod", "Code")
+        case .file: t("Pliki", "Files")
+        case .transcription: t("Transkrypcje", "Transcriptions")
         }
     }
 
     /// Singular, for a row's subtitle.
+    @MainActor
     var title: String {
         switch self {
-        case .text: "Tekst"
-        case .link: "Link"
-        case .image: "Obraz"
-        case .screenshot: "Zrzut"
-        case .color: "Kolor"
-        case .code: "Kod"
-        case .file: "Plik"
-        case .transcription: "Transkrypcja"
+        case .text: t("Tekst", "Text")
+        case .link: t("Link", "Link")
+        case .image: t("Obraz", "Image")
+        case .screenshot: t("Zrzut", "Screenshot")
+        case .color: t("Kolor", "Color")
+        case .code: t("Kod", "Code")
+        case .file: t("Plik", "File")
+        case .transcription: t("Transkrypcja", "Transcription")
         }
     }
 
@@ -96,7 +98,8 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
     var fromTranscription: Bool?
 
     /// "Nagranie" for a screen recording, otherwise the kind's own name.
-    var kindTitle: String { kind == .screenshot && isVideo == true ? "Nagranie" : kind.title }
+    @MainActor
+    var kindTitle: String { kind == .screenshot && isVideo == true ? t("Nagranie", "Recording") : kind.title }
 
     /// Everything the search field matches against.
     var searchableText: String {
@@ -113,6 +116,7 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
     }
 
     /// The row's main line.
+    @MainActor
     var headline: String {
         switch kind {
         case .text, .link, .code, .transcription:
@@ -125,7 +129,7 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
             if let paths = filePaths, !paths.isEmpty {
                 paths.map { ($0 as NSString).lastPathComponent }.joined(separator: ", ")
             } else {
-                "Obraz \(imageWidth ?? 0) × \(imageHeight ?? 0)"
+                t("Obraz", "Image") + " \(imageWidth ?? 0) × \(imageHeight ?? 0)"
             }
         }
     }

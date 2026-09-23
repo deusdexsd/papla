@@ -225,9 +225,11 @@ private struct MenuContent: View {
     @State private var parakeetOnDisk = ParakeetModels.isDownloaded
 
     private var parakeetStatus: String {
-        if isPreloadingParakeet { return "Wczytuję model…" }
+        if isPreloadingParakeet { return t("Wczytuję model…", "Loading model…") }
         // Reflects what's actually on disk, not just what this menu instance has done.
-        return parakeetOnDisk ? "Model mowy zainstalowany ✓" : "Pobierz model mowy…"
+        return parakeetOnDisk
+            ? t("Model mowy zainstalowany ✓", "Speech model installed ✓")
+            : t("Pobierz model mowy…", "Download speech model…")
     }
 
     private func preloadParakeet() {
@@ -245,7 +247,7 @@ private struct MenuContent: View {
     }
 
     var body: some View {
-        Button("Pokaż Paplę") {
+        Button(t("Pokaż Paplę", "Show Papla")) {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -253,19 +255,21 @@ private struct MenuContent: View {
         Divider()
 
         Text(settings.triggerMode == .hold
-            ? "Przytrzymaj \(settings.triggerDisplayName), żeby dyktować"
-            : "Naciśnij \(settings.triggerDisplayName), żeby dyktować — jeszcze raz, żeby skończyć")
+            ? t("Przytrzymaj \(settings.triggerDisplayName), żeby dyktować",
+                "Hold \(settings.triggerDisplayName) to dictate")
+            : t("Naciśnij \(settings.triggerDisplayName), żeby dyktować — jeszcze raz, żeby skończyć",
+                "Press \(settings.triggerDisplayName) to dictate — press again to stop"))
 
         if settings.customShortcut != nil {
             // Nagrywanie własnego skrótu potrzebuje okna z fokusem, nie da się tego zrobić
             // z paska menu — stąd tylko podgląd i możliwość wyczyszczenia.
-            Text("Własny skrót: \(settings.triggerDisplayName)")
-            Button("Wyczyść własny skrót") {
+            Text(t("Własny skrót: \(settings.triggerDisplayName)", "Custom shortcut: \(settings.triggerDisplayName)"))
+            Button(t("Wyczyść własny skrót", "Clear custom shortcut")) {
                 settings.customShortcut = nil
                 controller.reloadHotkey()
             }
         } else {
-            Menu("Klawisze dyktowania") {
+            Menu(t("Klawisze dyktowania", "Dictation keys")) {
                 ForEach(PushToTalkKey.allCases, id: \.self) { key in
                     Toggle(key.displayName, isOn: Binding(
                         get: { settings.triggerKeys.contains(key) },
@@ -283,21 +287,21 @@ private struct MenuContent: View {
                     ))
                 }
                 Divider()
-                Text("Własną kombinację nagrasz w Ustawieniach (⌘,)")
+                Text(t("Własną kombinację nagrasz w Ustawieniach (⌘,)", "Record a custom combo in Settings (⌘,)"))
             }
         }
 
-        Picker("Sposób wyzwalania", selection: $settings.triggerMode) {
+        Picker(t("Sposób wyzwalania", "Trigger mode"), selection: $settings.triggerMode) {
             ForEach(DictationTriggerMode.allCases, id: \.self) { mode in
                 Text(mode.displayName).tag(mode)
             }
         }
 
-        Toggle("Czyść tekst", isOn: $settings.cleanupEnabled)
+        Toggle(t("Czyść tekst", "Clean up text"), isOn: $settings.cleanupEnabled)
 
-        Toggle("Dźwięk", isOn: $settings.soundEnabled)
+        Toggle(t("Dźwięk", "Sound"), isOn: $settings.soundEnabled)
 
-        Toggle("Uruchamiaj przy logowaniu", isOn: Binding(
+        Toggle(t("Uruchamiaj przy logowaniu", "Launch at login"), isOn: Binding(
             get: { launchAtLogin },
             set: {
                 LaunchAtLogin.set($0)
@@ -307,26 +311,26 @@ private struct MenuContent: View {
 
         Divider()
 
-        Text("Chwytanie tekstu — \(settings.grabShortcut.displayName)")
-        Button("Chwyć obszar…") { grabController.beginGrab() }
+        Text(t("Chwytanie tekstu — \(settings.grabShortcut.displayName)", "Text grab — \(settings.grabShortcut.displayName)"))
+        Button(t("Chwyć obszar…", "Grab an area…")) { grabController.beginGrab() }
             .disabled(grabController.state.isBusy)
-        Button("Chwyć cały ekran") { grabController.grabFullScreen() }
+        Button(t("Chwyć cały ekran", "Grab the whole screen")) { grabController.grabFullScreen() }
             .disabled(grabController.state.isBusy)
 
         Divider()
 
-        Text("Papla (wyszukiwarka) — \(settings.clipboardShortcut.displayName)")
-        Button("Otwórz wyszukiwarkę schowka…") { clipboardController.showPanel() }
+        Text(t("Papla (wyszukiwarka) — \(settings.clipboardShortcut.displayName)", "Papla (search) — \(settings.clipboardShortcut.displayName)"))
+        Button(t("Otwórz wyszukiwarkę schowka…", "Open clipboard search…")) { clipboardController.showPanel() }
 
         Divider()
 
-        Text("Próbnik kolorów — \(settings.colorPickerShortcut.displayName)")
-        Button("Wybierz kolor z ekranu") { colorController.pick() }
+        Text(t("Próbnik kolorów — \(settings.colorPickerShortcut.displayName)", "Color picker — \(settings.colorPickerShortcut.displayName)"))
+        Button(t("Wybierz kolor z ekranu", "Pick a color from the screen")) { colorController.pick() }
 
         Divider()
 
-        Text("Minutnik — \(settings.timerShortcut.displayName)")
-        Button("Nowy minutnik / budzik…") { timerController.showPanel() }
+        Text(t("Minutnik — \(settings.timerShortcut.displayName)", "Timer — \(settings.timerShortcut.displayName)"))
+        Button(t("Nowy minutnik / budzik…", "New timer / alarm…")) { timerController.showPanel() }
 
         Divider()
 
@@ -337,16 +341,16 @@ private struct MenuContent: View {
 
 
         if !Permissions.hasAccessibility {
-            Button("Nadaj uprawnienia: Ułatwienia dostępu…") { Permissions.openAccessibilitySettings() }
+            Button(t("Nadaj uprawnienia: Ułatwienia dostępu…", "Grant permission: Accessibility…")) { Permissions.openAccessibilitySettings() }
         }
         if !Permissions.hasMicrophone {
-            Button("Nadaj uprawnienia: Mikrofon…") { Permissions.openMicrophoneSettings() }
+            Button(t("Nadaj uprawnienia: Mikrofon…", "Grant permission: Microphone…")) { Permissions.openMicrophoneSettings() }
         }
         if !Permissions.hasScreenRecording {
-            Button("Nadaj uprawnienia: Nagrywanie ekranu…") { Permissions.openScreenRecordingSettings() }
+            Button(t("Nadaj uprawnienia: Nagrywanie ekranu…", "Grant permission: Screen Recording…")) { Permissions.openScreenRecordingSettings() }
         }
 
-        Button("Zamknij Paplę") { NSApp.terminate(nil) }
+        Button(t("Zamknij Paplę", "Quit Papla")) { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }

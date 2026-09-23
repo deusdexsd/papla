@@ -178,7 +178,8 @@ final class DictationController {
         Task { @MainActor in
             do {
                 guard await Permissions.requestMicrophone() else {
-                    fail("Dostęp do mikrofonu jest wyłączony. Włącz go w Ustawienia systemowe ▸ Prywatność i bezpieczeństwo ▸ Mikrofon.")
+                    fail(t("Dostęp do mikrofonu jest wyłączony. Włącz go w Ustawienia systemowe ▸ Prywatność i bezpieczeństwo ▸ Mikrofon.",
+                           "Microphone access is off. Turn it on in System Settings ▸ Privacy & Security ▸ Microphone."))
                     return
                 }
 

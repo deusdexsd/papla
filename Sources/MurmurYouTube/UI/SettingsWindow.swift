@@ -35,14 +35,15 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     case dictation, grab, clipboard, colors, timer, appearance
 
     var id: String { rawValue }
+    @MainActor
     var title: String {
         switch self {
-        case .dictation: "Dyktowanie"
-        case .grab: "Chwytanie"
-        case .clipboard: "Schowek"
-        case .colors: "Kolory"
-        case .timer: "Minutnik"
-        case .appearance: "Wygląd"
+        case .dictation: t("Dyktowanie", "Dictation")
+        case .grab: t("Chwytanie", "Grab")
+        case .clipboard: t("Schowek", "Clipboard")
+        case .colors: t("Kolory", "Colors")
+        case .timer: t("Minutnik", "Timer")
+        case .appearance: t("Wygląd", "Appearance")
         }
     }
 }
@@ -118,7 +119,7 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var dictationPanels: some View {
-        panel(label: "Klawisz dyktowania") {
+        panel(label: t("Klawisz dyktowania", "Dictation key")) {
             if let shortcut = settings.customShortcut {
                 HStack(spacing: DS.Space.snug) {
                     DeckWindow {
@@ -126,26 +127,29 @@ struct SettingsContent: View {
                             .padding(.horizontal, DS.Space.base)
                             .padding(.vertical, DS.Space.snug)
                     }
-                    TransportKey(title: "Zmień") { startRecording() }
-                    TransportKey(title: "Wyczyść") {
+                    TransportKey(title: t("Zmień", "Change")) { startRecording() }
+                    TransportKey(title: t("Wyczyść", "Clear")) {
                         settings.customShortcut = nil
                         controller.reloadHotkey()
                     }
                 }
-                note("Własny nagrany skrót. Lista klawiszy poniżej jest nieaktywna, "
-                    + "dopóki go nie wyczyścisz.")
+                note(t("Własny nagrany skrót. Lista klawiszy poniżej jest nieaktywna, "
+                    + "dopóki go nie wyczyścisz.",
+                    "Custom recorded shortcut. The list of keys below is disabled "
+                    + "until you clear it."))
             } else if isRecordingShortcut {
                 HStack(spacing: DS.Space.snug) {
                     DeckWindow {
-                        Text("Naciśnij kombinację…")
+                        Text(t("Naciśnij kombinację…", "Press a combination…"))
                             .font(DS.Font.bodyEmphasis)
                             .foregroundStyle(DS.Color.inkOnDeck)
                             .padding(.horizontal, DS.Space.base)
                             .padding(.vertical, DS.Space.snug)
                     }
-                    TransportKey(title: "Anuluj") { cancelRecording() }
+                    TransportKey(title: t("Anuluj", "Cancel")) { cancelRecording() }
                 }
-                note("Wciśnij dowolną kombinację, np. ⌘⌥[ — złapię ją od razu. Esc anuluje.")
+                note(t("Wciśnij dowolną kombinację, np. ⌘⌥[ — złapię ją od razu. Esc anuluje.",
+                    "Press any combination, e.g. ⌘⌥[ — it's captured instantly. Esc cancels."))
             } else {
                 HStack(spacing: DS.Space.snug) {
                     ForEach(PushToTalkKey.allCases, id: \.self) { key in
@@ -157,20 +161,26 @@ struct SettingsContent: View {
                             toggleTriggerKey(key)
                         }
                     }
-                    TransportKey(title: "Nagraj własny…") { startRecording() }
+                    TransportKey(title: t("Nagraj własny…", "Record custom…")) { startRecording() }
                 }
                 note(settings.triggerKeys.count > 1
-                    ? "Trzymasz naraz wszystkie zaznaczone klawisze w dowolnym miejscu, "
+                    ? t("Trzymasz naraz wszystkie zaznaczone klawisze w dowolnym miejscu, "
                       + "żeby dyktować: \(settings.triggerKeys.sortedDisplay). Albo "
                       + "nagraj dowolną własną kombinację, jeśli żaden z tych trzech Ci "
-                      + "nie pasuje."
-                    : "Przytrzymaj ten klawisz w dowolnym miejscu, żeby dyktować. Zaznacz "
+                      + "nie pasuje.",
+                      "Hold down all the selected keys at once, anywhere, to dictate: "
+                      + "\(settings.triggerKeys.sortedDisplay). Or record your own custom "
+                      + "combination if none of these three suits you.")
+                    : t("Przytrzymaj ten klawisz w dowolnym miejscu, żeby dyktować. Zaznacz "
                       + "więcej niż jeden, żeby wymagać kombinacji trzymanej naraz — albo "
-                      + "nagraj dowolną własną, jeśli żaden z tych trzech Ci nie pasuje.")
+                      + "nagraj dowolną własną, jeśli żaden z tych trzech Ci nie pasuje.",
+                      "Hold this key down anywhere to dictate. Select more than one to "
+                      + "require a combination held at once — or record your own custom "
+                      + "one if none of these three suits you."))
             }
         }
 
-        panel(label: "Sposób wyzwalania") {
+        panel(label: t("Sposób wyzwalania", "Trigger mode")) {
             HStack(spacing: DS.Space.snug) {
                 ForEach(DictationTriggerMode.allCases, id: \.self) { mode in
                     TransportKey(
@@ -185,22 +195,24 @@ struct SettingsContent: View {
             note(settings.triggerMode.note)
         }
 
-        panel(label: "Czyszczenie") {
+        panel(label: t("Czyszczenie", "Cleanup")) {
             Toggle(isOn: $settings.cleanupEnabled) {
-                Silkscreen(text: "Czyść transkrypcje")
+                Silkscreen(text: t("Czyść transkrypcje", "Clean up transcriptions"))
             }
             .toggleStyle(.switch)
-            note("Usuwa wypełniacze, poprawia spacje i interpunkcję. Poprawki ze "
-                + "słownika działają niezależnie od tego ustawienia.")
+            note(t("Usuwa wypełniacze, poprawia spacje i interpunkcję. Poprawki ze "
+                + "słownika działają niezależnie od tego ustawienia.",
+                "Strips filler words, fixes spacing and punctuation. Dictionary "
+                + "corrections apply regardless of this setting."))
         }
 
-        panel(label: "Dyktuj i tłumacz") {
-            ShortcutRow(label: "Skrót", shortcut: $settings.translateShortcut) {
+        panel(label: t("Dyktuj i tłumacz", "Dictate and translate")) {
+            ShortcutRow(label: t("Skrót", "Shortcut"), shortcut: $settings.translateShortcut) {
                 controller.reloadHotkey()
             }
             HStack(spacing: DS.Space.base) {
-                Silkscreen(text: "Na język")
-                Picker("Na język", selection: $settings.translateTargetLanguage) {
+                Silkscreen(text: t("Na język", "To language"))
+                Picker(t("Na język", "To language"), selection: $settings.translateTargetLanguage) {
                     ForEach(TranslateLanguage.allCases, id: \.self) { language in
                         Text(language.displayName).tag(language)
                     }
@@ -211,17 +223,26 @@ struct SettingsContent: View {
             .padding(.top, DS.Space.snug)
             TranslationPrepareRow(target: settings.translateTargetLanguage)
                 .padding(.top, DS.Space.base)
-            note("Naciśnij ten skrót zamiast zwykłego, żeby to, co powiesz, zostało "
+            note(t("Naciśnij ten skrót zamiast zwykłego, żeby to, co powiesz, zostało "
                 + "przetłumaczone i wklejone w wybranym języku. Możesz go też nacisnąć w "
                 + "trakcie zwykłego dyktowania — dogrywa albo zdejmuje tłumaczenie dla tej "
                 + "wypowiedzi, bez przerywania nagrywania; start i stop dalej robi tylko "
                 + "klawisz dyktowania. Orb zmienia kolor, gdy tłumaczenie jest uzbrojone — "
                 + "kolory poniżej w Wygląd ▸ Kolory tłumaczenia. Działa lokalnie na Macu "
                 + "(Apple Translation) — wiersz powyżej pobiera pakiet danej pary języków "
-                + "raz, tutaj, żeby dyktowanie nigdy nie czekało na pobranie w tle.")
+                + "raz, tutaj, żeby dyktowanie nigdy nie czekało na pobranie w tle.",
+                "Press this shortcut instead of the regular one to have what you say "
+                + "translated and pasted in the chosen language. You can also press it "
+                + "mid-dictation — it arms or disarms translation for that utterance "
+                + "without interrupting the recording; only the dictation key still "
+                + "starts and stops it. The orb changes color while translation is "
+                + "armed — see the colors below under Appearance ▸ Translation Colors. "
+                + "It runs locally on your Mac (Apple Translation) — the row above "
+                + "downloads that language pair's package once, here, so dictation "
+                + "never has to wait on a background download."))
         }
 
-        panel(label: "Emoji") {
+        panel(label: t("Emoji", "Emoji")) {
             HStack(spacing: DS.Space.snug) {
                 ForEach(0...5, id: \.self) { level in
                     TransportKey(
@@ -234,25 +255,30 @@ struct SettingsContent: View {
                 }
             }
             note(settings.emojiIntensity == 0
-                ? "Wyłączone — transkrypcja zostaje dokładnie taka, jak ją wypowiedziałeś."
-                : "Do \(settings.emojiIntensity) "
-                  + polishPlural(settings.emojiIntensity, one: "emoji", few: "emoji", many: "emoji")
-                  + " na wypowiedź, dobierane po konkretnych słowach ze stałego słownika "
-                  + "poniżej — nigdy przez model językowy.")
+                ? t("Wyłączone — transkrypcja zostaje dokładnie taka, jak ją wypowiedziałeś.",
+                    "Off — the transcription stays exactly as you said it.")
+                : t("Do ", "Up to ") + "\(settings.emojiIntensity) "
+                  + t(polishPlural(settings.emojiIntensity, one: "emoji", few: "emoji", many: "emoji"),
+                      englishPlural(settings.emojiIntensity, one: "emoji", other: "emoji"))
+                  + t(" na wypowiedź, dobierane po konkretnych słowach ze stałego słownika "
+                      + "poniżej — nigdy przez model językowy.",
+                      " per utterance, picked by specific words from the fixed dictionary "
+                      + "below — never by a language model."))
 
             if settings.emojiIntensity > 0 {
                 Toggle(isOn: $settings.emojiAtSentenceEnd) {
-                    Silkscreen(text: "Emoji na końcu zdania, nie zaraz po słowie")
+                    Silkscreen(text: t("Emoji na końcu zdania, nie zaraz po słowie", "Emoji at the end of the sentence, not right after the word"))
                 }
                 .toggleStyle(.checkbox)
                 .padding(.top, DS.Space.base)
 
                 Toggle(isOn: $settings.emojiSuppressPeriod) {
-                    Silkscreen(text: "Nie stawiaj kropki obok emoji")
+                    Silkscreen(text: t("Nie stawiaj kropki obok emoji", "Don't put a period next to emoji"))
                 }
                 .toggleStyle(.checkbox)
                 .padding(.top, DS.Space.snug)
-                note("Emoji zamiast kropki, nie kropka i emoji obok siebie.")
+                note(t("Emoji zamiast kropki, nie kropka i emoji obok siebie.",
+                    "Emoji instead of a period, not a period and emoji side by side."))
 
                 emojiFilterGrid
                     .padding(.top, DS.Space.base)
@@ -261,15 +287,20 @@ struct SettingsContent: View {
                     .padding(.top, DS.Space.base)
 
                 Toggle(isOn: $settings.emojiSofteningEnabled) {
-                    Silkscreen(text: "Zmiękczaj korekty i zastrzeżenia (Twój styl)")
+                    Silkscreen(text: t("Zmiękczaj korekty i zastrzeżenia (Twój styl)", "Soften corrections and caveats (your style)"))
                 }
                 .toggleStyle(.checkbox)
                 .padding(.top, DS.Space.base)
-                note("Zdanie z przeczeniem, zastrzeżeniem albo przyznaniem się do czegoś "
+                note(t("Zdanie z przeczeniem, zastrzeżeniem albo przyznaniem się do czegoś "
                     + "(\"to nie jest…\", \"po Twojej stronie…\", \"fajniej jest…\") dostaje "
                     + "jedno emoji na końcu, tak jak sam to robisz w wiadomościach. To rozpoznawanie "
                     + "tonu, nie tematu — więc bywa mniej trafne niż słownik powyżej; wyłącz "
-                    + "pojedyncze wyzwalacze poniżej, jeśli któryś strzela za często.")
+                    + "pojedyncze wyzwalacze poniżej, jeśli któryś strzela za często.",
+                    "A sentence with a negation, a caveat, or an admission "
+                    + "(\"that's not…\", \"on your end…\", \"it's nicer to…\") gets "
+                    + "a single emoji at the end, the way you already do it in messages. This is "
+                    + "tone recognition, not topic recognition — so it's less accurate than the "
+                    + "dictionary above; turn off individual triggers below if one fires too often."))
 
                 if settings.emojiSofteningEnabled {
                     softeningFilterGrid
@@ -313,7 +344,7 @@ struct SettingsContent: View {
 
     private var customEmojiEditor: some View {
         VStack(alignment: .leading, spacing: DS.Space.tight) {
-            Silkscreen(text: "Własne słowa-klucze")
+            Silkscreen(text: t("Własne słowa-klucze", "Custom keywords"))
                 .font(DS.Font.label)
                 .foregroundStyle(DS.Color.inkSecondary)
 
@@ -322,7 +353,7 @@ struct SettingsContent: View {
                     Text("\(entry.emoji) \(entry.phrase)")
                         .font(DS.Font.body)
                     if entry.placement == .sentenceEnd {
-                        Text("na końcu zdania")
+                        Text(t("na końcu zdania", "at end of sentence"))
                             .font(DS.Font.caption)
                             .foregroundStyle(DS.Color.inkSecondary)
                     }
@@ -338,7 +369,7 @@ struct SettingsContent: View {
             }
 
             HStack(spacing: DS.Space.snug) {
-                TextField("słowo lub fraza", text: $newEmojiPhrase)
+                TextField(t("słowo lub fraza", "word or phrase"), text: $newEmojiPhrase)
                     .textFieldStyle(.plain)
                     .padding(.horizontal, DS.Space.snug)
                     .padding(.vertical, 5)
@@ -349,19 +380,21 @@ struct SettingsContent: View {
                     .multilineTextAlignment(.center)
                     .padding(.vertical, 5)
                     .background(DS.Color.well, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-                TransportKey(title: "Dodaj") { addCustomEmoji() }
+                TransportKey(title: t("Dodaj", "Add")) { addCustomEmoji() }
                     .disabled(newEmojiPhrase.trimmingCharacters(in: .whitespaces).isEmpty || newEmojiGlyph.isEmpty)
             }
             .padding(.top, DS.Space.tight)
 
             Toggle(isOn: $newEmojiAtSentenceEnd) {
-                Silkscreen(text: "Ta fraza na końcu zdania, nie zaraz po niej")
+                Silkscreen(text: t("Ta fraza na końcu zdania, nie zaraz po niej", "This phrase at the end of the sentence, not right after it"))
             }
             .toggleStyle(.checkbox)
             .padding(.top, DS.Space.hair)
 
-            note("Sprawdzane przed stałym słownikiem, więc możesz nadpisać jego emoji "
-                + "podając to samo słowo.")
+            note(t("Sprawdzane przed stałym słownikiem, więc możesz nadpisać jego emoji "
+                + "podając to samo słowo.",
+                "Checked before the fixed dictionary, so you can override its emoji "
+                + "by using the same word."))
         }
     }
 
@@ -381,7 +414,7 @@ struct SettingsContent: View {
 
     private var emojiFilterGrid: some View {
         VStack(alignment: .leading, spacing: DS.Space.tight) {
-            Silkscreen(text: "Słowa-klucze")
+            Silkscreen(text: t("Słowa-klucze", "Keywords"))
                 .font(DS.Font.label)
                 .foregroundStyle(DS.Color.inkSecondary)
             LazyVGrid(
@@ -420,19 +453,20 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var grabPanels: some View {
-        panel(label: "Skrót do chwytania") {
+        panel(label: t("Skrót do chwytania", "Grab shortcut")) {
             if isRecordingGrabShortcut {
                 HStack(spacing: DS.Space.snug) {
                     DeckWindow {
-                        Text("Naciśnij kombinację…")
+                        Text(t("Naciśnij kombinację…", "Press a combination…"))
                             .font(DS.Font.bodyEmphasis)
                             .foregroundStyle(DS.Color.inkOnDeck)
                             .padding(.horizontal, DS.Space.base)
                             .padding(.vertical, DS.Space.snug)
                     }
-                    TransportKey(title: "Anuluj") { cancelGrabRecording() }
+                    TransportKey(title: t("Anuluj", "Cancel")) { cancelGrabRecording() }
                 }
-                note("Wciśnij dowolną kombinację, np. ⌃⌥⌘4 — złapię ją od razu. Esc anuluje.")
+                note(t("Wciśnij dowolną kombinację, np. ⌃⌥⌘4 — złapię ją od razu. Esc anuluje.",
+                    "Press any combination, e.g. ⌃⌥⌘4 — it's captured instantly. Esc cancels."))
             } else {
                 HStack(spacing: DS.Space.snug) {
                     DeckWindow {
@@ -440,21 +474,23 @@ struct SettingsContent: View {
                             .padding(.horizontal, DS.Space.base)
                             .padding(.vertical, DS.Space.snug)
                     }
-                    TransportKey(title: "Zmień") { startGrabRecording() }
+                    TransportKey(title: t("Zmień", "Change")) { startGrabRecording() }
                 }
-                note("Osobny od klawisza dyktowania — naciśnij go w dowolnym miejscu, "
-                    + "żeby zaznaczyć obszar ekranu do rozpoznania.")
+                note(t("Osobny od klawisza dyktowania — naciśnij go w dowolnym miejscu, "
+                    + "żeby zaznaczyć obszar ekranu do rozpoznania.",
+                    "Separate from the dictation key — press it anywhere to select "
+                    + "a screen area for recognition."))
             }
         }
 
-        panel(label: "Języki rozpoznawania") {
+        panel(label: t("Języki rozpoznawania", "Recognition languages")) {
             VStack(alignment: .leading, spacing: DS.Space.snug) {
-                languageRow(label: "Główny", selection: Binding(
+                languageRow(label: t("Główny", "Primary"), selection: Binding(
                     get: { settings.grabPrimaryLanguage },
                     set: { settings.grabPrimaryLanguage = $0 }
                 ))
                 languageRow(
-                    label: "Dodatkowy",
+                    label: t("Dodatkowy", "Secondary"),
                     selection: Binding(
                         get: { settings.grabSecondaryLanguage ?? Self.noneLanguage },
                         set: { settings.grabSecondaryLanguage = $0 == Self.noneLanguage ? nil : $0 }
@@ -462,59 +498,73 @@ struct SettingsContent: View {
                     includeNone: true
                 )
             }
-            note("Główny język zawsze wygrywa — to on naprawia polskie ogonki. Dodatkowy "
-                + "pomaga, gdy w zaznaczeniu miesza się polski z angielskim.")
+            note(t("Główny język zawsze wygrywa — to on naprawia polskie ogonki. Dodatkowy "
+                + "pomaga, gdy w zaznaczeniu miesza się polski z angielskim.",
+                "The primary language always wins — it's the one that fixes Polish "
+                + "diacritics. The secondary one helps when the selection mixes Polish "
+                + "and English."))
         }
 
-        panel(label: "Dokładność rozpoznawania") {
+        panel(label: t("Dokładność rozpoznawania", "Recognition accuracy")) {
             HStack(spacing: DS.Space.snug) {
                 TransportKey(
-                    title: "Dokładna",
+                    title: t("Dokładna", "Accurate"),
                     isEngaged: settings.grabAccurateRecognition,
                     engagedColor: Brand.accent
                 ) { settings.grabAccurateRecognition = true }
                 TransportKey(
-                    title: "Szybka",
+                    title: t("Szybka", "Fast"),
                     isEngaged: !settings.grabAccurateRecognition,
                     engagedColor: Brand.accent
                 ) { settings.grabAccurateRecognition = false }
             }
             note(settings.grabAccurateRecognition
-                ? "Wolniejsza o ułamek sekundy, ale to tryb szybki najczęściej gubi ogonki."
-                : "Szybszy przebieg, gorzej radzi sobie ze znakami diakrytycznymi.")
+                ? t("Wolniejsza o ułamek sekundy, ale to tryb szybki najczęściej gubi ogonki.",
+                    "A fraction of a second slower, but the fast mode is the one that "
+                    + "usually loses diacritics.")
+                : t("Szybszy przebieg, gorzej radzi sobie ze znakami diakrytycznymi.",
+                    "A faster pass, but worse at handling diacritical marks."))
         }
 
-        panel(label: "Tekst chwytania") {
+        panel(label: t("Tekst chwytania", "Grabbed text")) {
             Toggle(isOn: $settings.grabJoinHyphenatedLines) {
-                Silkscreen(text: "Łącz wyrazy dzielone myślnikiem na końcu wiersza")
+                Silkscreen(text: t("Łącz wyrazy dzielone myślnikiem na końcu wiersza", "Join words hyphenated at the end of a line"))
             }
             .toggleStyle(.switch)
 
             Toggle(isOn: $settings.grabStraightenDashes) {
-                Silkscreen(text: "Zamień długi myślnik „—” na zwykły „-”")
+                Silkscreen(text: t("Zamień długi myślnik „—” na zwykły „-”", "Replace the em dash “—” with a plain hyphen “-”"))
             }
             .toggleStyle(.switch)
             .padding(.top, DS.Space.snug)
 
             Toggle(isOn: $settings.grabAutoPaste) {
-                Silkscreen(text: "Wklejaj automatycznie w polu, które ma fokus")
+                Silkscreen(text: t("Wklejaj automatycznie w polu, które ma fokus", "Paste automatically into the focused field"))
             }
             .toggleStyle(.switch)
             .padding(.top, DS.Space.snug)
-            note("Domyślnie tekst tylko ląduje w schowku — wklejasz sam, gdzie chcesz.")
+            note(t("Domyślnie tekst tylko ląduje w schowku — wklejasz sam, gdzie chcesz.",
+                "By default the text only lands in the clipboard — you paste it yourself, "
+                + "wherever you want."))
         }
 
-        panel(label: "Pole zaznaczenia") {
+        panel(label: t("Pole zaznaczenia", "Selection box")) {
             Toggle(isOn: $settings.grabAnimatedSelectionGlow) {
-                Silkscreen(text: "Ruchoma poświata w kolorach Papli")
+                Silkscreen(text: t("Ruchoma poświata w kolorach Papli", "Animated glow in Papla's colors"))
             }
             .toggleStyle(.switch)
             note(settings.grabAnimatedSelectionGlow
-                ? "Obwódka zaokrąglonego pola przelewa się między trzema kolorami z "
+                ? t("Obwódka zaokrąglonego pola przelewa się między trzema kolorami z "
                   + "Ustawień ▸ Wygląd, dopóki trwa zaznaczanie. Wyłącz, jeśli wolisz "
-                  + "prostą, statyczną ramkę bez dodatkowego odświeżania w tle."
-                : "Prosta, statyczna ramka — zero dodatkowego odświeżania podczas "
-                  + "przeciągania zaznaczenia.")
+                  + "prostą, statyczną ramkę bez dodatkowego odświeżania w tle.",
+                  "The rounded box's outline flows between the three colors from "
+                  + "Settings ▸ Appearance for as long as the selection lasts. Turn "
+                  + "this off if you'd rather have a simple, static border with no "
+                  + "extra background refresh.")
+                : t("Prosta, statyczna ramka — zero dodatkowego odświeżania podczas "
+                  + "przeciągania zaznaczenia.",
+                  "A simple, static border — zero extra refreshing while dragging "
+                  + "the selection."))
         }
     }
 
@@ -522,16 +572,19 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var clipboardPanels: some View {
-        panel(label: "Skrót") {
-            ShortcutRow(label: "Otwórz Paplę", shortcut: $settings.clipboardShortcut) {
+        panel(label: t("Skrót", "Shortcut")) {
+            ShortcutRow(label: t("Otwórz Paplę", "Open Papla"), shortcut: $settings.clipboardShortcut) {
                 clipboardController.reloadHotkey()
             }
-            note("Wywołuje wyszukiwarkę Papli — historię wszystkiego, co skopiowałeś, z "
+            note(t("Wywołuje wyszukiwarkę Papli — historię wszystkiego, co skopiowałeś, z "
                 + "kategoriami. Zębatka w rogu okna otwiera ustawienia. Osobny od dyktowania, "
-                + "chwytania i próbnika kolorów.")
+                + "chwytania i próbnika kolorów.",
+                "Opens Papla's search window — the history of everything you've "
+                + "copied, organized into categories. The gear in the window's corner "
+                + "opens Settings. Separate from dictation, grab, and the color picker."))
         }
 
-        panel(label: "Historia") {
+        panel(label: t("Historia", "History")) {
             Toggle(isOn: Binding(
                 get: { settings.clipboardEnabled },
                 set: {
@@ -539,17 +592,21 @@ struct SettingsContent: View {
                     clipboardController.updateMonitoring()
                 }
             )) {
-                Silkscreen(text: "Zapamiętuj skopiowane rzeczy")
+                Silkscreen(text: t("Zapamiętuj skopiowane rzeczy", "Remember copied items"))
             }
             .toggleStyle(.switch)
-            note("Wszystko, co skopiujesz przez ⌘C, trafia do historii: tekst, linki, obrazy, "
+            note(t("Wszystko, co skopiujesz przez ⌘C, trafia do historii: tekst, linki, obrazy, "
                 + "kolory, kod i pliki. Samo kopiowanie działa normalnie — nic w nim nie "
                 + "zmieniam. Treści z menedżerów haseł (1Password, Bitwarden, Hasła…) nigdy "
-                + "nie są zapisywane.")
+                + "nie są zapisywane.",
+                "Everything you copy with ⌘C lands in the history: text, links, images, "
+                + "colors, code, and files. Copying itself works normally — I don't change "
+                + "anything about it. Content from password managers (1Password, Bitwarden, "
+                + "Passwords…) is never saved."))
 
             HStack(spacing: DS.Space.base) {
-                Silkscreen(text: "Limit historii")
-                Picker("Limit", selection: $settings.clipboardMaxItems) {
+                Silkscreen(text: t("Limit historii", "History limit"))
+                Picker(t("Limit", "Limit"), selection: $settings.clipboardMaxItems) {
                     ForEach([100, 250, 500, 1000, 2000], id: \.self) { count in
                         Text("\(count)").tag(count)
                     }
@@ -561,29 +618,30 @@ struct SettingsContent: View {
             .padding(.top, DS.Space.base)
 
             Toggle(isOn: $settings.clipboardKeepImages) {
-                Silkscreen(text: "Zapamiętuj też obrazy")
+                Silkscreen(text: t("Zapamiętuj też obrazy", "Remember images too"))
             }
             .toggleStyle(.switch)
             .padding(.top, DS.Space.snug)
-            note("Obrazy zajmują najwięcej miejsca na dysku — wyłącz, jeśli wolisz tylko tekst.")
+            note(t("Obrazy zajmują najwięcej miejsca na dysku — wyłącz, jeśli wolisz tylko tekst.",
+                "Images take up the most disk space — turn this off if you only want text."))
 
-            TransportKey(title: "Wyczyść historię", systemImage: "trash") {
+            TransportKey(title: t("Wyczyść historię", "Clear history"), systemImage: "trash") {
                 isConfirmingClipboardClear = true
             }
             .padding(.top, DS.Space.base)
             .confirmationDialog(
-                "Usunąć całą historię schowka?",
+                t("Usunąć całą historię schowka?", "Delete the entire clipboard history?"),
                 isPresented: $isConfirmingClipboardClear,
                 titleVisibility: .visible
             ) {
-                Button("Usuń wszystko", role: .destructive) { ClipboardStore.shared.clear() }
-                Button("Anuluj", role: .cancel) {}
+                Button(t("Usuń wszystko", "Delete all"), role: .destructive) { ClipboardStore.shared.clear() }
+                Button(t("Anuluj", "Cancel"), role: .cancel) {}
             } message: {
-                Text("Tej operacji nie można cofnąć.")
+                Text(t("Tej operacji nie można cofnąć.", "This action can't be undone."))
             }
         }
 
-        panel(label: "Widoczne w wyszukiwarce") {
+        panel(label: t("Widoczne w wyszukiwarce", "Visible in search")) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 6)], alignment: .leading, spacing: 6) {
                 ForEach(ClipboardKind.allCases, id: \.self) { kind in
                     Toggle(isOn: kindVisibilityBinding(kind)) {
@@ -592,11 +650,13 @@ struct SettingsContent: View {
                     .toggleStyle(.switch)
                 }
             }
-            note("Wyłączenie kategorii tylko chowa ją z wyszukiwarki — jej właściwa historia "
-                + "(schowek, kolory, transkrypcje…) zostaje nietknięta.")
+            note(t("Wyłączenie kategorii tylko chowa ją z wyszukiwarki — jej właściwa historia "
+                + "(schowek, kolory, transkrypcje…) zostaje nietknięta.",
+                "Turning off a category only hides it from search — its actual history "
+                + "(clipboard, colors, transcriptions…) stays untouched."))
         }
 
-        panel(label: "Zrzuty ekranu") {
+        panel(label: t("Zrzuty ekranu", "Screenshots")) {
             Toggle(isOn: Binding(
                 get: { settings.screenshotsEnabled },
                 set: {
@@ -604,32 +664,41 @@ struct SettingsContent: View {
                     ScreenshotIndex.shared.refresh()
                 }
             )) {
-                Silkscreen(text: "Pokazuj zrzuty i nagrania ekranu")
+                Silkscreen(text: t("Pokazuj zrzuty i nagrania ekranu", "Show screenshots and screen recordings"))
             }
             .toggleStyle(.switch)
-            note("Zrzuty (⌘⇧3, ⌘⇧4) i nagrania ekranu (⌘⇧5) zrobione wbudowaną funkcją macOS "
+            note(t("Zrzuty (⌘⇧3, ⌘⇧4) i nagrania ekranu (⌘⇧5) zrobione wbudowaną funkcją macOS "
                 + "pojawiają się w wyszukiwarce w kategorii Zrzuty, z miniaturami. Papla nie "
-                + "robi ich sama — tylko wyszukuje pliki w: "
+                + "robi ich sama — tylko wyszukuje pliki w: ",
+                "Screenshots (⌘⇧3, ⌘⇧4) and screen recordings (⌘⇧5) taken with macOS's "
+                + "built-in tool show up in search under the Screenshots category, with "
+                + "thumbnails. Papla doesn't take them itself — it only looks for files in: ")
                 + ScreenshotIndex.captureDirectories()
                     .map { $0.path.replacingOccurrences(of: NSHomeDirectory(), with: "~") }
-                    .joined(separator: " oraz ")
-                + ". Przy pierwszym użyciu macOS zapyta o dostęp do folderu Pulpit.")
+                    .joined(separator: t(" oraz ", " and "))
+                + t(". Przy pierwszym użyciu macOS zapyta o dostęp do folderu Pulpit.",
+                    ". The first time, macOS will ask for access to your Desktop folder."))
         }
 
-        panel(label: "Tłumaczenie w wyszukiwarce") {
+        panel(label: t("Tłumaczenie w wyszukiwarce", "Translation in search")) {
             Toggle(isOn: $settings.clipboardTranslateAddsToHistory) {
-                Silkscreen(text: "Dodaj tłumaczenie do historii")
+                Silkscreen(text: t("Dodaj tłumaczenie do historii", "Add translation to history"))
             }
             .toggleStyle(.switch)
             note(settings.clipboardTranslateAddsToHistory
-                ? "„Tłumacz i kopiuj” z menu kontekstowego dokłada tłumaczenie jako nowy "
+                ? t("„Tłumacz i kopiuj” z menu kontekstowego dokłada tłumaczenie jako nowy "
                   + "wpis nad oryginałem — widzisz je od razu w liście, panel nie zamyka "
-                  + "się w trakcie tłumaczenia."
-                : "„Tłumacz i kopiuj” tylko podmienia zawartość schowka — bez dopisywania "
-                  + "niczego do historii.")
+                  + "się w trakcie tłumaczenia.",
+                  "“Translate and Copy” from the context menu adds the translation as "
+                  + "a new entry above the original — you see it right away in the list, "
+                  + "and the panel doesn't close while translating.")
+                : t("„Tłumacz i kopiuj” tylko podmienia zawartość schowka — bez dopisywania "
+                  + "niczego do historii.",
+                  "“Translate and Copy” only swaps the clipboard's contents — without "
+                  + "adding anything to the history."))
         }
 
-        panel(label: "Wygląd wyszukiwarki") {
+        panel(label: t("Wygląd wyszukiwarki", "Search window appearance")) {
             HStack(spacing: DS.Space.snug) {
                 ForEach(PanelAppearance.allCases, id: \.self) { appearance in
                     TransportKey(
@@ -642,11 +711,13 @@ struct SettingsContent: View {
                     }
                 }
             }
-            note("Okno wyszukiwarki używa szkła i kolorów systemowych, jak natywna aplikacja "
-                + "macOS. „Systemowy” podąża za jasnym/ciemnym trybem Maca.")
+            note(t("Okno wyszukiwarki używa szkła i kolorów systemowych, jak natywna aplikacja "
+                + "macOS. „Systemowy” podąża za jasnym/ciemnym trybem Maca.",
+                "The search window uses glass and system colors, like a native macOS app. "
+                + "“System” follows your Mac's light/dark mode."))
         }
 
-        panel(label: "Wklejanie") {
+        panel(label: t("Wklejanie", "Pasting")) {
             Toggle(isOn: Binding(
                 get: { settings.pasteStraightenDashes },
                 set: {
@@ -654,13 +725,17 @@ struct SettingsContent: View {
                     clipboardController.updatePasteInterceptor()
                 }
             )) {
-                Silkscreen(text: "Zamień długi myślnik „—” na zwykły „-”")
+                Silkscreen(text: t("Zamień długi myślnik „—” na zwykły „-”", "Replace the em dash “—” with a plain hyphen “-”"))
             }
             .toggleStyle(.switch)
-            note("Zmienia się dopiero w chwili wklejania (⌘V w dowolnej aplikacji albo wklejenie "
+            note(t("Zmienia się dopiero w chwili wklejania (⌘V w dowolnej aplikacji albo wklejenie "
                 + "z historii Papli) — zwykłe kopiowanie zostaje nietknięte, a po wklejeniu "
                 + "schowek wraca do oryginału. Formatowanie tekstu zostaje. Wymaga uprawnienia "
-                + "Dostępność, tak jak skróty.")
+                + "Dostępność, tak jak skróty.",
+                "Only changes at the moment of pasting (⌘V in any app, or pasting from "
+                + "Papla's history) — plain copying stays untouched, and the clipboard "
+                + "reverts to the original right after pasting. Text formatting is "
+                + "preserved. Requires the Accessibility permission, same as the shortcuts."))
         }
     }
 
@@ -668,15 +743,17 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var colorPanels: some View {
-        panel(label: "Skrót") {
-            ShortcutRow(label: "Próbnik kolorów", shortcut: $settings.colorPickerShortcut) {
+        panel(label: t("Skrót", "Shortcut")) {
+            ShortcutRow(label: t("Próbnik kolorów", "Color picker"), shortcut: $settings.colorPickerShortcut) {
                 colorController.reloadHotkey()
             }
-            note("Otwiera systemową pipetę — kliknij dowolny piksel na ekranie. Osobny od "
-                + "pozostałych skrótów.")
+            note(t("Otwiera systemową pipetę — kliknij dowolny piksel na ekranie. Osobny od "
+                + "pozostałych skrótów.",
+                "Opens the system eyedropper — click any pixel on screen. Separate from "
+                + "the other shortcuts."))
         }
 
-        panel(label: "Zapis koloru") {
+        panel(label: t("Zapis koloru", "Color format")) {
             HStack(spacing: DS.Space.snug) {
                 ForEach(ColorFormat.allCases, id: \.self) { format in
                     TransportKey(
@@ -692,14 +769,17 @@ struct SettingsContent: View {
                         .padding(.vertical, DS.Space.snug)
                 }
             }
-            note("W tym zapisie kolor ląduje w schowku zaraz po wybraniu. Z historii w sekcji "
-                + "Kolory skopiujesz go w dowolnym z trzech zapisów.")
+            note(t("W tym zapisie kolor ląduje w schowku zaraz po wybraniu. Z historii w sekcji "
+                + "Kolory skopiujesz go w dowolnym z trzech zapisów.",
+                "The color lands in the clipboard in this format right after picking it. "
+                + "From the history in the Colors section you can copy it in any of the "
+                + "three formats."))
         }
 
-        panel(label: "Historia kolorów") {
+        panel(label: t("Historia kolorów", "Color history")) {
             HStack(spacing: DS.Space.base) {
-                Silkscreen(text: "Limit historii")
-                Picker("Limit", selection: $settings.colorMaxItems) {
+                Silkscreen(text: t("Limit historii", "History limit"))
+                Picker(t("Limit", "Limit"), selection: $settings.colorMaxItems) {
                     ForEach([50, 100, 200, 500], id: \.self) { count in
                         Text("\(count)").tag(count)
                     }
@@ -708,19 +788,19 @@ struct SettingsContent: View {
                 .pickerStyle(.menu)
                 .onChange(of: settings.colorMaxItems) { ColorStore.shared.trim() }
             }
-            TransportKey(title: "Wyczyść historię kolorów", systemImage: "trash") {
+            TransportKey(title: t("Wyczyść historię kolorów", "Clear color history"), systemImage: "trash") {
                 isConfirmingColorClear = true
             }
             .padding(.top, DS.Space.snug)
             .confirmationDialog(
-                "Usunąć całą historię kolorów?",
+                t("Usunąć całą historię kolorów?", "Delete the entire color history?"),
                 isPresented: $isConfirmingColorClear,
                 titleVisibility: .visible
             ) {
-                Button("Usuń wszystko", role: .destructive) { ColorStore.shared.clear() }
-                Button("Anuluj", role: .cancel) {}
+                Button(t("Usuń wszystko", "Delete all"), role: .destructive) { ColorStore.shared.clear() }
+                Button(t("Anuluj", "Cancel"), role: .cancel) {}
             } message: {
-                Text("Tej operacji nie można cofnąć.")
+                Text(t("Tej operacji nie można cofnąć.", "This action can't be undone."))
             }
         }
     }
@@ -729,36 +809,47 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var timerPanels: some View {
-        panel(label: "Skrót") {
-            ShortcutRow(label: "Otwórz", shortcut: $settings.timerShortcut) {
+        panel(label: t("Skrót", "Shortcut")) {
+            ShortcutRow(label: t("Otwórz", "Open"), shortcut: $settings.timerShortcut) {
                 timerController.reloadHotkey()
             }
-            note("Otwiera małe okienko: „za” (odliczanie, godziny/minuty/sekundy) albo „o” "
+            note(t("Otwiera małe okienko: „za” (odliczanie, godziny/minuty/sekundy) albo „o” "
                 + "(konkretna godzina, ewentualnie inny dzień — domyślnie dziś). To samo okienko "
                 + "otwiera zegar przy polu wyszukiwania w Papli. Aktywne minutniki i budziki "
-                + "widać na liście pod polem, z możliwością anulowania.")
+                + "widać na liście pod polem, z możliwością anulowania.",
+                "Opens a small window: “in” (a countdown, hours/minutes/seconds) or "
+                + "“at” (a specific time, optionally a different day — today by default). "
+                + "The same window is opened by the clock icon next to Papla's search "
+                + "field. Active timers and alarms show up in a list under the field, "
+                + "and can be canceled."))
         }
 
-        panel(label: "Dźwięk alarmu") {
-            Picker("Dźwięk", selection: $settings.alarmSound) {
+        panel(label: t("Dźwięk alarmu", "Alarm sound")) {
+            Picker(t("Dźwięk", "Sound"), selection: $settings.alarmSound) {
                 ForEach(SystemSound.allCases, id: \.self) { sound in
                     Text(sound.displayName).tag(sound)
                 }
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            note("Gdy minutnik lub budzik dojdzie do zera, dzwoni bez przerwy, na okienku z "
+            note(t("Gdy minutnik lub budzik dojdzie do zera, dzwoni bez przerwy, na okienku z "
                 + "przyciskiem „Wyłącz”, dopóki go nie potwierdzisz — nie ścisza go przełącznik "
                 + "dźwięku dyktowania, bo cichy alarm mija się z celem. Do tego zawsze wyskakuje "
-                + "też systemowe powiadomienie.")
+                + "też systemowe powiadomienie.",
+                "When a timer or alarm reaches zero, it rings continuously, with a window "
+                + "and a “Dismiss” button, until you confirm it — the dictation sound "
+                + "toggle doesn't mute it, since a silent alarm would defeat the purpose. "
+                + "A system notification always pops up alongside it, too."))
         }
 
-        panel(label: "Pasek menu") {
+        panel(label: t("Pasek menu", "Menu bar")) {
             Toggle(isOn: $settings.showTimerInMenuBar) {
-                Silkscreen(text: "Pokazuj odliczanie obok ikony Papli")
+                Silkscreen(text: t("Pokazuj odliczanie obok ikony Papli", "Show the countdown next to Papla's icon"))
             }
-            note("Widać najbliższy aktywny minutnik cały czas, nie tylko po otwarciu "
-                + "wyszukiwarki.")
+            note(t("Widać najbliższy aktywny minutnik cały czas, nie tylko po otwarciu "
+                + "wyszukiwarki.",
+                "The nearest active timer stays visible at all times, not just when the "
+                + "search window is open."))
         }
     }
 
@@ -766,7 +857,7 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private var appearancePanels: some View {
-        panel(label: "Uruchamianie") {
+        panel(label: t("Uruchamianie", "Startup")) {
             Toggle(isOn: Binding(
                 get: { launchAtLogin },
                 set: {
@@ -774,15 +865,18 @@ struct SettingsContent: View {
                     launchAtLogin = LaunchAtLogin.isEnabled
                 }
             )) {
-                Silkscreen(text: "Uruchamiaj Paplę przy logowaniu")
+                Silkscreen(text: t("Uruchamiaj Paplę przy logowaniu", "Launch Papla at login"))
             }
             .toggleStyle(.switch)
-            note("Papla startuje w tle razem z Twoim kontem — ikona w pasku menu, bez okna. "
+            note(t("Papla startuje w tle razem z Twoim kontem — ikona w pasku menu, bez okna. "
                 + "Możesz to też wyłączyć w Ustawieniach systemowych ▸ Ogólne ▸ Rzeczy "
-                + "otwierane podczas logowania.")
+                + "otwierane podczas logowania.",
+                "Papla starts in the background along with your account — a menu bar "
+                + "icon, no window. You can also turn this off in System Settings ▸ "
+                + "General ▸ Login Items."))
         }
 
-        panel(label: "Pozycja wskaźnika") {
+        panel(label: t("Pozycja wskaźnika", "Indicator position")) {
             VStack(alignment: .leading, spacing: DS.Space.base) {
                 HStack(spacing: DS.Space.snug) {
                     ForEach(HUDPosition.allCases, id: \.self) { position in
@@ -797,7 +891,7 @@ struct SettingsContent: View {
                     }
                 }
                 HStack(spacing: DS.Space.base) {
-                    Silkscreen(text: "Margines")
+                    Silkscreen(text: t("Margines", "Margin"))
                     Slider(value: Binding(
                         get: { settings.hudMargin },
                         set: {
@@ -809,9 +903,12 @@ struct SettingsContent: View {
                         .foregroundStyle(DS.Color.inkSecondary)
                         .frame(width: 42, alignment: .trailing)
                 }
-                note("Gdzie na ekranie pojawia się orb — dla dyktowania i dla chwytania "
+                note(t("Gdzie na ekranie pojawia się orb — dla dyktowania i dla chwytania "
                     + "tekstu naraz — i jak daleko od krawędzi. Widoczne na żywo, dopóki "
-                    + "ten panel jest otwarty.")
+                    + "ten panel jest otwarty.",
+                    "Where the orb appears on screen — for dictation and for grabbing "
+                    + "text alike — and how far from the edge. Visible live for as long "
+                    + "as this panel is open."))
             }
         }
         .onAppear { HUDPreview.show() }
@@ -831,80 +928,92 @@ struct SettingsContent: View {
                     + "system language, and of what language you dictate or translate into."))
         }
 
-        panel(label: "Wizualizacja") {
-            Picker("Kształt", selection: $settings.hudVisualizerStyle) {
+        panel(label: t("Wizualizacja", "Visualization")) {
+            Picker(t("Kształt", "Shape"), selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in
                     Text(style.displayName).tag(style)
                 }
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            note("Kula — miękka, świetlista kula w duchu Siri. Fala — rząd pasków reagujących "
+            note(t("Kula — miękka, świetlista kula w duchu Siri. Fala — rząd pasków reagujących "
                 + "na poziom głosu, jak wizualizacja poleceń głosowych w Tesli. Dotyczy HUD-u "
-                + "dyktowania, miernika w oknie głównym i HUD-u chwytania tekstu naraz.")
+                + "dyktowania, miernika w oknie głównym i HUD-u chwytania tekstu naraz.",
+                "Orb — a soft, glowing sphere in the spirit of Siri. Wave — a row of bars "
+                + "reacting to your voice level, like Tesla's voice command visualizer. "
+                + "Applies to the dictation HUD, the meter in the main window, and the "
+                + "grab HUD alike."))
         }
 
-        panel(label: "Rozpiętość nasłuchu") {
+        panel(label: t("Rozpiętość nasłuchu", "Listening range")) {
             HStack(spacing: DS.Space.base) {
-                Silkscreen(text: "Mało")
+                Silkscreen(text: t("Mało", "Little"))
                 Slider(value: $settings.orbSpread, in: 0.2...2.0, step: 0.1)
-                Silkscreen(text: "Dużo")
+                Silkscreen(text: t("Dużo", "A lot"))
             }
-            note("Jak mocno orb się rozwidla, gdy mówisz głośniej albo appka pracuje. "
+            note(t("Jak mocno orb się rozwidla, gdy mówisz głośniej albo appka pracuje. "
                 + "Nisko = zwarta, spokojna kula nawet przy krzyku; wysoko = rozjeżdża "
-                + "się szeroko nawet na szepcie.")
+                + "się szeroko nawet na szepcie.",
+                "How much the orb spreads out as you speak louder, or as the app works. "
+                + "Low = a tight, calm sphere even when you shout; high = it spreads "
+                + "wide even on a whisper."))
         }
 
-        panel(label: "Kolory") {
+        panel(label: t("Kolory", "Colors")) {
             HStack(spacing: DS.Space.roomy) {
-                colorSwatch("Pierwszy", binding: Binding(
+                colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.accentPrimary.color },
                     set: { settings.accentPrimary = RGBColor($0) }
                 ))
-                colorSwatch("Drugi", binding: Binding(
+                colorSwatch(t("Drugi", "Second"), binding: Binding(
                     get: { settings.accentSecondary.color },
                     set: { settings.accentSecondary = RGBColor($0) }
                 ))
-                colorSwatch("Trzeci", binding: Binding(
+                colorSwatch(t("Trzeci", "Third"), binding: Binding(
                     get: { settings.accentTertiary.color },
                     set: { settings.accentTertiary = RGBColor($0) }
                 ))
                 Spacer()
-                TransportKey(title: "Domyślne") { settings.resetAccentColors() }
+                TransportKey(title: t("Domyślne", "Defaults")) { settings.resetAccentColors() }
             }
-            note("Trzy kolory, które krążą w orbie i podświetlają zaznaczone przyciski w "
-                + "całej appce — łącznie z poświatą pola zaznaczenia przy chwytaniu tekstu.")
+            note(t("Trzy kolory, które krążą w orbie i podświetlają zaznaczone przyciski w "
+                + "całej appce — łącznie z poświatą pola zaznaczenia przy chwytaniu tekstu.",
+                "Three colors that swirl in the orb and highlight selected buttons "
+                + "throughout the app — including the selection box glow when grabbing text."))
         }
 
-        panel(label: "Kolory tłumaczenia") {
+        panel(label: t("Kolory tłumaczenia", "Translation colors")) {
             HStack(spacing: DS.Space.roomy) {
-                colorSwatch("Pierwszy", binding: Binding(
+                colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.translateAccentPrimary.color },
                     set: { settings.translateAccentPrimary = RGBColor($0) }
                 ))
-                colorSwatch("Drugi", binding: Binding(
+                colorSwatch(t("Drugi", "Second"), binding: Binding(
                     get: { settings.translateAccentSecondary.color },
                     set: { settings.translateAccentSecondary = RGBColor($0) }
                 ))
-                colorSwatch("Trzeci", binding: Binding(
+                colorSwatch(t("Trzeci", "Third"), binding: Binding(
                     get: { settings.translateAccentTertiary.color },
                     set: { settings.translateAccentTertiary = RGBColor($0) }
                 ))
                 Spacer()
-                TransportKey(title: "Domyślne") { settings.resetTranslateAccentColors() }
+                TransportKey(title: t("Domyślne", "Defaults")) { settings.resetTranslateAccentColors() }
             }
-            note("Ten sam orb, ale w innych kolorach, gdy nagranie ma zostać przetłumaczone "
-                + "— żeby dało się od razu, bez czytania, rozpoznać który tryb właśnie działa.")
+            note(t("Ten sam orb, ale w innych kolorach, gdy nagranie ma zostać przetłumaczone "
+                + "— żeby dało się od razu, bez czytania, rozpoznać który tryb właśnie działa.",
+                "The same orb, but in different colors, when the recording is going to "
+                + "be translated — so you can tell at a glance, without reading, which "
+                + "mode is currently active."))
         }
 
-        panel(label: "Dźwięk") {
+        panel(label: t("Dźwięk", "Sound")) {
             Toggle(isOn: $settings.soundEnabled) {
-                Silkscreen(text: "Dźwięk przy starcie i końcu")
+                Silkscreen(text: t("Dźwięk przy starcie i końcu", "Sound at start and end"))
             }
             .toggleStyle(.switch)
 
             HStack(spacing: DS.Space.base) {
-                Silkscreen(text: "Głośność")
+                Silkscreen(text: t("Głośność", "Volume"))
                 Slider(value: $settings.soundVolume, in: 0...1)
                 Readout(text: "\(Int(settings.soundVolume * 100))%")
                     .foregroundStyle(DS.Color.inkSecondary)
@@ -915,8 +1024,8 @@ struct SettingsContent: View {
             .opacity(settings.soundEnabled ? 1 : 0.4)
 
             HStack(spacing: DS.Space.base) {
-                soundRow(label: "Start", selection: $settings.soundStart)
-                soundRow(label: "Koniec", selection: $settings.soundEnd)
+                soundRow(label: t("Start", "Start"), selection: $settings.soundStart)
+                soundRow(label: t("Koniec", "End"), selection: $settings.soundEnd)
             }
             .padding(.top, DS.Space.snug)
             .disabled(!settings.soundEnabled)
@@ -954,7 +1063,7 @@ struct SettingsContent: View {
                 .frame(width: 70, alignment: .leading)
             Picker(label, selection: selection) {
                 if includeNone {
-                    Text("Brak").tag(Self.noneLanguage)
+                    Text(t("Brak", "None")).tag(Self.noneLanguage)
                 }
                 ForEach(OCRLanguage.common) { language in
                     Text(language.displayName).tag(language.code)
@@ -1063,7 +1172,7 @@ struct SettingsContent: View {
 /// per target language, before dictating with it, gets the download out of the way here.
 private struct TranslationPrepareRow: View {
     let target: TranslateLanguage
-    @State private var status = "Sprawdzam…"
+    @State private var status = t("Sprawdzam…", "Checking…")
     @State private var isWorking = true
 
     var body: some View {
@@ -1078,9 +1187,11 @@ private struct TranslationPrepareRow: View {
             isWorking = true
             do {
                 try await session.prepareTranslation()
-                status = "Pakiet gotowy — tłumaczenie działa offline"
+                status = t("Pakiet gotowy — tłumaczenie działa offline",
+                    "Package ready — translation works offline")
             } catch {
-                status = "Nie udało się przygotować pakietu: \(error.localizedDescription)"
+                status = t("Nie udało się przygotować pakietu: \(error.localizedDescription)",
+                    "Couldn't prepare the package: \(error.localizedDescription)")
             }
             isWorking = false
         }
@@ -1104,7 +1215,7 @@ private struct ShortcutRow: View {
             DeckWindow {
                 Group {
                     if isRecording {
-                        Text("Naciśnij kombinację…")
+                        Text(t("Naciśnij kombinację…", "Press a combination…"))
                             .font(DS.Font.bodyEmphasis)
                             .foregroundStyle(DS.Color.inkOnDeck)
                     } else {
@@ -1114,7 +1225,7 @@ private struct ShortcutRow: View {
                 .padding(.horizontal, DS.Space.base)
                 .padding(.vertical, DS.Space.snug)
             }
-            TransportKey(title: isRecording ? "Anuluj" : "Zmień") {
+            TransportKey(title: isRecording ? t("Anuluj", "Cancel") : t("Zmień", "Change")) {
                 isRecording ? cancel() : start()
             }
             Spacer()

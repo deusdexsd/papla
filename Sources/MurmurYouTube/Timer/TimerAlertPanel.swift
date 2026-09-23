@@ -80,7 +80,7 @@ private struct TimerAlertView: View {
 
             VStack(spacing: 4) {
                 ForEach(controller.firedEntries) { entry in
-                    Text(entry.label.isEmpty ? "Czas minął" : entry.label)
+                    Text(entry.label.isEmpty ? t("Czas minął", "Time's up") : entry.label)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(style.primary)
                         .multilineTextAlignment(.center)
@@ -90,7 +90,7 @@ private struct TimerAlertView: View {
             Button {
                 controller.dismissFiredAlert()
             } label: {
-                Text("Wyłącz").frame(maxWidth: .infinity)
+                Text(t("Wyłącz", "Dismiss")).frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)

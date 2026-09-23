@@ -28,8 +28,8 @@ struct TimerView: View {
             header
 
             Picker("", selection: $mode) {
-                Text("Za").tag(Mode.duration)
-                Text("O").tag(Mode.alarm)
+                Text(t("Za", "In")).tag(Mode.duration)
+                Text(t("O", "At")).tag(Mode.alarm)
             }
             .labelsHidden()
             .pickerStyle(.segmented)
@@ -44,13 +44,13 @@ struct TimerView: View {
                     .datePickerStyle(.field)
             }
 
-            TextField("Na co (opcjonalnie)", text: $label)
+            TextField(t("Na co (opcjonalnie)", "For what (optional)"), text: $label)
                 .textFieldStyle(.roundedBorder)
 
             Button {
                 start()
             } label: {
-                Text(mode == .duration ? "Start" : "Ustaw")
+                Text(mode == .duration ? t("Start", "Start") : t("Ustaw", "Set"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -59,7 +59,7 @@ struct TimerView: View {
 
             if !store.entries.isEmpty {
                 Rectangle().fill(style.hairline).frame(height: 1).padding(.vertical, 2)
-                Text("Aktywne")
+                Text(t("Aktywne", "Active"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(style.secondary)
                 activeList
@@ -74,7 +74,7 @@ struct TimerView: View {
 
     private var header: some View {
         HStack {
-            Text("Minutnik")
+            Text(t("Minutnik", "Timer"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(style.primary)
             Spacer()
@@ -96,7 +96,7 @@ struct TimerView: View {
                             Image(systemName: entry.isAlarm ? "alarm" : "timer")
                                 .foregroundStyle(style.accent)
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(entry.label.isEmpty ? "Minutnik" : entry.label)
+                                Text(entry.label.isEmpty ? t("Minutnik", "Timer") : entry.label)
                                     .font(.system(size: 13))
                                     .foregroundStyle(style.primary)
                                 Text(remaining(entry.fireDate))

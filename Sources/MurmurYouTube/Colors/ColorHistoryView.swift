@@ -21,7 +21,7 @@ struct ColorHistoryList: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: DS.Space.base) {
-                TransportKey(title: "Wybierz kolor z ekranu", systemImage: "eyedropper", engagedColor: Brand.accent) {
+                TransportKey(title: t("Wybierz kolor z ekranu", "Pick color from screen"), systemImage: "eyedropper", engagedColor: Brand.accent) {
                     controller.pick()
                 }
                 Text(Settings.shared.colorPickerShortcut.displayName)
@@ -31,14 +31,14 @@ struct ColorHistoryList: View {
             }
             .padding(DS.Space.base)
 
-            SearchField(text: $query, placeholder: "Szukaj koloru")
+            SearchField(text: $query, placeholder: t("Szukaj koloru", "Search colors"))
 
             if entries.isEmpty {
                 EmptyPanel(
-                    label: store.entries.isEmpty ? "Brak kolorów" : "Brak wyników",
+                    label: store.entries.isEmpty ? t("Brak kolorów", "No colors") : t("Brak wyników", "No results"),
                     detail: store.entries.isEmpty
-                        ? "Użyj przycisku albo skrótu i kliknij dowolny piksel na ekranie."
-                        : "Spróbuj innego wyszukiwania."
+                        ? t("Użyj przycisku albo skrótu i kliknij dowolny piksel na ekranie.", "Use the button or the shortcut and click any pixel on the screen.")
+                        : t("Spróbuj innego wyszukiwania.", "Try a different search.")
                 )
             } else {
                 ScrollView {
@@ -60,12 +60,13 @@ struct ColorHistoryList: View {
         HStack {
             Silkscreen(
                 text: "\(store.entries.count) "
-                    + polishPlural(store.entries.count, one: "kolor", few: "kolory", many: "kolorów"),
+                    + t(polishPlural(store.entries.count, one: "kolor", few: "kolory", many: "kolorów"),
+                        englishPlural(store.entries.count, one: "color", other: "colors")),
                 color: DS.Color.inkOnDeck.opacity(0.5)
             )
             Spacer()
             Button { isConfirmingClear = true } label: {
-                Silkscreen(text: "Usuń wszystko", color: DS.Color.inkOnDeck.opacity(0.5))
+                Silkscreen(text: t("Usuń wszystko", "Delete all"), color: DS.Color.inkOnDeck.opacity(0.5))
             }
             .buttonStyle(.plain)
         }
@@ -76,14 +77,14 @@ struct ColorHistoryList: View {
             Rectangle().fill(DS.Color.seam).frame(height: DS.Border.seam)
         }
         .confirmationDialog(
-            "Usunąć całą historię kolorów?",
+            t("Usunąć całą historię kolorów?", "Delete the entire color history?"),
             isPresented: $isConfirmingClear,
             titleVisibility: .visible
         ) {
-            Button("Usuń wszystko", role: .destructive) { store.clear() }
-            Button("Anuluj", role: .cancel) {}
+            Button(t("Usuń wszystko", "Delete all"), role: .destructive) { store.clear() }
+            Button(t("Anuluj", "Cancel"), role: .cancel) {}
         } message: {
-            Text("Tej operacji nie można cofnąć.")
+            Text(t("Tej operacji nie można cofnąć.", "This action cannot be undone."))
         }
     }
 }
@@ -127,7 +128,7 @@ private struct ColorRow: View {
                     }
                 } label: {
                     Silkscreen(
-                        text: copiedFormat == format ? "Skopiowano" : format.displayName,
+                        text: copiedFormat == format ? t("Skopiowano", "Copied") : format.displayName,
                         color: copiedFormat == format ? Brand.accent : DS.Color.inkOnDeck.opacity(0.7)
                     )
                     .padding(.horizontal, DS.Space.snug)

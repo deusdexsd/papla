@@ -17,14 +17,14 @@ struct GrabHistoryList: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SearchField(text: $query, placeholder: "Szukaj w chwytach")
+            SearchField(text: $query, placeholder: t("Szukaj w chwytach", "Search grabs"))
 
             if grabs.isEmpty {
                 EmptyPanel(
-                    label: store.grabs.isEmpty ? "Brak zrzutów" : "Brak wyników",
+                    label: store.grabs.isEmpty ? t("Brak zrzutów", "No grabs") : t("Brak wyników", "No results"),
                     detail: store.grabs.isEmpty
-                        ? "Użyj skrótu albo menu paska górnego, żeby zacząć."
-                        : "Spróbuj innego wyszukiwania."
+                        ? t("Użyj skrótu albo menu paska górnego, żeby zacząć.", "Use the shortcut or the menu bar item to get started.")
+                        : t("Spróbuj innego wyszukiwania.", "Try a different search.")
                 )
             } else {
                 ScrollView {
@@ -46,12 +46,13 @@ struct GrabHistoryList: View {
         HStack {
             Silkscreen(
                 text: "\(store.grabs.count) "
-                    + polishPlural(store.grabs.count, one: "zrzut", few: "zrzuty", many: "zrzutów"),
+                    + t(polishPlural(store.grabs.count, one: "zrzut", few: "zrzuty", many: "zrzutów"),
+                        englishPlural(store.grabs.count, one: "grab", other: "grabs")),
                 color: DS.Color.inkOnDeck.opacity(0.5)
             )
             Spacer()
             Button { isConfirmingClear = true } label: {
-                Silkscreen(text: "Usuń wszystko", color: DS.Color.inkOnDeck.opacity(0.5))
+                Silkscreen(text: t("Usuń wszystko", "Delete all"), color: DS.Color.inkOnDeck.opacity(0.5))
             }
             .buttonStyle(.plain)
         }
@@ -62,15 +63,17 @@ struct GrabHistoryList: View {
             Rectangle().fill(DS.Color.seam).frame(height: DS.Border.seam)
         }
         .confirmationDialog(
-            "Usunąć całą historię chwytów (\(store.grabs.count) "
-                + polishPlural(store.grabs.count, one: "zrzut", few: "zrzuty", many: "zrzutów") + ")?",
+            t("Usunąć całą historię chwytów (\(store.grabs.count) "
+                    + polishPlural(store.grabs.count, one: "zrzut", few: "zrzuty", many: "zrzutów") + ")?",
+                "Delete the entire grab history (\(store.grabs.count) "
+                    + englishPlural(store.grabs.count, one: "grab", other: "grabs") + ")?"),
             isPresented: $isConfirmingClear,
             titleVisibility: .visible
         ) {
-            Button("Usuń wszystko", role: .destructive) { GrabLog.clear() }
-            Button("Anuluj", role: .cancel) {}
+            Button(t("Usuń wszystko", "Delete all"), role: .destructive) { GrabLog.clear() }
+            Button(t("Anuluj", "Cancel"), role: .cancel) {}
         } message: {
-            Text("Tej operacji nie można cofnąć.")
+            Text(t("Tej operacji nie można cofnąć.", "This action cannot be undone."))
         }
     }
 }
@@ -89,7 +92,7 @@ private struct GrabRow: View {
                     text: grab.languages.map(OCRLanguage.name(for:)).joined(separator: " + "),
                     color: DS.Color.inkOnDeck.opacity(0.7)
                 )
-                Readout(text: "\(grab.characters) znaków")
+                Readout(text: t("\(grab.characters) znaków", "\(grab.characters) characters"))
                     .foregroundStyle(DS.Color.inkOnDeck.opacity(0.6))
                 Spacer()
                 Text(grab.date, style: .time)
@@ -127,7 +130,7 @@ private struct GrabRow: View {
             }
         } label: {
             Silkscreen(
-                text: didCopy ? "Skopiowano" : "Kopiuj",
+                text: didCopy ? t("Skopiowano", "Copied") : t("Kopiuj", "Copy"),
                 color: DS.Color.inkOnDeck.opacity(didCopy ? 1 : 0.6)
             )
             .padding(.horizontal, DS.Space.snug)
@@ -153,6 +156,6 @@ private struct GrabRow: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Usuń ten zrzut")
+        .help(t("Usuń ten zrzut", "Delete this grab"))
     }
 }

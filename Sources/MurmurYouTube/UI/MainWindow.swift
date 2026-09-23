@@ -36,14 +36,15 @@ struct MainWindow: View {
         case settings
 
         var id: String { rawValue }
+        @MainActor
         var title: String {
             switch self {
-            case .transcriptions: "Transkrypcje"
-            case .grabs: "Chwytanie"
-            case .clipboard: "Schowek"
-            case .colors: "Kolory"
-            case .dictionary: "Słownik"
-            case .settings: "Ustawienia"
+            case .transcriptions: t("Transkrypcje", "Transcriptions")
+            case .grabs: t("Chwytanie", "Grabs")
+            case .clipboard: t("Schowek", "Clipboard")
+            case .colors: t("Kolory", "Colors")
+            case .dictionary: t("Słownik", "Dictionary")
+            case .settings: t("Ustawienia", "Settings")
             }
         }
     }
@@ -124,10 +125,10 @@ private struct TransportPanel: View {
     var body: some View {
         HStack(spacing: DS.Space.roomy) {
             VStack(alignment: .leading, spacing: DS.Space.snug) {
-                Silkscreen(text: "Nagrywanie")
+                Silkscreen(text: t("Nagrywanie", "Recording"))
                 HStack(spacing: DS.Space.snug) {
                     TransportKey(
-                        title: isRecording ? "Stop" : "Nagrywaj",
+                        title: isRecording ? "Stop" : t("Nagrywaj", "Record"),
                         systemImage: isRecording ? "stop.fill" : "circle.fill",
                         isEngaged: isRecording
                     ) {
@@ -147,7 +148,7 @@ private struct TransportPanel: View {
             }
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {
-                Silkscreen(text: "Poziom")
+                Silkscreen(text: t("Poziom", "Level"))
                 VisualizerView(
                     energy: levelEnergy,
                     isAnimating: isRecording,
@@ -158,7 +159,7 @@ private struct TransportPanel: View {
             }
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {
-                Silkscreen(text: "Licznik")
+                Silkscreen(text: t("Licznik", "Counter"))
                 DeckWindow {
                     Readout(text: counterText, large: true)
                         .padding(.horizontal, DS.Space.base)
@@ -167,9 +168,9 @@ private struct TransportPanel: View {
             }
 
             VStack(alignment: .leading, spacing: DS.Space.snug) {
-                Silkscreen(text: "Chwytanie")
+                Silkscreen(text: t("Chwytanie", "Capture"))
                 TransportKey(
-                    title: "Chwyć obszar",
+                    title: t("Chwyć obszar", "Grab Area"),
                     systemImage: "viewfinder",
                     isEnabled: !grabController.state.isBusy
                 ) {
@@ -222,12 +223,14 @@ private struct TranscriptionList: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SearchField(text: $query, placeholder: "Szukaj w transkrypcjach")
+            SearchField(text: $query, placeholder: t("Szukaj w transkrypcjach", "Search transcriptions"))
 
             if runs.isEmpty {
                 EmptyPanel(
-                    label: store.runs.isEmpty ? "Brak nagrań" : "Brak wyników",
-                    detail: store.runs.isEmpty ? "Naciśnij Nagrywaj, żeby zacząć." : "Spróbuj innego wyszukiwania."
+                    label: store.runs.isEmpty ? t("Brak nagrań", "No recordings") : t("Brak wyników", "No results"),
+                    detail: store.runs.isEmpty
+                        ? t("Naciśnij Nagrywaj, żeby zacząć.", "Press Record to get started.")
+                        : t("Spróbuj innego wyszukiwania.", "Try a different search.")
                 )
             } else {
                 ScrollView {
@@ -249,12 +252,13 @@ private struct TranscriptionList: View {
         HStack {
             Silkscreen(
                 text: "\(store.runs.count) "
-                    + polishPlural(store.runs.count, one: "nagranie", few: "nagrania", many: "nagrań"),
+                    + t(polishPlural(store.runs.count, one: "nagranie", few: "nagrania", many: "nagrań"),
+                        englishPlural(store.runs.count, one: "recording", other: "recordings")),
                 color: DS.Color.inkOnDeck.opacity(0.5)
             )
             Spacer()
             Button { isConfirmingClear = true } label: {
-                Silkscreen(text: "Usuń wszystko", color: DS.Color.inkOnDeck.opacity(0.5))
+                Silkscreen(text: t("Usuń wszystko", "Delete All"), color: DS.Color.inkOnDeck.opacity(0.5))
             }
             .buttonStyle(.plain)
         }
@@ -267,15 +271,17 @@ private struct TranscriptionList: View {
         // Confirmed, unlike a single row: one row is trivially re-recorded, the whole
         // history is not, and there's no undo.
         .confirmationDialog(
-            "Usunąć wszystkie \(store.runs.count) "
+            t("Usunąć wszystkie \(store.runs.count) "
                 + polishPlural(store.runs.count, one: "nagranie", few: "nagrania", many: "nagrań") + "?",
+              "Delete all \(store.runs.count) "
+                + englishPlural(store.runs.count, one: "recording", other: "recordings") + "?"),
             isPresented: $isConfirmingClear,
             titleVisibility: .visible
         ) {
-            Button("Usuń wszystko", role: .destructive) { RunLog.clear() }
-            Button("Anuluj", role: .cancel) {}
+            Button(t("Usuń wszystko", "Delete All"), role: .destructive) { RunLog.clear() }
+            Button(t("Anuluj", "Cancel"), role: .cancel) {}
         } message: {
-            Text("Tej operacji nie można cofnąć.")
+            Text(t("Tej operacji nie można cofnąć.", "This can't be undone."))
         }
     }
 }
@@ -349,7 +355,7 @@ private struct TranscriptionRow: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Dodaj poprawkę do słownika")
+        .help(t("Dodaj poprawkę do słownika", "Add correction to dictionary"))
     }
 
     private var copyButton: some View {
@@ -363,7 +369,7 @@ private struct TranscriptionRow: View {
             }
         } label: {
             Silkscreen(
-                text: didCopy ? "Skopiowano" : "Kopiuj",
+                text: didCopy ? t("Skopiowano", "Copied") : t("Kopiuj", "Copy"),
                 color: DS.Color.inkOnDeck.opacity(didCopy ? 1 : 0.6)
             )
             .padding(.horizontal, DS.Space.snug)
@@ -392,7 +398,7 @@ private struct TranscriptionRow: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Usuń tę transkrypcję")
+        .help(t("Usuń tę transkrypcję", "Delete this transcription"))
     }
 }
 
@@ -403,7 +409,7 @@ private struct CorrectionBadges: View {
 
     var body: some View {
         HStack(spacing: DS.Space.snug) {
-            Silkscreen(text: "Poprawiono", color: DS.Color.statusWarning)
+            Silkscreen(text: t("Poprawiono", "Corrected"), color: DS.Color.statusWarning)
             ForEach(corrections, id: \.self) { correction in
                 HStack(spacing: DS.Space.tight) {
                     Text(correction.from)

@@ -35,14 +35,14 @@ struct ClipboardView: View {
             ClipboardItem(
                 id: entry.id, date: entry.date, kind: .color,
                 text: entry.formatted(format), colorHex: entry.hex,
-                appName: "Próbnik kolorów", fromColorPicker: true
+                appName: t("Próbnik kolorów", "Color picker"), fromColorPicker: true
             )
         }
         let captures = screenshots.entries.map { entry in
             ClipboardItem(
                 id: entry.id, date: entry.date, kind: .screenshot,
                 filePaths: [entry.path],
-                appName: entry.isVideo ? "Nagranie ekranu" : "Zrzut ekranu",
+                appName: entry.isVideo ? t("Nagranie ekranu", "Screen recording") : t("Zrzut ekranu", "Screenshot"),
                 fromScreenshot: true, isVideo: entry.isVideo
             )
         }
@@ -91,15 +91,19 @@ struct ClipboardView: View {
         .onChange(of: query) { selection = visible.first?.id }
         .onChange(of: filter) { selection = visible.first?.id }
         .confirmationDialog(
-            "Usunąć całą historię schowka (\(store.items.count) "
-                + polishPlural(store.items.count, one: "element", few: "elementy", many: "elementów") + ")?",
+            t(
+                "Usunąć całą historię schowka (\(store.items.count) "
+                    + polishPlural(store.items.count, one: "element", few: "elementy", many: "elementów") + ")?",
+                "Delete the entire clipboard history (\(store.items.count) "
+                    + englishPlural(store.items.count, one: "item", other: "items") + ")?"
+            ),
             isPresented: $isConfirmingClear,
             titleVisibility: .visible
         ) {
-            Button("Usuń wszystko", role: .destructive) { store.clear() }
-            Button("Anuluj", role: .cancel) {}
+            Button(t("Usuń wszystko", "Delete all"), role: .destructive) { store.clear() }
+            Button(t("Anuluj", "Cancel"), role: .cancel) {}
         } message: {
-            Text("Tej operacji nie można cofnąć.")
+            Text(t("Tej operacji nie można cofnąć.", "This can't be undone."))
         }
     }
 
@@ -110,10 +114,14 @@ struct ClipboardView: View {
             Image(systemName: "tray")
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(style.tertiary)
-            Text(allItems.isEmpty ? "Schowek jest pusty" : "Brak wyników")
+            Text(allItems.isEmpty
+                ? t("Schowek jest pusty", "Clipboard is empty")
+                : t("Brak wyników", "No results"))
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(style.secondary)
-            Text(allItems.isEmpty ? "Skopiuj coś (⌘C) — pojawi się tutaj." : "Zmień filtr albo wyszukiwanie.")
+            Text(allItems.isEmpty
+                ? t("Skopiuj coś (⌘C) — pojawi się tutaj.", "Copy something (⌘C) — it'll show up here.")
+                : t("Zmień filtr albo wyszukiwanie.", "Try a different filter or search."))
                 .font(DS.Font.label)
                 .foregroundStyle(style.tertiary)
         }
@@ -125,7 +133,7 @@ struct ClipboardView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(style.secondary)
-            TextField("Szukaj w schowku…", text: $query)
+            TextField(t("Szukaj w schowku…", "Search clipboard…"), text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 20, weight: .regular))
                 .foregroundStyle(style.primary)
@@ -147,7 +155,7 @@ struct ClipboardView: View {
     private var filterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: DS.Space.snug) {
-                FilterChip(title: "Wszystko", isOn: filter == nil, style: style) { filter = nil }
+                FilterChip(title: t("Wszystko", "All"), isOn: filter == nil, style: style) { filter = nil }
                 ForEach(ClipboardKind.allCases.filter { Settings.shared.clipboardVisibleKinds.contains($0) }, id: \.self) { kind in
                     FilterChip(title: kind.chipTitle, isOn: filter == kind, style: style) {
                         filter = filter == kind ? nil : kind
@@ -177,18 +185,18 @@ struct ClipboardView: View {
                         .id(item.id)
                         .onTapGesture { selection = item.id; activate(item) }
                         .contextMenu {
-                            Button("Kopiuj") { copyOnly(item) }
-                            if isPanel { Button("Wklej") { controller.paste(item) } }
+                            Button(t("Kopiuj", "Copy")) { copyOnly(item) }
+                            if isPanel { Button(t("Wklej", "Paste")) { controller.paste(item) } }
                             if let direction = translateDirection(for: item) {
                                 Button(direction.label) { translate(item, to: direction.target) }
                             }
                             if let path = item.filePaths?.first {
-                                Button("Pokaż w Finderze") {
+                                Button(t("Pokaż w Finderze", "Show in Finder")) {
                                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
                                 }
                             }
                             Divider()
-                            Button(item.fromScreenshot == true ? "Ukryj na liście" : "Usuń", role: .destructive) { remove(item) }
+                            Button(item.fromScreenshot == true ? t("Ukryj na liście", "Hide from list") : t("Usuń", "Delete"), role: .destructive) { remove(item) }
                         }
                     }
                 }
@@ -204,24 +212,25 @@ struct ClipboardView: View {
 
     private func footer(count: Int) -> some View {
         HStack(spacing: DS.Space.roomy) {
-            Text("\(count) " + polishPlural(count, one: "element", few: "elementy", many: "elementów"))
+            Text("\(count) " + t(polishPlural(count, one: "element", few: "elementy", many: "elementów"),
+                                  englishPlural(count, one: "item", other: "items")))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(style.secondary)
             Spacer()
             if isPanel {
-                hint("↩", "Kopiuj")
-                hint("⌘V", "Wklej")
-                hint("⌘⌫", "Usuń")
+                hint("↩", t("Kopiuj", "Copy"))
+                hint("⌘V", t("Wklej", "Paste"))
+                hint("⌘⌫", t("Usuń", "Delete"))
                 Button { controller.openSettings() } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(style.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Otwórz Paplę i ustawienia")
+                .help(t("Otwórz Paplę i ustawienia", "Open Papla and settings"))
             } else {
                 Button { isConfirmingClear = true } label: {
-                    Text("Usuń wszystko")
+                    Text(t("Usuń wszystko", "Delete all"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(style.secondary)
                 }
@@ -302,9 +311,11 @@ struct ClipboardView: View {
 
         if language == .polish {
             let target = Settings.shared.translateTargetLanguage
-            return ("Tłumacz na \(target.displayName.lowercased()) i kopiuj", Locale.Language(identifier: target.rawValue))
+            return (t("Tłumacz na \(target.displayName.lowercased()) i kopiuj",
+                       "Translate to \(target.displayName.lowercased()) and copy"),
+                     Locale.Language(identifier: target.rawValue))
         }
-        return ("Tłumacz na polski i kopiuj", Locale.Language(identifier: "pl"))
+        return (t("Tłumacz na polski i kopiuj", "Translate to Polish and copy"), Locale.Language(identifier: "pl"))
     }
 
     /// Translates a copied item and puts the *result* on the clipboard — the original entry is
@@ -326,7 +337,7 @@ struct ClipboardView: View {
                 pasteboard.setString(translated, forType: .string)
                 ClipboardMonitor.shared.adopt()
                 if Settings.shared.clipboardTranslateAddsToHistory {
-                    store.add(ClipboardItem(date: Date(), kind: .text, text: translated, appName: "Tłumaczenie"))
+                    store.add(ClipboardItem(date: Date(), kind: .text, text: translated, appName: t("Tłumaczenie", "Translation")))
                 }
             } catch {
                 Log.app.error("clipboard translate failed: \(error.localizedDescription, privacy: .public)")
@@ -393,12 +404,23 @@ private struct ClipboardRow: View {
     @State private var isHovering = false
     @State private var fileThumbnail: NSImage?
 
-    private static let relative: RelativeDateTimeFormatter = {
+    private static let relativePolish: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = Locale(identifier: "pl_PL")
         formatter.unitsStyle = .short
         return formatter
     }()
+    private static let relativeEnglish: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.unitsStyle = .short
+        return formatter
+    }()
+    /// Follows `Settings.appLanguage` rather than a fixed locale — "5 min ago" shouldn't stay
+    /// Polish once the rest of the row around it has switched to English.
+    private var relative: RelativeDateTimeFormatter {
+        Settings.shared.appLanguage == .english ? Self.relativeEnglish : Self.relativePolish
+    }
 
     /// A natively-styled selected row is the system accent with white text, like any list.
     private var onAccent: Bool { style.native && isSelected }
@@ -454,15 +476,15 @@ private struct ClipboardRow: View {
     }
 
     private var subtitle: String {
-        let app = item.appName ?? "Nieznana aplikacja"
-        let when = Self.relative.localizedString(for: item.date, relativeTo: Date())
+        let app = item.appName ?? t("Nieznana aplikacja", "Unknown app")
+        let when = relative.localizedString(for: item.date, relativeTo: Date())
         return "\(app) · \(when) · \(item.kindTitle)"
     }
 
     @ViewBuilder
     private var trailing: some View {
         if didCopy {
-            Text("Skopiowano")
+            Text(t("Skopiowano", "Copied"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(onAccent ? .white : style.accent)
         } else if isHovering {
@@ -472,7 +494,7 @@ private struct ClipboardRow: View {
                     .foregroundStyle(detailColor)
             }
             .buttonStyle(.plain)
-            .help("Usuń z historii")
+            .help(t("Usuń z historii", "Remove from history"))
         } else if let quickIndex {
             Text("⌘\(quickIndex)")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -597,7 +619,9 @@ private struct TimerBadge: View {
         .buttonStyle(.plain)
         .font(.system(size: 13, weight: .medium))
         .foregroundStyle(nextTimer == nil ? style.tertiary : style.accent)
-        .help(nextTimer == nil ? "Ustaw minutnik" : "Minutnik działa — kliknij, żeby zobaczyć")
+        .help(nextTimer == nil
+            ? t("Ustaw minutnik", "Set a timer")
+            : t("Minutnik działa — kliknij, żeby zobaczyć", "Timer running — click to view"))
     }
 
     private func remaining(_ fireDate: Date) -> String {

@@ -89,8 +89,8 @@ final class TimerStore {
 
     private func scheduleNotification(for entry: TimerEntry) {
         let content = UNMutableNotificationContent()
-        content.title = entry.isAlarm ? "Papla — budzik" : "Papla — minutnik"
-        content.body = entry.label.isEmpty ? "Czas minął." : entry.label
+        content.title = entry.isAlarm ? t("Papla — budzik", "Papla — alarm") : t("Papla — minutnik", "Papla — timer")
+        content.body = entry.label.isEmpty ? t("Czas minął.", "Time's up.") : entry.label
         content.sound = .defaultCritical
         let interval = max(1, entry.fireDate.timeIntervalSinceNow)
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)

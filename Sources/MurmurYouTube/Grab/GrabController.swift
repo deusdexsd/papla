@@ -90,7 +90,7 @@ final class GrabController {
         guard case .idle = state else { return }
         let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
         guard let screen else {
-            fail("Nie znalazłem żadnego ekranu.")
+            fail(t("Nie znalazłem żadnego ekranu.", "Couldn't find a screen."))
             return
         }
         Task { await runFullScreenCapture(screen: screen) }
