@@ -243,11 +243,14 @@ struct VisualizerView: View {
 /// snaps the whole shape up together the instant the mic gets louder, the way an actual
 /// live waveform (Siri, a voice memo app, anything reacting to sound in real time) does.
 ///
-/// A soft blurred glow layer sits under a crisp particle layer for depth, echoing the same
-/// light-through-fog look as `SiriOrb`'s own glow. At rest it never goes fully flat — a slow,
-/// quiet undulation keeps it reading as alive rather than off. Same
-/// `energy`/`isAnimating`/`isError`/`isTranslating` inputs as `SiriOrb`, so `VisualizerView`
-/// can swap between the two without either caller knowing which one it got.
+/// A blurred wide glow sits under a tighter glow under a crisp core line, for depth, echoing
+/// the same light-through-fog look as `SiriOrb`'s own glow. At rest it stays nearly straight
+/// — `energy` itself never actually reaches zero while listening (`SiriOrb` wants some
+/// baseline motion even in silence), so a noise-gate remap in `onChange` suppresses that
+/// built-in floor here specifically, rather than the wave visibly "talking" on its own before
+/// anyone's said anything. Same `energy`/`isAnimating`/`isError`/`isTranslating` inputs as
+/// `SiriOrb`, so `VisualizerView` can swap between the two without either caller knowing which
+/// one it got.
 struct WaveformVisualizer: View {
     var energy: CGFloat
     var isAnimating: Bool
@@ -289,13 +292,18 @@ struct WaveformVisualizer: View {
         // below the line's peak or it visibly clips against the view's own bounds the moment
         // the mic gets loud. Shorter horizontally than the first pass — the long version read
         // as an oversized, slow-feeling shape rather than a compact reactive one.
-        .frame(width: size * 2.3, height: size * 1.4)
+        .frame(width: size * 2.3, height: size * 1.6)
         .onChange(of: energy) { _, newValue in
             guard isAnimating else { return }
-            // A bit of gain above 1 on purpose — a raised peak reads as punchier and more
-            // reactive; edgeEnvelope and the draw-time scale still keep it from ever
-            // overflowing the frame.
-            let clamped = max(0, min(1, newValue)) * 1.3
+            // `energy` carries a baseline floor per state (`SiriOrb` wants the orb to never go
+            // fully still while listening) — roughly 0.2–0.3 even in dead silence. A flat
+            // pass-through would make the wave look like it's talking quietly all the time.
+            // This noise-gate remap treats that floor as "nothing happening" and only starts
+            // showing movement once the mic level actually rises above it, rescaled so real
+            // speech still uses the full range.
+            let floor: CGFloat = 0.3
+            let gated = max(0, min(1, newValue) - floor) / (1 - floor)
+            let clamped = gated * 1.15
             for i in 0..<Self.bandCount {
                 let target = clamped * Self.bandCharacter[i]
                 // Fast attack (snap straight to a louder target), quicker decay than before —
@@ -321,11 +329,17 @@ struct WaveformVisualizer: View {
     private func draw(into context: inout GraphicsContext, canvasSize: CGSize, time: TimeInterval) {
         let midY = canvasSize.height / 2
         let n = Self.bandCount
-        // Never truly silent: a slow, low breathing term so a quiet mic still reads as a
-        // living, softly waving line rather than a dead flat one.
-        let breathing = 0.05 + 0.035 * sin(time * 0.8)
-        // Room for the glow to bleed past the line's own peak without hitting the canvas edge.
-        let amplitudeScale = canvasSize.height * 0.3
+        // Barely-there residual so a silent mic (which the noise gate above already reduces
+        // to ~0) still reads as a hair-thin living line rather than a dead ruler-straight one
+        // — not enough to look like quiet speech, just enough to not look switched off.
+        let breathing = 0.012 + 0.006 * sin(time * 0.7)
+        // Conservative headroom: even at full clamped amplitude plus the widest glow's blur
+        // radius, this keeps everything inside the canvas instead of clipping on a loud peak.
+        let amplitudeScale = canvasSize.height * 0.22
+        // The path is drawn inset from the true edges, not spanning the full canvas width —
+        // gives the blur passes room to fade out completely before reaching the canvas
+        // boundary, instead of visibly pressing color right up against it.
+        let inset = canvasSize.width * 0.08
 
         func amplitude(at index: Int) -> CGFloat {
             let unit = CGFloat(index) / CGFloat(n - 1)
@@ -337,7 +351,7 @@ struct WaveformVisualizer: View {
         var corePath = Path()
         for i in 0..<n {
             let unit = CGFloat(i) / CGFloat(n - 1)
-            let x = unit * canvasSize.width
+            let x = inset + unit * (canvasSize.width - inset * 2)
             let y = midY - amplitude(at: i) * amplitudeScale
             if i == 0 { corePath.move(to: CGPoint(x: x, y: y)) } else { corePath.addLine(to: CGPoint(x: x, y: y)) }
         }
@@ -357,41 +371,20 @@ struct WaveformVisualizer: View {
             .init(color: third, location: 0.68 - drift),
             .init(color: third.opacity(0), location: 1),
         ])
-        let start = CGPoint(x: 0, y: midY)
-        let end = CGPoint(x: canvasSize.width, y: midY)
+        let start = CGPoint(x: inset, y: midY)
+        let end = CGPoint(x: canvasSize.width - inset, y: midY)
 
         // Deep, wide, blurred glow — the diffuse "fog" layer.
         context.drawLayer { layer in
-            layer.addFilter(.blur(radius: size * 0.16))
-            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.16)
+            layer.addFilter(.blur(radius: size * 0.13))
+            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.14)
         }
         // A second, tighter glow pass for depth between the fog and the crisp line.
         context.drawLayer { layer in
-            layer.addFilter(.blur(radius: size * 0.05))
-            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.07)
+            layer.addFilter(.blur(radius: size * 0.04))
+            layer.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.06)
         }
         // The crisp, sharp core registering the actual micro-movement.
-        context.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.025)
-
-        // Volumetric dust: a scatter of tiny points hugging the line, denser and brighter
-        // near the center and on louder samples — the "3D particle cloud" around the core.
-        for i in 0..<n {
-            let unit = CGFloat(i) / CGFloat(n - 1)
-            let env = edgeEnvelope(unit)
-            guard env > 0.02 else { continue }
-            let amp = amplitude(at: i)
-            let x = unit * canvasSize.width
-            let y = midY - amp * amplitudeScale
-            let particleCount = Int(1 + env * (2 + amp * 5))
-            for p in 0..<particleCount {
-                let seed = Double(i * 37 + p * 11)
-                let jx = x + CGFloat(sin(time * 1.7 + seed)) * size * 0.06 * env
-                let jy = y + CGFloat(cos(time * 2.3 + seed * 1.4)) * size * (0.04 + amp * 0.1) * env
-                let dotSize = size * (0.012 + amp * 0.02) * (0.6 + env * 0.4)
-                let opacity = (0.12 + amp * 0.5) * env
-                let dot = CGRect(x: jx - dotSize / 2, y: jy - dotSize / 2, width: dotSize, height: dotSize)
-                context.fill(Path(ellipseIn: dot), with: .color(palette[p % palette.count].opacity(opacity)))
-            }
-        }
+        context.stroke(corePath, with: .linearGradient(gradient, startPoint: start, endPoint: end), lineWidth: size * 0.022)
     }
 }
