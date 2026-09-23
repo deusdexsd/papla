@@ -155,7 +155,7 @@ private struct TransportPanel: View {
                     isError: false,
                     size: 54
                 )
-                .frame(width: 90, height: 54)
+                .frame(width: 90, height: 76)
             }
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {

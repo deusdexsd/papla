@@ -214,13 +214,21 @@ struct VisualizerView: View {
 /// A borderless plasma streak, not a bar chart: no fixed start/end point, no frame the wave
 /// bumps up against. Amplitude is architecturally zero at both edges and maximal in the
 /// middle — the shape *is* the fade, not a mask applied to one — so it always reads as a
-/// glowing thread suspended in the interface rather than a chart with axes. Mic level scrolls
-/// through a short history buffer to draw a live contour; a soft blurred glow layer sits
-/// under a crisp particle layer for depth, echoing the same light-through-fog look as
-/// `SiriOrb`'s own glow. At rest it never goes fully flat — a slow, quiet undulation keeps it
-/// reading as alive rather than off. Same `energy`/`isAnimating`/`isError`/`isTranslating`
-/// inputs as `SiriOrb`, so `VisualizerView` can swap between the two without either caller
-/// knowing which one it got.
+/// glowing thread suspended in the interface rather than a chart with axes.
+///
+/// Every band reacts to the *current* mic level simultaneously (fast attack, slower decay,
+/// like a real VU meter), each scaled by its own fixed "character" multiplier for organic
+/// variation across the width — not a scrolling history buffer. A history buffer draws
+/// yesterday's loud moment as a hump that visibly *travels* across the view as time passes,
+/// which reads as sluggish and disconnected from what's happening right now; this instead
+/// snaps the whole shape up together the instant the mic gets louder, the way an actual
+/// live waveform (Siri, a voice memo app, anything reacting to sound in real time) does.
+///
+/// A soft blurred glow layer sits under a crisp particle layer for depth, echoing the same
+/// light-through-fog look as `SiriOrb`'s own glow. At rest it never goes fully flat — a slow,
+/// quiet undulation keeps it reading as alive rather than off. Same
+/// `energy`/`isAnimating`/`isError`/`isTranslating` inputs as `SiriOrb`, so `VisualizerView`
+/// can swap between the two without either caller knowing which one it got.
 struct WaveformVisualizer: View {
     var energy: CGFloat
     var isAnimating: Bool
@@ -228,8 +236,17 @@ struct WaveformVisualizer: View {
     var isTranslating: Bool = false
     var size: CGFloat = 44
 
-    private static let sampleCount = 48
-    @State private var samples = Array(repeating: CGFloat(0), count: sampleCount)
+    private static let bandCount = 40
+    @State private var bandLevels = Array(repeating: CGFloat(0), count: bandCount)
+
+    /// A fixed, deterministic per-band multiplier (not random per-frame — the same band is
+    /// always a little louder or quieter than its neighbor) so the wave has organic texture
+    /// instead of every band snapping to the exact same height.
+    private static let bandCharacter: [CGFloat] = (0..<bandCount).map { i in
+        let x = sin(Double(i) * 12.9898) * 43758.5453
+        let fraction = x - floor(x)
+        return CGFloat(0.5 + fraction * 0.5)
+    }
 
     private var palette: [Color] {
         if isError { return [Brand.error, Brand.errorWarm] }
@@ -243,15 +260,24 @@ struct WaveformVisualizer: View {
                 draw(into: &context, canvasSize: canvasSize, time: timeline.date.timeIntervalSinceReferenceDate)
             }
         }
-        .frame(width: size * 3.4, height: size * 0.85)
+        // Taller than the wave's own amplitude on purpose — the glow needs headroom above and
+        // below the line's peak or it visibly clips against the view's own bounds the moment
+        // the mic gets loud.
+        .frame(width: size * 3.4, height: size * 1.4)
         .onChange(of: energy) { _, newValue in
             guard isAnimating else { return }
-            samples.removeFirst()
-            samples.append(max(0, min(1, newValue)))
+            let clamped = max(0, min(1, newValue))
+            for i in 0..<Self.bandCount {
+                let target = clamped * Self.bandCharacter[i]
+                // Fast attack (snap straight to a louder target), slower decay (ease back
+                // down) — the same asymmetry a real VU meter uses so peaks read instantly but
+                // the motion still looks fluid rather than jittery on the way back down.
+                bandLevels[i] = target > bandLevels[i] ? target : bandLevels[i] + (target - bandLevels[i]) * 0.35
+            }
         }
         .onChange(of: isAnimating) { _, animating in
             guard !animating else { return }
-            samples = Array(repeating: 0, count: Self.sampleCount)
+            bandLevels = Array(repeating: 0, count: Self.bandCount)
         }
     }
 
@@ -265,31 +291,31 @@ struct WaveformVisualizer: View {
 
     private func draw(into context: inout GraphicsContext, canvasSize: CGSize, time: TimeInterval) {
         let midY = canvasSize.height / 2
-        let n = samples.count
+        let n = Self.bandCount
         // Never truly silent: a slow, low breathing term so a quiet mic still reads as a
         // living, softly waving line rather than a dead flat one.
         let breathing = 0.05 + 0.035 * sin(time * 0.8)
+        // Room for the glow to bleed past the line's own peak without hitting the canvas edge.
+        let amplitudeScale = canvasSize.height * 0.3
 
         func amplitude(at index: Int) -> CGFloat {
             let unit = CGFloat(index) / CGFloat(n - 1)
-            let wobble = 1 + sin(time * 2.2 + Double(index) * 0.4) * 0.12
-            return (samples[index] + breathing) * edgeEnvelope(unit) * CGFloat(wobble)
+            let wobble = 1 + sin(time * 2.2 + Double(index) * 0.4) * 0.1
+            return (bandLevels[index] + breathing) * edgeEnvelope(unit) * CGFloat(wobble)
         }
 
         var corePath = Path()
         for i in 0..<n {
             let unit = CGFloat(i) / CGFloat(n - 1)
             let x = unit * canvasSize.width
-            let y = midY - amplitude(at: i) * canvasSize.height * 0.85
+            let y = midY - amplitude(at: i) * amplitudeScale
             if i == 0 { corePath.move(to: CGPoint(x: x, y: y)) } else { corePath.addLine(to: CGPoint(x: x, y: y)) }
         }
 
-        let gradient = Gradient(stops: [
-            .init(color: palette[0].opacity(0), location: 0),
-            .init(color: palette[0].opacity(0.95), location: 0.5),
-            .init(color: palette.count > 1 ? palette[1].opacity(0.95) : palette[0].opacity(0.95), location: 0.5),
-            .init(color: (palette.count > 1 ? palette[1] : palette[0]).opacity(0), location: 1),
-        ])
+        // A smooth left-to-right blend between the two palette colors, fading to transparent
+        // at both ends — never a hard split, always a continuous gradient across the line.
+        let secondColor = palette.count > 1 ? palette[1] : palette[0]
+        let gradient = Gradient(colors: [palette[0].opacity(0), palette[0], secondColor, secondColor.opacity(0)])
         let start = CGPoint(x: 0, y: midY)
         let end = CGPoint(x: canvasSize.width, y: midY)
 
@@ -314,7 +340,7 @@ struct WaveformVisualizer: View {
             guard env > 0.02 else { continue }
             let amp = amplitude(at: i)
             let x = unit * canvasSize.width
-            let y = midY - amp * canvasSize.height * 0.85
+            let y = midY - amp * amplitudeScale
             let particleCount = Int(1 + env * (2 + amp * 5))
             for p in 0..<particleCount {
                 let seed = Double(i * 37 + p * 11)
