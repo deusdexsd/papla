@@ -817,6 +817,19 @@ struct SettingsContent: View {
         .onAppear { HUDPreview.show() }
         .onDisappear { HUDPreview.hide() }
 
+        panel(label: "Wizualizacja") {
+            Picker("Kształt", selection: $settings.hudVisualizerStyle) {
+                ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in
+                    Text(style.displayName).tag(style)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            note("Kula — miękka, świetlista kula w duchu Siri. Fala — rząd pasków reagujących "
+                + "na poziom głosu, jak wizualizacja poleceń głosowych w Tesli. Dotyczy HUD-u "
+                + "dyktowania, miernika w oknie głównym i HUD-u chwytania tekstu naraz.")
+        }
+
         panel(label: "Rozpiętość nasłuchu") {
             HStack(spacing: DS.Space.base) {
                 Silkscreen(text: "Mało")

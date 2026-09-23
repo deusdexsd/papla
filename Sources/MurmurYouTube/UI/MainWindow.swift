@@ -148,7 +148,7 @@ private struct TransportPanel: View {
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {
                 Silkscreen(text: "Poziom")
-                SiriOrb(
+                VisualizerView(
                     energy: levelEnergy,
                     isAnimating: isRecording,
                     isError: false,

@@ -68,6 +68,22 @@ enum TranslateLanguage: String, CaseIterable, Sendable {
     }
 }
 
+/// The dictation indicator's shape — shown in the HUD, the main window's level meter, and
+/// the grab HUD, wherever `VisualizerView` is used.
+enum HUDVisualizerStyle: String, CaseIterable, Sendable {
+    case orb
+    /// A scrolling row of mirrored bars reacting to mic level — a modern equalizer look,
+    /// closer to Tesla's own voice-command visualizer than a soft glowing sphere.
+    case waveform
+
+    var displayName: String {
+        switch self {
+        case .orb: "Kula"
+        case .waveform: "Fala"
+        }
+    }
+}
+
 /// Light / dark / follow-the-system for the floating search panel.
 enum PanelAppearance: String, CaseIterable, Sendable {
     case system, light, dark
@@ -272,6 +288,12 @@ final class Settings {
     /// fixed `0.7` in `SiriOrb`.
     var orbSpread: Double {
         didSet { defaults.set(orbSpread, forKey: Keys.orbSpread) }
+    }
+
+    /// Which shape the dictation indicator draws as — the orb everywhere it's shown (HUD,
+    /// the main window's level meter, the grab HUD).
+    var hudVisualizerStyle: HUDVisualizerStyle {
+        didSet { defaults.set(hudVisualizerStyle.rawValue, forKey: Keys.hudVisualizerStyle) }
     }
 
     // MARK: Colors
@@ -481,6 +503,7 @@ final class Settings {
         static let hudPosition = "hudPosition"
         static let hudMargin = "hudMargin"
         static let orbSpread = "orbSpread"
+        static let hudVisualizerStyle = "hudVisualizerStyle"
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
         static let accentTertiary = "accentTertiary"
@@ -531,6 +554,7 @@ final class Settings {
         hudPosition = HUDPosition(rawValue: defaults.string(forKey: Keys.hudPosition) ?? "") ?? .bottom
         hudMargin = defaults.object(forKey: Keys.hudMargin) as? Double ?? 48
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
+        hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
 
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary
         accentSecondary = Settings.decode(RGBColor.self, defaults, Keys.accentSecondary) ?? Brand.defaultSecondary

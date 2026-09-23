@@ -12,7 +12,7 @@ struct GrabHUDView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            SiriOrb(energy: energy, isAnimating: isAnimating, isError: isError, size: Self.orbSize)
+            VisualizerView(energy: energy, isAnimating: isAnimating, isError: isError, size: Self.orbSize)
 
             if let message {
                 Text(message)

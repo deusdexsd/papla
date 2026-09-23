@@ -51,7 +51,7 @@ struct HUDView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            SiriOrb(
+            VisualizerView(
                 energy: energy, isAnimating: isAnimating, isError: isError,
                 isTranslating: controller.wantsTranslate, size: Self.orbSize
             )
@@ -188,5 +188,79 @@ struct SiriOrb: View {
             .fill(.white.opacity(0.9))
             .frame(width: size * (0.18 + energy * 0.08), height: size * (0.18 + energy * 0.08))
             .blur(radius: size * 0.057)
+    }
+}
+
+/// Picks the orb or the waveform per `Settings.hudVisualizerStyle` — the one place any of the
+/// three call sites (dictation HUD, main window's level meter, grab HUD) need to touch, so
+/// adding a third style later only means adding a case here.
+struct VisualizerView: View {
+    var energy: CGFloat
+    var isAnimating: Bool
+    var isError: Bool = false
+    var isTranslating: Bool = false
+    var size: CGFloat = 44
+
+    var body: some View {
+        switch Settings.shared.hudVisualizerStyle {
+        case .orb:
+            SiriOrb(energy: energy, isAnimating: isAnimating, isError: isError, isTranslating: isTranslating, size: size)
+        case .waveform:
+            WaveformVisualizer(energy: energy, isAnimating: isAnimating, isError: isError, isTranslating: isTranslating, size: size)
+        }
+    }
+}
+
+/// A modern, mirrored equalizer bar — mic level scrolls through a short history buffer
+/// instead of driving one single shape, closer to the voice-command visualizer on a Tesla
+/// dash than a glowing sphere. Same `energy`/`isAnimating`/`isError`/`isTranslating` inputs
+/// as `SiriOrb`, so `VisualizerView` can swap between the two without either caller knowing.
+struct WaveformVisualizer: View {
+    var energy: CGFloat
+    var isAnimating: Bool
+    var isError: Bool = false
+    var isTranslating: Bool = false
+    var size: CGFloat = 44
+
+    private static let barCount = 24
+    @State private var samples = Array(repeating: CGFloat(0.06), count: barCount)
+
+    private var palette: [Color] {
+        if isError { return [Brand.error, Brand.errorWarm] }
+        if isTranslating { return [Brand.accentTranslate, Brand.accentTranslateCool] }
+        return [Brand.accent, Brand.accentCool]
+    }
+
+    private var barWidth: CGFloat { size * 1.7 / CGFloat(Self.barCount) * 0.55 }
+
+    var body: some View {
+        HStack(spacing: max(1, size * 0.02)) {
+            ForEach(0..<Self.barCount, id: \.self) { index in
+                Capsule()
+                    .fill(LinearGradient(colors: palette, startPoint: .top, endPoint: .bottom))
+                    .frame(width: barWidth, height: barHeight(at: index))
+            }
+        }
+        .frame(width: size * 1.7, height: size)
+        .animation(.easeOut(duration: 0.1), value: samples)
+        .onChange(of: energy) { _, newValue in
+            guard isAnimating else { return }
+            samples.removeFirst()
+            samples.append(max(0, min(1, newValue)))
+        }
+        .onChange(of: isAnimating) { _, animating in
+            guard !animating else { return }
+            samples = Array(repeating: 0.06, count: Self.barCount)
+        }
+    }
+
+    /// A center-weighted envelope (bars taper down toward the edges) times the live sample
+    /// at that position — reads as a real equalizer instead of a flat row of identical bars.
+    private func barHeight(at index: Int) -> CGFloat {
+        let mid = CGFloat(Self.barCount - 1) / 2
+        let distance = mid == 0 ? 0 : abs(CGFloat(index) - mid) / mid
+        let envelope = 1 - distance * 0.6
+        let minHeight = size * 0.08
+        return minHeight + (size - minHeight) * samples[index] * envelope
     }
 }
