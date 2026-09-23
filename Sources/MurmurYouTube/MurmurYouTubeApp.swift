@@ -111,9 +111,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         observeState()
         observeGrabState()
+        installStatusItemRightClick()
         let readyMessage = "Papla gotowa — przytrzymaj \(Settings.shared.triggerDisplayName), żeby dyktować, "
             + "albo \(Settings.shared.grabShortcut.displayName), żeby chwycić tekst z ekranu"
         Log.app.info("\(readyMessage, privacy: .public)")
+    }
+
+    /// `MenuBarExtra` gives no hook for telling clicks apart — any click opens its menu. So a
+    /// local event monitor watches for a right-click (or ctrl-click) landing on the status bar
+    /// window and turns it into "open Papla" instead, swallowing it so the menu doesn't also
+    /// drop down; an ordinary left click is left alone and opens the menu as before.
+    private func installStatusItemRightClick() {
+        NSEvent.addLocalMonitorForEvents(matching: [.rightMouseDown, .leftMouseDown]) { event in
+            let isRight = event.type == .rightMouseDown
+                || (event.type == .leftMouseDown && event.modifierFlags.contains(.control))
+            guard isRight, let window = event.window,
+                  String(describing: type(of: window)).contains("StatusBar")
+            else { return event }
+            NotificationCenter.default.post(name: .openPaplaWindow, object: nil)
+            return nil
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
