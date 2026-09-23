@@ -23,6 +23,9 @@ struct ClipboardView: View {
     @State private var filter: ClipboardKind?
     @State private var selection: UUID?
     @State private var flashedID: UUID?
+    /// What a row is showing in place of "Skopiowano" while/after a translation — "Tłumaczę…",
+    /// or the failure. Success is the ordinary copy flash, so this only ever holds the other two.
+    @State private var translateStatus: (id: UUID, text: String)?
     @State private var isConfirmingClear = false
     @FocusState private var searchFocused: Bool
 
@@ -179,6 +182,7 @@ struct ClipboardView: View {
                             isSelected: selection == item.id,
                             quickIndex: isPanel && index < 9 ? index + 1 : nil,
                             didCopy: flashedID == item.id,
+                            statusText: translateStatus?.id == item.id ? translateStatus?.text : nil,
                             style: style,
                             onDelete: { remove(item) }
                         )
@@ -220,6 +224,7 @@ struct ClipboardView: View {
             if isPanel {
                 hint("↩", t("Kopiuj", "Copy"))
                 hint("⌘V", t("Wklej", "Paste"))
+                hint("⌘T", t("Tłumacz", "Translate"))
                 hint("⌘⌫", t("Usuń", "Delete"))
                 Button { controller.openSettings() } label: {
                     Image(systemName: "gearshape")
@@ -326,7 +331,7 @@ struct ClipboardView: View {
     /// it before the result is even back.
     private func translate(_ item: ClipboardItem, to target: Locale.Language) {
         guard let text = item.text else { return }
-        flashedID = item.id
+        translateStatus = (item.id, t("Tłumaczę…", "Translating…"))
         controller.isTranslating = true
         Task {
             defer { controller.isTranslating = false }
@@ -339,11 +344,16 @@ struct ClipboardView: View {
                 if Settings.shared.clipboardTranslateAddsToHistory {
                     store.add(ClipboardItem(date: Date(), kind: .text, text: translated, appName: t("Tłumaczenie", "Translation")))
                 }
+                translateStatus = nil
+                flashedID = item.id
+                try? await Task.sleep(for: .seconds(1.2))
+                if flashedID == item.id { flashedID = nil }
             } catch {
-                Log.app.error("clipboard translate failed: \(error.localizedDescription, privacy: .public)")
+                Log.app.error("clipboard translate failed: \(String(describing: error), privacy: .public)")
+                translateStatus = (item.id, t("Nie udało się przetłumaczyć", "Translation failed"))
+                try? await Task.sleep(for: .seconds(3))
+                if translateStatus?.id == item.id { translateStatus = nil }
             }
-            try? await Task.sleep(for: .seconds(1.2))
-            if flashedID == item.id { flashedID = nil }
         }
     }
 
@@ -379,6 +389,10 @@ struct ClipboardView: View {
         }
 
         guard isPanel, command else { return .ignored }
+        if press.characters == "t", let selected, let direction = translateDirection(for: selected) {
+            translate(selected, to: direction.target)
+            return .handled
+        }
         if press.characters == "v", let selected {
             controller.paste(selected)
             return .handled
@@ -398,6 +412,7 @@ private struct ClipboardRow: View {
     let isSelected: Bool
     let quickIndex: Int?
     let didCopy: Bool
+    var statusText: String?
     let style: PanelStyle
     let onDelete: () -> Void
 
@@ -483,7 +498,11 @@ private struct ClipboardRow: View {
 
     @ViewBuilder
     private var trailing: some View {
-        if didCopy {
+        if let statusText {
+            Text(statusText)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(onAccent ? .white : style.accent)
+        } else if didCopy {
             Text(t("Skopiowano", "Copied"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(onAccent ? .white : style.accent)

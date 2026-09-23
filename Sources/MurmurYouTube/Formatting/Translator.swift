@@ -49,12 +49,30 @@ enum Translator {
         if let source {
             status = await availability.status(from: source, to: target)
         } else {
-            status = (try? await availability.status(for: text, to: target)) ?? .installed
+            // Detection failing outright is treated as "can't vouch for it being installed" —
+            // the visible path below handles both cases, the offscreen one only the first.
+            status = (try? await availability.status(for: text, to: target)) ?? .supported
         }
         if status == .unsupported { throw TranslatorError.unavailable }
-        let needsDownload = status == .supported
 
-        return try await withCheckedThrowingContinuation { continuation in
+        if status == .installed {
+            do {
+                return try await run(text, source: source, target: target, needsDownload: false)
+            } catch TranslatorError.timedOut {
+                throw TranslatorError.timedOut
+            } catch {
+                // The status said "installed" but the offscreen session still refused
+                // ("Unable to Translate") — retry once where the system can show its own UI.
+                Log.app.error("offscreen translation failed (\(String(describing: error), privacy: .public)) — retrying visibly")
+            }
+        }
+        return try await run(text, source: source, target: target, needsDownload: true)
+    }
+
+    private static func run(
+        _ text: String, source: Locale.Language?, target: Locale.Language, needsDownload: Bool
+    ) async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
             let host = TranslationHostWindow(
                 text: text, source: source, target: target, needsDownload: needsDownload
             ) { result in
@@ -154,7 +172,7 @@ private struct TranslationTaskView: View {
             if needsDownload {
                 VStack(spacing: 10) {
                     ProgressView()
-                    Text(t("Pobieram pakiet językowy do tłumaczenia…", "Downloading the translation language pack…"))
+                    Text(t("Tłumaczenie: zatwierdź pobranie pakietu językowego w oknie systemowym.", "Translation: approve the language pack download in the system prompt."))
                         .font(.system(size: 13))
                         .multilineTextAlignment(.center)
                 }
