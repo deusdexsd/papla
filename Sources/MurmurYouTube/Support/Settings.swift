@@ -348,6 +348,40 @@ final class Settings {
         translateAccentTertiary = Brand.defaultTranslateTertiary
     }
 
+    /// The waveform visualizer's own three colors — independent of the orb's, so picking a
+    /// different palette for one never drags the other along with it.
+    var waveformAccentPrimary: RGBColor {
+        didSet { encode(waveformAccentPrimary, forKey: Keys.waveformAccentPrimary) }
+    }
+    var waveformAccentSecondary: RGBColor {
+        didSet { encode(waveformAccentSecondary, forKey: Keys.waveformAccentSecondary) }
+    }
+    var waveformAccentTertiary: RGBColor {
+        didSet { encode(waveformAccentTertiary, forKey: Keys.waveformAccentTertiary) }
+    }
+
+    func resetWaveformAccentColors() {
+        waveformAccentPrimary = Brand.defaultWaveformPrimary
+        waveformAccentSecondary = Brand.defaultWaveformSecondary
+        waveformAccentTertiary = Brand.defaultWaveformTertiary
+    }
+
+    var waveformTranslateAccentPrimary: RGBColor {
+        didSet { encode(waveformTranslateAccentPrimary, forKey: Keys.waveformTranslateAccentPrimary) }
+    }
+    var waveformTranslateAccentSecondary: RGBColor {
+        didSet { encode(waveformTranslateAccentSecondary, forKey: Keys.waveformTranslateAccentSecondary) }
+    }
+    var waveformTranslateAccentTertiary: RGBColor {
+        didSet { encode(waveformTranslateAccentTertiary, forKey: Keys.waveformTranslateAccentTertiary) }
+    }
+
+    func resetWaveformTranslateAccentColors() {
+        waveformTranslateAccentPrimary = Brand.defaultWaveformTranslatePrimary
+        waveformTranslateAccentSecondary = Brand.defaultWaveformTranslateSecondary
+        waveformTranslateAccentTertiary = Brand.defaultWaveformTranslateTertiary
+    }
+
     // MARK: Chwytanie tekstu (grab-text OCR)
 
     /// The global shortcut that opens the region-selection overlay. Deliberately its own
@@ -523,6 +557,12 @@ final class Settings {
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
         static let accentTertiary = "accentTertiary"
+        static let waveformAccentPrimary = "waveformAccentPrimary"
+        static let waveformAccentSecondary = "waveformAccentSecondary"
+        static let waveformAccentTertiary = "waveformAccentTertiary"
+        static let waveformTranslateAccentPrimary = "waveformTranslateAccentPrimary"
+        static let waveformTranslateAccentSecondary = "waveformTranslateAccentSecondary"
+        static let waveformTranslateAccentTertiary = "waveformTranslateAccentTertiary"
         static let grabShortcut = "grabShortcut"
         static let grabPrimaryLanguage = "grabPrimaryLanguage"
         static let grabSecondaryLanguage = "grabSecondaryLanguage"
@@ -571,7 +611,7 @@ final class Settings {
         hudMargin = defaults.object(forKey: Keys.hudMargin) as? Double ?? 48
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
-        appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .polish
+        appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .english
 
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary
         accentSecondary = Settings.decode(RGBColor.self, defaults, Keys.accentSecondary) ?? Brand.defaultSecondary
@@ -579,6 +619,12 @@ final class Settings {
         translateAccentPrimary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentPrimary) ?? Brand.defaultTranslatePrimary
         translateAccentSecondary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentSecondary) ?? Brand.defaultTranslateSecondary
         translateAccentTertiary = Settings.decode(RGBColor.self, defaults, Keys.translateAccentTertiary) ?? Brand.defaultTranslateTertiary
+        waveformAccentPrimary = Settings.decode(RGBColor.self, defaults, Keys.waveformAccentPrimary) ?? Brand.defaultWaveformPrimary
+        waveformAccentSecondary = Settings.decode(RGBColor.self, defaults, Keys.waveformAccentSecondary) ?? Brand.defaultWaveformSecondary
+        waveformAccentTertiary = Settings.decode(RGBColor.self, defaults, Keys.waveformAccentTertiary) ?? Brand.defaultWaveformTertiary
+        waveformTranslateAccentPrimary = Settings.decode(RGBColor.self, defaults, Keys.waveformTranslateAccentPrimary) ?? Brand.defaultWaveformTranslatePrimary
+        waveformTranslateAccentSecondary = Settings.decode(RGBColor.self, defaults, Keys.waveformTranslateAccentSecondary) ?? Brand.defaultWaveformTranslateSecondary
+        waveformTranslateAccentTertiary = Settings.decode(RGBColor.self, defaults, Keys.waveformTranslateAccentTertiary) ?? Brand.defaultWaveformTranslateTertiary
 
         grabShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.grabShortcut) ?? .defaultGrabShortcut
         grabPrimaryLanguage = defaults.string(forKey: Keys.grabPrimaryLanguage) ?? "pl-PL"

@@ -19,6 +19,15 @@ enum Brand {
     static var accentTranslateWarm: Color { Settings.shared.translateAccentSecondary.color }
     static var accentTranslateCool: Color { Settings.shared.translateAccentTertiary.color }
 
+    /// The waveform visualizer's own three colors — deliberately a separate setting from the
+    /// orb's `accent*` above, so customizing one never drags the other along with it.
+    static var waveformAccent: Color { Settings.shared.waveformAccentPrimary.color }
+    static var waveformAccentWarm: Color { Settings.shared.waveformAccentSecondary.color }
+    static var waveformAccentCool: Color { Settings.shared.waveformAccentTertiary.color }
+    static var waveformAccentTranslate: Color { Settings.shared.waveformTranslateAccentPrimary.color }
+    static var waveformAccentTranslateWarm: Color { Settings.shared.waveformTranslateAccentSecondary.color }
+    static var waveformAccentTranslateCool: Color { Settings.shared.waveformTranslateAccentTertiary.color }
+
     static var gradient: LinearGradient {
         LinearGradient(colors: [accent, accentWarm], startPoint: .leading, endPoint: .trailing)
     }
@@ -33,6 +42,16 @@ enum Brand {
     static let defaultTranslatePrimary = RGBColor(r: 0.30, g: 0.78, b: 0.48)
     static let defaultTranslateSecondary = RGBColor(r: 0.96, g: 0.78, b: 0.25)
     static let defaultTranslateTertiary = RGBColor(r: 0.35, g: 0.85, b: 0.70)
+
+    /// A cyan/teal/pink family, deliberately distinct from the orb's blue/violet — the two
+    /// visualizers read as different things even before anyone customizes either.
+    static let defaultWaveformPrimary = RGBColor(r: 0.30, g: 0.85, b: 0.95)
+    static let defaultWaveformSecondary = RGBColor(r: 0.55, g: 0.60, b: 1.0)
+    static let defaultWaveformTertiary = RGBColor(r: 0.95, g: 0.45, b: 0.80)
+
+    static let defaultWaveformTranslatePrimary = defaultTranslatePrimary
+    static let defaultWaveformTranslateSecondary = defaultTranslateSecondary
+    static let defaultWaveformTranslateTertiary = defaultTranslateTertiary
 }
 
 /// The floating indicator while you hold the key: just the orb, no card, no pill, no bar
@@ -240,18 +259,24 @@ struct WaveformVisualizer: View {
     @State private var bandLevels = Array(repeating: CGFloat(0), count: bandCount)
 
     /// A fixed, deterministic per-band multiplier (not random per-frame — the same band is
-    /// always a little louder or quieter than its neighbor) so the wave has organic texture
-    /// instead of every band snapping to the exact same height.
+    /// always a little louder or quieter than its neighbor) so the wave has organic, scattered
+    /// texture instead of every band snapping to the exact same height. Wide range (down to
+    /// 0.2, up past 1) on purpose — a narrow range reads as a tame, uniform ripple; this reads
+    /// as genuinely reactive and a little chaotic, the way a real spectrum does.
     private static let bandCharacter: [CGFloat] = (0..<bandCount).map { i in
         let x = sin(Double(i) * 12.9898) * 43758.5453
         let fraction = x - floor(x)
-        return CGFloat(0.5 + fraction * 0.5)
+        return CGFloat(0.2 + fraction * 1.3)
     }
 
+    /// Waveform colors are independent of the orb's own `accent*` — a separate Ustawienia
+    /// setting, so customizing one never touches the other.
     private var palette: [Color] {
         if isError { return [Brand.error, Brand.errorWarm] }
-        if isTranslating { return [Brand.accentTranslate, Brand.accentTranslateCool] }
-        return [Brand.accent, Brand.accentCool]
+        if isTranslating {
+            return [Brand.waveformAccentTranslate, Brand.waveformAccentTranslateWarm, Brand.waveformAccentTranslateCool]
+        }
+        return [Brand.waveformAccent, Brand.waveformAccentWarm, Brand.waveformAccentCool]
     }
 
     var body: some View {
@@ -262,17 +287,21 @@ struct WaveformVisualizer: View {
         }
         // Taller than the wave's own amplitude on purpose — the glow needs headroom above and
         // below the line's peak or it visibly clips against the view's own bounds the moment
-        // the mic gets loud.
-        .frame(width: size * 3.4, height: size * 1.4)
+        // the mic gets loud. Shorter horizontally than the first pass — the long version read
+        // as an oversized, slow-feeling shape rather than a compact reactive one.
+        .frame(width: size * 2.3, height: size * 1.4)
         .onChange(of: energy) { _, newValue in
             guard isAnimating else { return }
-            let clamped = max(0, min(1, newValue))
+            // A bit of gain above 1 on purpose — a raised peak reads as punchier and more
+            // reactive; edgeEnvelope and the draw-time scale still keep it from ever
+            // overflowing the frame.
+            let clamped = max(0, min(1, newValue)) * 1.3
             for i in 0..<Self.bandCount {
                 let target = clamped * Self.bandCharacter[i]
-                // Fast attack (snap straight to a louder target), slower decay (ease back
-                // down) — the same asymmetry a real VU meter uses so peaks read instantly but
-                // the motion still looks fluid rather than jittery on the way back down.
-                bandLevels[i] = target > bandLevels[i] ? target : bandLevels[i] + (target - bandLevels[i]) * 0.35
+                // Fast attack (snap straight to a louder target), quicker decay than before —
+                // the same asymmetry a real VU meter uses so peaks read instantly and the
+                // motion doesn't linger, staying tightly tied to what's happening right now.
+                bandLevels[i] = target > bandLevels[i] ? target : bandLevels[i] + (target - bandLevels[i]) * 0.5
             }
         }
         .onChange(of: isAnimating) { _, animating in
@@ -301,7 +330,8 @@ struct WaveformVisualizer: View {
         func amplitude(at index: Int) -> CGFloat {
             let unit = CGFloat(index) / CGFloat(n - 1)
             let wobble = 1 + sin(time * 2.2 + Double(index) * 0.4) * 0.1
-            return (bandLevels[index] + breathing) * edgeEnvelope(unit) * CGFloat(wobble)
+            let raw = (bandLevels[index] + breathing) * edgeEnvelope(unit) * CGFloat(wobble)
+            return min(1, raw) // headroom guarantee: never lets the extra gain push past the frame
         }
 
         var corePath = Path()
@@ -312,10 +342,21 @@ struct WaveformVisualizer: View {
             if i == 0 { corePath.move(to: CGPoint(x: x, y: y)) } else { corePath.addLine(to: CGPoint(x: x, y: y)) }
         }
 
-        // A smooth left-to-right blend between the two palette colors, fading to transparent
-        // at both ends — never a hard split, always a continuous gradient across the line.
-        let secondColor = palette.count > 1 ? palette[1] : palette[0]
-        let gradient = Gradient(colors: [palette[0].opacity(0), palette[0], secondColor, secondColor.opacity(0)])
+        // A bloom from the center, not a left/right split: transparent at both ends, ramping
+        // through all three palette colors and peaking at the middle. The two inner stops'
+        // positions drift slowly over time — the same "always a little in motion" quality as
+        // the orb's own orbiting blobs, just expressed as color travelling along the line
+        // instead of blobs travelling around a circle.
+        let drift = sin(time * 0.35) * 0.06
+        let third = palette.count > 2 ? palette[2] : palette[0]
+        let second = palette.count > 1 ? palette[1] : palette[0]
+        let gradient = Gradient(stops: [
+            .init(color: palette[0].opacity(0), location: 0),
+            .init(color: palette[0], location: 0.32 + drift),
+            .init(color: second, location: 0.5),
+            .init(color: third, location: 0.68 - drift),
+            .init(color: third.opacity(0), location: 1),
+        ])
         let start = CGPoint(x: 0, y: midY)
         let end = CGPoint(x: canvasSize.width, y: midY)
 

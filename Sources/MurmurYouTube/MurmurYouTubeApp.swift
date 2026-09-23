@@ -340,6 +340,14 @@ private struct MenuContent: View {
             .disabled(isPreloadingParakeet || parakeetOnDisk)
 
 
+        Picker(t("Język", "Language"), selection: $settings.appLanguage) {
+            ForEach(AppLanguage.allCases, id: \.self) { language in
+                Text(language.displayName).tag(language)
+            }
+        }
+
+        Divider()
+
         if !Permissions.hasAccessibility {
             Button(t("Nadaj uprawnienia: Ułatwienia dostępu…", "Grant permission: Accessibility…")) { Permissions.openAccessibilitySettings() }
         }

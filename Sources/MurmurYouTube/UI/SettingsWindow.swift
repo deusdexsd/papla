@@ -936,13 +936,33 @@ struct SettingsContent: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            note(t("Kula — miękka, świetlista kula w duchu Siri. Fala — rząd pasków reagujących "
-                + "na poziom głosu, jak wizualizacja poleceń głosowych w Tesli. Dotyczy HUD-u "
-                + "dyktowania, miernika w oknie głównym i HUD-u chwytania tekstu naraz.",
-                "Orb — a soft, glowing sphere in the spirit of Siri. Wave — a row of bars "
-                + "reacting to your voice level, like Tesla's voice command visualizer. "
-                + "Applies to the dictation HUD, the meter in the main window, and the "
-                + "grab HUD alike."))
+            note(t("Kula — miękka, świetlista kula w duchu Siri. Fala — świetlista smuga "
+                + "reagująca na poziom głosu w czasie rzeczywistym. Dotyczy HUD-u dyktowania, "
+                + "miernika w oknie głównym i HUD-u chwytania tekstu naraz.",
+                "Orb — a soft, glowing sphere in the spirit of Siri. Wave — a glowing streak "
+                + "reacting to your voice level in real time. Applies to the dictation HUD, "
+                + "the meter in the main window, and the grab HUD alike."))
+        }
+
+        panel(label: t("Kolory fali", "Wave colors")) {
+            HStack(spacing: DS.Space.roomy) {
+                colorSwatch(t("Pierwszy", "First"), binding: Binding(
+                    get: { settings.waveformAccentPrimary.color },
+                    set: { settings.waveformAccentPrimary = RGBColor($0) }
+                ))
+                colorSwatch(t("Drugi", "Second"), binding: Binding(
+                    get: { settings.waveformAccentSecondary.color },
+                    set: { settings.waveformAccentSecondary = RGBColor($0) }
+                ))
+                colorSwatch(t("Trzeci", "Third"), binding: Binding(
+                    get: { settings.waveformAccentTertiary.color },
+                    set: { settings.waveformAccentTertiary = RGBColor($0) }
+                ))
+                Spacer()
+                TransportKey(title: t("Domyślne", "Defaults")) { settings.resetWaveformAccentColors() }
+            }
+            note(t("Własna paleta dla wizualizacji „Fala” — niezależna od kolorów orbu powyżej.",
+                "The wave visualization's own palette — independent of the orb's colors above."))
         }
 
         panel(label: t("Rozpiętość nasłuchu", "Listening range")) {
