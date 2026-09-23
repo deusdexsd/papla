@@ -928,6 +928,36 @@ struct SettingsContent: View {
                     + "system language, and of what language you dictate or translate into."))
         }
 
+        panel(label: t("Ikona w pasku menu", "Menu bar icon")) {
+            HStack(spacing: DS.Space.snug) {
+                ForEach(MenuBarIconStyle.allCases, id: \.self) { style in
+                    let isOn = settings.menuBarIconStyle == style
+                    Button {
+                        settings.menuBarIconStyle = style
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: style.symbol(active: false))
+                                .font(.system(size: 20))
+                                .frame(height: 24)
+                            Text(style.displayName).font(DS.Font.caption)
+                        }
+                        .foregroundStyle(isOn ? Brand.accent : DS.Color.inkSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, DS.Space.snug)
+                        .background(
+                            RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
+                                .fill(isOn ? Brand.accent.opacity(0.14) : DS.Color.seam)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            note(t("Jak wygląda ikona Papli w pasku menu. Podczas dyktowania zmienia się na "
+                + "wypełnioną wersję. Lewy klik otwiera/zamyka okno Papli, prawy — menu.",
+                "How Papla's icon looks in the menu bar. It switches to a filled version while "
+                + "dictating. Left click opens/closes the Papla window, right click opens the menu."))
+        }
+
         panel(label: t("Wizualizacja", "Visualization")) {
             Picker(t("Kształt", "Shape"), selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in

@@ -92,6 +92,35 @@ enum HUDVisualizerStyle: String, CaseIterable, Sendable {
     }
 }
 
+/// The glyph in the menu bar — five to pick from, each with a "lit" variant shown while
+/// dictating.
+enum MenuBarIconStyle: String, CaseIterable, Sendable {
+    case orb, wave, mic, bubble, spark
+
+    var symbol: String { symbol(active: false) }
+
+    func symbol(active: Bool) -> String {
+        switch self {
+        case .orb: active ? "circle.hexagongrid.fill" : "circle.hexagongrid"
+        case .wave: active ? "waveform.circle.fill" : "waveform"
+        case .mic: active ? "mic.fill" : "mic"
+        case .bubble: active ? "text.bubble.fill" : "text.bubble"
+        case .spark: active ? "sparkles" : "sparkle"
+        }
+    }
+
+    @MainActor
+    var displayName: String {
+        switch self {
+        case .orb: t("Kula", "Orb")
+        case .wave: t("Fala", "Wave")
+        case .mic: t("Mikrofon", "Microphone")
+        case .bubble: t("Dymek", "Bubble")
+        case .spark: t("Iskra", "Spark")
+        }
+    }
+}
+
 /// Light / dark / follow-the-system for the floating search panel.
 enum PanelAppearance: String, CaseIterable, Sendable {
     case system, light, dark
@@ -309,6 +338,10 @@ final class Settings {
     /// language, and of what language you dictate or translate into.
     var appLanguage: AppLanguage {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
+    }
+
+    var menuBarIconStyle: MenuBarIconStyle {
+        didSet { defaults.set(menuBarIconStyle.rawValue, forKey: Keys.menuBarIconStyle) }
     }
 
     // MARK: Colors
@@ -554,6 +587,7 @@ final class Settings {
         static let orbSpread = "orbSpread"
         static let hudVisualizerStyle = "hudVisualizerStyle"
         static let appLanguage = "appLanguage"
+        static let menuBarIconStyle = "menuBarIconStyle"
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
         static let accentTertiary = "accentTertiary"
@@ -612,6 +646,7 @@ final class Settings {
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
         appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .english
+        menuBarIconStyle = MenuBarIconStyle(rawValue: defaults.string(forKey: Keys.menuBarIconStyle) ?? "") ?? .orb
 
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary
         accentSecondary = Settings.decode(RGBColor.self, defaults, Keys.accentSecondary) ?? Brand.defaultSecondary

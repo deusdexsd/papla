@@ -119,14 +119,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// `MenuBarExtra` gives no hook for telling clicks apart — any click opens its menu. So a
     /// local event monitor watches for a plain left click landing on the status bar window and
-    /// turns it into "open Papla's window", swallowing it so the menu doesn't also drop down. A
+    /// turns it into "toggle Papla's window", swallowing it so the menu doesn't also drop down. A
     /// right click (or ctrl-click) is left alone and opens the menu as usual.
     private func installStatusItemLeftClick() {
         NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown]) { event in
             guard !event.modifierFlags.contains(.control), let window = event.window,
                   String(describing: type(of: window)).contains("StatusBar")
             else { return event }
-            NotificationCenter.default.post(name: .openPaplaWindow, object: nil)
+            // A second click closes it again — but only if it's actually in front; a window
+            // buried behind others should come forward instead of vanishing.
+            if let main = NSApp.windows.first(where: { $0.title == "Papla" && !($0 is NSPanel) }),
+               main.isVisible, main.isKeyWindow {
+                main.close()
+            } else {
+                NotificationCenter.default.post(name: .openPaplaWindow, object: nil)
+            }
             return nil
         }
     }
@@ -206,7 +213,7 @@ private struct OrbMenuBarIcon: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: isActive ? "circle.hexagongrid.fill" : "circle.hexagongrid")
+            Image(systemName: settings.menuBarIconStyle.symbol(active: isActive))
             if settings.showTimerInMenuBar, let next = timerStore.entries.first {
                 Text(remaining(next.fireDate)).monospacedDigit()
             }
