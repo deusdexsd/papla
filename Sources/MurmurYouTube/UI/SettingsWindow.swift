@@ -32,7 +32,7 @@ struct SettingsWindow: View {
 /// feature. A small tab row up top, the same `TransportKey` idiom the rest of the app uses
 /// for switching sections, keeps them apart without needing three separate windows.
 private enum SettingsTab: String, CaseIterable, Identifiable {
-    case dictation, grab, clipboard, colors, timer, appearance, dictionary, model
+    case dictation, grab, clipboard, colors, timer, appearance, dictionary, model, permissions
 
     var id: String { rawValue }
     @MainActor
@@ -46,6 +46,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .appearance: t("Wygląd", "Appearance")
         case .dictionary: t("Słownik", "Dictionary")
         case .model: t("Model", "Model")
+        case .permissions: t("Uprawnienia", "Permissions")
         }
     }
 }
@@ -102,6 +103,7 @@ struct SettingsContent: View {
                         case .appearance: appearancePanels
                         case .dictionary: EmptyView()
                         case .model: ModelSettingsPanel(controller: controller)
+                        case .permissions: PermissionsSettingsPanel()
                         }
                     }
                     .padding(.bottom, DS.Space.roomy)

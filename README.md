@@ -69,6 +69,7 @@ xattr -cr /Applications/Papla.app
 
 ### Porady
 
+- Wszystkie uprawnienia (status na żywo, skróty do ustawień systemu, restart Papli) są w Ustawienia ▸ Uprawnienia.
 - Po każdej aktualizacji (nowy podpis) macOS zapomina Dostępność: usuń Paplę z listy (−), dodaj
   ponownie i uruchom appkę od nowa.
 - Klawisze F1–F12 mają w macOS własne funkcje; do skrótów używaj kombinacji z ⌘⌥⌃ albo
