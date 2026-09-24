@@ -244,6 +244,26 @@ struct SettingsContent: View {
                 + "corrections apply regardless of this setting."))
         }
 
+        panel(label: t("Interpunkcja", "Punctuation")) {
+            HStack(spacing: DS.Space.snug) {
+                ForEach(PunctuationStyle.allCases, id: \.self) { style in
+                    TransportKey(
+                        title: style.displayName,
+                        isEngaged: settings.punctuationStyle == style,
+                        engagedColor: Brand.accent
+                    ) {
+                        settings.punctuationStyle = style
+                    }
+                }
+            }
+            note(t("Normalna — kropka na końcu jak zwykle. Bez kropki na końcu — koniec z „kropką "
+                + "nienawiści” w wiadomościach. Minimalna — dodatkowo bez przecinków (zostają ? i !). "
+                + "Po emoji i po „XD” nigdy nie ma przecinka ani kropki, niezależnie od wyboru.",
+                "Normal — a period at the end as usual. No final period — no more “hate period” in "
+                + "chat messages. Minimal — also no commas (? and ! stay). Nothing ever follows an "
+                + "emoji or “XD” — no comma, no period — whichever you pick."))
+        }
+
         panel(label: t("Dyktuj i tłumacz", "Dictate and translate")) {
             ShortcutRow(label: t("Skrót", "Shortcut"), shortcut: $settings.translateShortcut) {
                 controller.reloadHotkey()
@@ -1481,7 +1501,10 @@ private struct SearchWidthPreview: View {
                     .frame(width: width * scale, height: Self.height * scale)
             }
         }
-        .frame(height: Self.height * 0.36 + 8)
+        .frame(maxWidth: 560)
+        .aspectRatio(Self.maxWidth / Self.height, contentMode: .fit)
+        .frame(maxWidth: .infinity)
+        .clipped()
         .animation(DS.Motion.panel, value: width)
     }
 }

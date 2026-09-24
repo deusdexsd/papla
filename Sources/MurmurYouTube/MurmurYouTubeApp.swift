@@ -278,6 +278,12 @@ private struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
         }
 
+        Picker(t("Język", "Language"), selection: $settings.appLanguage) {
+            ForEach(AppLanguage.allCases, id: \.self) { language in
+                Text(language.displayName).tag(language)
+            }
+        }
+
         Divider()
 
         Text(settings.triggerMode == .hold
@@ -365,12 +371,6 @@ private struct MenuContent: View {
         Button(parakeetStatus) { preloadParakeet() }
             .disabled(isPreloadingParakeet || parakeetOnDisk)
 
-
-        Picker(t("Język", "Language"), selection: $settings.appLanguage) {
-            ForEach(AppLanguage.allCases, id: \.self) { language in
-                Text(language.displayName).tag(language)
-            }
-        }
 
         Divider()
 

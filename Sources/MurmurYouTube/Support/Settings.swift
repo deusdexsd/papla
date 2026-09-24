@@ -340,6 +340,10 @@ final class Settings {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
 
+    var punctuationStyle: PunctuationStyle {
+        didSet { defaults.set(punctuationStyle.rawValue, forKey: Keys.punctuationStyle) }
+    }
+
     var menuBarIconStyle: MenuBarIconStyle {
         didSet { defaults.set(menuBarIconStyle.rawValue, forKey: Keys.menuBarIconStyle) }
     }
@@ -592,6 +596,7 @@ final class Settings {
         static let hudVisualizerStyle = "hudVisualizerStyle"
         static let appLanguage = "appLanguage"
         static let menuBarIconStyle = "menuBarIconStyle"
+        static let punctuationStyle = "punctuationStyle"
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
         static let accentTertiary = "accentTertiary"
@@ -651,6 +656,7 @@ final class Settings {
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
         appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .english
+        punctuationStyle = PunctuationStyle(rawValue: defaults.string(forKey: Keys.punctuationStyle) ?? "") ?? .normal
         menuBarIconStyle = MenuBarIconStyle(rawValue: defaults.string(forKey: Keys.menuBarIconStyle) ?? "") ?? .orb
 
         accentPrimary = Settings.decode(RGBColor.self, defaults, Keys.accentPrimary) ?? Brand.defaultPrimary

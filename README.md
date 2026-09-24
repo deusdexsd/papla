@@ -14,6 +14,8 @@ Funkcje, każda z własnym skrótem i zakładką w ustawieniach:
   - **Emoji** — Papla sama dodaje emoji do podyktowanego tekstu według słownika reguł (bez AI,
     lokalnie). Natężenie ustawiasz w skali 0–5, możesz wyłączać pojedyncze hasła, dopisywać
     własne (fraza → emoji) i wybrać, czy emoji ma wpadać w zdaniu czy na jego końcu.
+  - **Interpunkcja** — normalna, „bez kropki na końcu" albo minimalna (bez przecinków). Po emoji i
+    po „XD" nigdy nie ma przecinka ani kropki.
   - **Wizualizacja** — podczas nagrywania kula albo fala reagująca na głos, z własnymi kolorami.
 - **Chwytanie tekstu** — zaznaczasz obszar ekranu, OCR (Apple Vision, wymuszony polski)
   kopiuje tekst do schowka. Zaznaczony kod QR / Aztec / DataMatrix / PDF417 kopiuje swoją
@@ -55,7 +57,7 @@ xattr -cr /Applications/Papla.app
 
 ### Pierwsze uruchomienie
 
-1. Uruchom Paplę — ikona pojawi się w pasku menu (lewy klik otwiera/zamyka okno, prawy pokazuje menu).
+1. Uruchom Paplę — ikona pojawi się w pasku menu (lewy klik otwiera/zamyka okno ustawień, prawy pokazuje menu z wyszukiwarką, ustawieniami i językiem).
 2. Nadaj uprawnienia w Ustawieniach systemowych ▸ Prywatność i bezpieczeństwo: **Mikrofon**,
    **Dostępność**, **Nagrywanie ekranu**.
 3. Przy pierwszym dyktowaniu model rozpoznawania mowy (~470 MB) pobierze się sam — to jednorazowe.

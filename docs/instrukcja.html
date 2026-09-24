@@ -78,7 +78,7 @@
   <li>Sprawdź uprawnienia z punktu 3.</li>
   <li>Opcjonalnie włącz <b>Uruchamiaj przy logowaniu</b> (menu ▸ ta pozycja) — Papla wystartuje w tle razem z Twoim kontem.</li>
 </ol>
-<p>Menu pod ikoną zawiera też: <b>Pokaż Paplę</b> (główne okno), przyciski chwytania tekstu, otwarcia wyszukiwarki i próbnika kolorów, szybkie przełączniki oraz <b>Zamknij Paplę</b>.</p>
+<p>Menu pod ikoną zawiera też: <b>Pokaż wyszukiwarkę Papli</b>, <b>Ustawienia Papli</b>, wybór języka interfejsu (polski / angielski), przyciski chwytania tekstu, próbnika kolorów i minutnika, szybkie przełączniki oraz <b>Zamknij Paplę</b>. Lewy klik na ikonę otwiera i zamyka okno ustawień, prawy pokazuje to menu.</p>
 
 <h2>5. Dyktowanie</h2>
 <p>Domyślny klawisz: <kbd>prawy ⌥</kbd> (Option). Możesz go zmienić w <b>Ustawienia ▸ Dyktowanie</b> — zaznacz jeden, dwa lub trzy klawisze modyfikujące naraz albo kliknij <b>Nagraj własny…</b> i naciśnij dowolną kombinację (np. <kbd>⌃⌥⌘\</kbd> albo klawisz funkcyjny).</p>
@@ -92,10 +92,17 @@
 <h3>Czyszczenie i słownik</h3>
 <ul>
   <li><b>Czyść transkrypcje</b> (Ustawienia ▸ Dyktowanie) usuwa wypełniacze („yyy", „eee"), poprawia spacje i interpunkcję. Mówione komendy: „nowy akapit", „nowa linia", „otwórz nawias", „zamknij nawias".</li>
-  <li><b>Słownik</b> (sekcja w głównym oknie) uczy Paplę słów, które źle rozpoznaje — nazw własnych, żargonu. Możesz dodać słowo albo parę „gdy usłyszysz X, wpisz Y". Plik słownika otworzysz z menu aplikacji <i>Papla ▸ Pokaż plik słownika</i> (widoczne, gdy główne okno jest na wierzchu).</li>
+  <li><b>Słownik</b> (Ustawienia ▸ Słownik) uczy Paplę słów, które źle rozpoznaje — nazw własnych, żargonu. Możesz dodać słowo albo parę „gdy usłyszysz X, wpisz Y". Plik słownika otworzysz z menu aplikacji <i>Papla ▸ Pokaż plik słownika</i> (widoczne, gdy główne okno jest na wierzchu).</li>
+</ul>
+<h3>Interpunkcja, emoji i XD</h3>
+<ul>
+  <li><b>Ustawienia ▸ Dyktowanie ▸ Interpunkcja</b>: <b>Normalna</b>, <b>Bez kropki na końcu</b> (koniec z „kropką nienawiści" w wiadomościach) albo <b>Minimalna</b> (dodatkowo bez przecinków; znaki ? i ! zostają).</li>
+  <li>Po emoji i po „XD" nigdy nie ma przecinka ani kropki — niezależnie od wybranej opcji. „XD" wpisujesz, mówiąc „iksde".</li>
+  <li><b>Emoji</b>: natężenie 0–5, własne wpisy, wyłączanie pojedynczych haseł, emoji na końcu zdania. Dobór odbywa się słownikiem reguł, bez modelu AI.</li>
+  <li><b>Tłumaczenie</b>: drugi skrót (domyślnie <kbd>⌃⌥⌘T</kbd>) dyktuje po polsku, a wstawia tekst w wybranym języku (angielski, niemiecki, hiszpański, francuski, włoski, ukraiński, portugalski). Pakiet języka macOS pobiera przy pierwszym użyciu.</li>
 </ul>
 <h3>Historia</h3>
-<p>Sekcja <b>Transkrypcje</b> w głównym oknie zapisuje każde podyktowane zdanie z czasem, z wyszukiwarką i przyciskiem „Kopiuj".</p>
+<p>Każde podyktowane zdanie zapisuje się z czasem i widać je w wyszukiwarce (kategoria <b>Transkrypcje</b>) — z przyciskiem kopiowania.</p>
 
 <h2>6. Chwytanie tekstu</h2>
 <p>Domyślny skrót: <kbd>⌃⌥⌘4</kbd>. Ekran przyciemnia się — przeciągnij prostokąt wokół tekstu, który chcesz zdobyć. Zaokrąglona ramka z delikatnie płynącym blaskiem pokazuje zaznaczenie. <kbd>Esc</kbd> anuluje.</p>
@@ -143,21 +150,24 @@
 <p>Domyślny skrót: <kbd>⌃⌥⌘C</kbd>. Pojawia się systemowa pipeta z lupą — kliknij dowolny piksel na ekranie. Kolor:</p>
 <ul>
   <li>trafia do schowka w wybranym zapisie: <b>HEX</b> (<code>#FF8800</code>), <b>RGB</b> (<code>rgb(255, 136, 0)</code>) lub <b>HSL</b> (<code>hsl(32, 100%, 50%)</code>),</li>
-  <li>zapisuje się w osobnej historii — sekcja <b>Kolory</b> w głównym oknie, gdzie każdy kolor skopiujesz w dowolnym z trzech zapisów,</li>
+  <li>zapisuje się w historii, którą widać w wyszukiwarce (kategoria Kolory),</li>
   <li>widać go też w wyszukiwarce, w kategoriach Kolory i Wszystko.</li>
 </ul>
 <p>Ustawienia (<b>Ustawienia ▸ Kolory</b>): skrót, zapis, limit historii, czyszczenie historii.</p>
 
 <h2>9. Ustawienia</h2>
-<p>Ustawienia są w głównym oknie (sekcja <b>Ustawienia</b>) i w oknie <kbd>⌘,</kbd>. Podzielone na zakładki:</p>
+<p>Główne okno Papli to ustawienia (lewy klik na ikonę w pasku menu albo „Ustawienia Papli" w menu). Na górze są przyciski <b>Nagrywaj</b>, <b>Chwyć obszar</b> i <b>Wyszukiwarka</b>. <kbd>Esc</kbd> zamyka okno. Ustawienia są podzielone na zakładki:</p>
 <table>
   <tr><th>Zakładka</th><th>Zawartość</th></tr>
-  <tr><td>Dyktowanie</td><td>klawisz dyktowania, sposób wyzwalania, czyszczenie transkrypcji</td></tr>
+  <tr><td>Dyktowanie</td><td>klawisz dyktowania, sposób wyzwalania, czyszczenie, interpunkcja, tłumaczenie, emoji</td></tr>
   <tr><td>Chwytanie</td><td>skrót, języki OCR, dokładność, opcje tekstu i pola zaznaczenia</td></tr>
-  <tr><td>Schowek</td><td>skrót wyszukiwarki, historia i limit, zrzuty ekranu, wygląd okna, zamiana myślników przy wklejaniu</td></tr>
+  <tr><td>Schowek</td><td>skrót wyszukiwarki, historia i limit, zrzuty ekranu, wygląd i <b>szerokość okna (podgląd na żywo)</b>, zamiana myślników przy wklejaniu</td></tr>
   <tr><td>Kolory</td><td>skrót pipety, zapis koloru, historia kolorów</td></tr>
-  <tr><td>Wygląd</td><td>uruchamianie przy logowaniu, pozycja i margines kuli (podgląd na żywo), rozpiętość reakcji na głos, trzy kolory kuli (wspólne dla całej appki), dźwięki (głośność, wybór dźwięku startu i końca)</td></tr>
+  <tr><td>Minutnik</td><td>skrót, dźwięk alarmu, odliczanie w pasku menu</td></tr>
+  <tr><td>Wygląd</td><td>język interfejsu, ikona w pasku menu (5 do wyboru), kula lub fala z podglądem na żywo, kolory, rozpiętość reakcji na głos, pozycja i margines wskaźnika, dźwięki, uruchamianie przy logowaniu</td></tr>
+  <tr><td>Słownik</td><td>własne poprawki rozpoznawania słów</td></tr>
 </table>
+<div class="tip"><b>Klawisze F1–F12:</b> macOS zarezerwował gołe klawisze F, więc Papla ich nie widzi. Obok zakładek jest przycisk (i) z instrukcją, jak przypisać klawisz F do skrótu programem <b>Karabiner-Elements</b> — to zupełnie osobna, niezależna aplikacja, niezwiązana z Paplą.</div>
 <div class="tip"><b>Zmiana skrótu:</b> kliknij <b>Zmień</b>, naciśnij nową kombinację (musi zawierać modyfikator: ⌘, ⌥, ⌃ albo ⇧ — wyjątek to klawisze F1–F20). <kbd>Esc</kbd> anuluje. W trakcie nagrywania skróty Papli są wstrzymane, więc możesz ustawić kombinację, która jest już używana.</div>
 
 <h2>10. Skróty — ściągawka</h2>

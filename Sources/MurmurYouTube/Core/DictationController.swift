@@ -297,11 +297,12 @@ final class DictationController {
                 softeningEnabled: Settings.shared.emojiSofteningEnabled
             )
 
-            var output = enriched
+            let output0 = PunctuationPolish.apply(to: enriched, style: Settings.shared.punctuationStyle)
+            var output = output0
             var translationFailure: String?
             if wantsTranslate {
                 do {
-                    output = try await Translator.translate(enriched, to: Settings.shared.translateTargetLanguage)
+                    output = try await Translator.translate(output0, to: Settings.shared.translateTargetLanguage)
                 } catch {
                     Log.speech.error("translation failed, injecting Polish original: \(error.localizedDescription, privacy: .public)")
                     translationFailure = error.localizedDescription
