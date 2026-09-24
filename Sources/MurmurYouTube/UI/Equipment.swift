@@ -100,6 +100,9 @@ struct TransportKey: View {
     var isEngaged = false
     var engagedColor: Color = DS.Color.record
     var isEnabled = true
+    /// A resting tint for a button that belongs to a different family than its neighbours.
+    var tint: Color?
+    var help: String?
     let action: () -> Void
 
     @State private var isHovering = false
@@ -111,17 +114,21 @@ struct TransportKey: View {
                     Image(systemName: systemImage)
                         .font(.system(size: 11, weight: .semibold))
                 }
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                if !title.isEmpty {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                        .lineLimit(1)
+                        .fixedSize()
+                }
             }
             .foregroundStyle(isEngaged ? DS.Color.ink : DS.Color.ink.opacity(0.75))
-            .frame(minWidth: DS.Material.keyMinWidth - DS.Space.roomy * 2)
-            .padding(.horizontal, DS.Space.roomy)
+            .frame(minWidth: title.isEmpty ? 0 : DS.Material.keyMinWidth - DS.Space.roomy * 2)
+            .padding(.horizontal, title.isEmpty ? DS.Space.base : DS.Space.roomy)
             .padding(.vertical, 7)
             .background(
                 Capsule().fill(isEngaged
                     ? engagedColor.opacity(0.2)
-                    : DS.Color.ink.opacity(isHovering ? 0.12 : 0.08))
+                    : (tint?.opacity(isHovering ? 0.26 : 0.18) ?? DS.Color.ink.opacity(isHovering ? 0.12 : 0.08)))
             )
             .overlay(Capsule().strokeBorder(isEngaged ? engagedColor.opacity(0.8) : .clear, lineWidth: 1.5))
         }
@@ -130,6 +137,7 @@ struct TransportKey: View {
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.4)
         .onHover { isHovering = $0 }
+        .help(help ?? "")
         .animation(DS.Motion.panel, value: isEngaged)
     }
 }

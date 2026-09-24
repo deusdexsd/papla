@@ -32,9 +32,20 @@ struct SettingsWindow: View {
 /// feature. A small tab row up top, the same `TransportKey` idiom the rest of the app uses
 /// for switching sections, keeps them apart without needing three separate windows.
 private enum SettingsTab: String, CaseIterable, Identifiable {
-    case dictation, grab, clipboard, colors, timer, appearance, dictionary, model, permissions
+    case dictation, grab, clipboard, colors, timer, dictionary, appearance, model, permissions
 
     var id: String { rawValue }
+
+    /// The last three are shown as bare icons — there's no room for ten words in one row.
+    var icon: String? {
+        switch self {
+        case .appearance: "paintbrush.pointed"
+        case .model: "cpu"
+        case .permissions: "lock.shield"
+        default: nil
+        }
+    }
+
     @MainActor
     var title: String {
         switch self {
@@ -124,10 +135,19 @@ struct SettingsContent: View {
         HStack(spacing: DS.Space.snug) {
             Spacer(minLength: 0)
             ForEach(SettingsTab.allCases) { candidate in
+                if candidate == .appearance {
+                    Rectangle().fill(DS.Color.seam).frame(width: 1, height: 20)
+                        .padding(.horizontal, DS.Space.tight)
+                }
                 TransportKey(
-                    title: candidate.title,
+                    title: candidate.icon == nil ? candidate.title : "",
+                    systemImage: candidate.icon,
                     isEngaged: tab == candidate,
-                    engagedColor: Brand.accent
+                    engagedColor: Brand.accent,
+                    // The dictionary isn't one of the features that also live in the search
+                    // bar, so it gets its own faint warm tint.
+                    tint: candidate == .dictionary ? .orange : nil,
+                    help: candidate.icon == nil ? nil : candidate.title
                 ) {
                     withAnimation(DS.Motion.panel) { tab = candidate }
                 }

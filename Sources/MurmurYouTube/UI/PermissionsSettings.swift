@@ -20,25 +20,25 @@ struct PermissionsSettingsPanel: View {
                     detail: t("Skróty klawiszowe, wpisywanie tekstu do pól, wklejanie z wyszukiwarki.",
                               "Keyboard shortcuts, typing text into fields, pasting from the search."),
                     granted: accessibility,
-                    grant: { Permissions.promptForAccessibility(); Permissions.openAccessibilitySettings() },
-                    open: Permissions.openAccessibilitySettings
+                    open: { Permissions.promptForAccessibility(); Permissions.openAccessibilitySettings() }
                 )
                 permissionRow(
                     title: t("Mikrofon", "Microphone"),
                     detail: t("Dyktowanie.", "Dictation."),
                     granted: microphone,
-                    grant: {
-                        Task { _ = await Permissions.requestMicrophone(); microphone = Permissions.hasMicrophone }
-                        if !microphone { Permissions.openMicrophoneSettings() }
-                    },
-                    open: Permissions.openMicrophoneSettings
+                    open: {
+                        Task {
+                            _ = await Permissions.requestMicrophone()
+                            microphone = Permissions.hasMicrophone
+                            if !microphone { Permissions.openMicrophoneSettings() }
+                        }
+                    }
                 )
                 permissionRow(
                     title: t("Nagrywanie ekranu", "Screen Recording"),
                     detail: t("Chwytanie tekstu z ekranu (OCR) i kodów QR.", "Grabbing text (OCR) and QR codes from the screen."),
                     granted: screenRecording,
-                    grant: { Permissions.promptForScreenRecording(); Permissions.openScreenRecordingSettings() },
-                    open: Permissions.openScreenRecordingSettings
+                    open: { Permissions.promptForScreenRecording(); Permissions.openScreenRecordingSettings() }
                 )
             }
 
@@ -93,7 +93,7 @@ struct PermissionsSettingsPanel: View {
 
     private func permissionRow(
         title: String, detail: String, granted: Bool,
-        grant: @escaping () -> Void, open: @escaping () -> Void
+        open: @escaping () -> Void
     ) -> some View {
         HStack(spacing: DS.Space.base) {
             Image(systemName: granted ? "checkmark.circle.fill" : "xmark.circle.fill")
@@ -108,7 +108,6 @@ struct PermissionsSettingsPanel: View {
             Text(granted ? t("Nadane", "Granted") : t("Brak", "Missing"))
                 .font(DS.Font.silkscreen)
                 .foregroundStyle(granted ? DS.Color.statusGood : DS.Color.statusBad)
-            if !granted { TransportKey(title: t("Nadaj", "Grant"), action: grant) }
             TransportKey(title: t("Otwórz ustawienia", "Open settings"), action: open)
         }
         .padding(.vertical, DS.Space.tight)
