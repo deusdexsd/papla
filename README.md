@@ -67,8 +67,7 @@ xattr -cr /Applications/Papla.app
 
 ## Licencja
 
-Wszystkie prawa zastrzeżone. Aplikacja jest darmowa do użytku osobistego; kodu nie wolno
-kopiować ani rozpowszechniać bez zgody autora.
+[MIT](LICENSE) — możesz używać, zmieniać i rozpowszechniać, zostawiając informację o autorze.
 
 ## Wymagania
 
