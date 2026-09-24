@@ -3,12 +3,18 @@
 Osobista appka na macOS działająca w tle (ikona w pasku menu, bez ikony w Docku). Wszystko
 dzieje się lokalnie na Macu — nic nie wychodzi w sieć.
 
-Kilka niezależnych funkcji, każda z własnym skrótem, historią i zakładką w ustawieniach:
+Funkcje, każda z własnym skrótem i zakładką w ustawieniach:
 
 - **Dyktowanie** — trzymasz klawisz (albo naciskasz raz i raz), mówisz po polsku, tekst
   ląduje w polu, w którym piszesz. Transkrypcja: NVIDIA Parakeet TDT v3 (CoreML, ~470 MB,
   pobierany raz). Brak pola do wpisania → tekst trafia do schowka. Czyszczenie regułowe
   (wypełniacze, interpunkcja) + własny słownik poprawek.
+  - **Tłumaczenie podyktowanego tekstu** — drugi skrót (⌃⌥⌘T): mówisz po polsku, wstawia się
+    tekst w wybranym języku (szczegóły niżej).
+  - **Emoji** — Papla sama dodaje emoji do podyktowanego tekstu według słownika reguł (bez AI,
+    lokalnie). Natężenie ustawiasz w skali 0–5, możesz wyłączać pojedyncze hasła, dopisywać
+    własne (fraza → emoji) i wybrać, czy emoji ma wpadać w zdaniu czy na jego końcu.
+  - **Wizualizacja** — podczas nagrywania kula albo fala reagująca na głos, z własnymi kolorami.
 - **Chwytanie tekstu** — zaznaczasz obszar ekranu, OCR (Apple Vision, wymuszony polski)
   kopiuje tekst do schowka. Zaznaczony kod QR / Aztec / DataMatrix / PDF417 kopiuje swoją
   zdekodowaną wartość. Opcjonalnie zamienia „—” na „-”.
@@ -17,10 +23,12 @@ Kilka niezależnych funkcji, każda z własnym skrótem, historią i zakładką 
   z prawdziwymi miniaturami (obrazy, a dla plików podgląd QuickLook jak w Finderze) i
   kolorami wybranymi pipetą oraz zrzutami i nagraniami ekranu z macOS (kategoria „Zrzuty"). Natywny wygląd (szkło Liquid Glass, kolory systemowe), tryb
   systemowy / jasny / ciemny. Wyszukiwarka + filtry kategorii, ⌘1–⌘9 do wklejania, zębatka
-  otwiera ustawienia Papli.
+  otwiera ustawienia Papli. ⌘T tłumaczy zaznaczony wpis.
   Zwykłe kopiowanie zostaje nietknięte; opcjonalnie **przy wklejaniu** (⌘V w dowolnej
   aplikacji lub z historii) „—” i „–” zamieniają się na „-”, a po wklejeniu schowek wraca do
   oryginału. Treści z menedżerów haseł nigdy nie są zapisywane.
+- **Minutnik** — skrót ⌃⌥⌘M otwiera szybkie okno: wpisujesz minuty (np. 45) i opis, alarm z
+  wybranym dźwiękiem, opcjonalnie odliczanie w pasku menu.
 - **Próbnik kolorów** — systemowa pipeta pod własnym skrótem; kolor trafia do schowka
   (HEX / RGB / HSL) i do osobnej historii kolorów.
 
