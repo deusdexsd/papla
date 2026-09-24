@@ -481,6 +481,10 @@ final class Settings {
     }
 
     /// How many entries the history keeps before the oldest fall off.
+    var clipboardPanelWidth: Double {
+        didSet { defaults.set(clipboardPanelWidth, forKey: Keys.clipboardPanelWidth) }
+    }
+
     var clipboardMaxItems: Int {
         didSet { defaults.set(clipboardMaxItems, forKey: Keys.clipboardMaxItems) }
     }
@@ -609,6 +613,7 @@ final class Settings {
         static let clipboardShortcut = "clipboardShortcut"
         static let colorPickerShortcut = "colorPickerShortcut"
         static let clipboardMaxItems = "clipboardMaxItems"
+        static let clipboardPanelWidth = "clipboardPanelWidth"
         static let clipboardKeepImages = "clipboardKeepImages"
         static let pasteStraightenDashes = "pasteStraightenDashes"
         static let clipboardAppearance = "clipboardAppearance"
@@ -676,6 +681,7 @@ final class Settings {
         clipboardShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.clipboardShortcut) ?? .defaultClipboardShortcut
         colorPickerShortcut = Settings.decode(CustomShortcut.self, defaults, Keys.colorPickerShortcut) ?? .defaultColorPickerShortcut
         clipboardMaxItems = defaults.object(forKey: Keys.clipboardMaxItems) as? Int ?? 500
+        clipboardPanelWidth = min(max(defaults.object(forKey: Keys.clipboardPanelWidth) as? Double ?? 760, 600), 1200)
         clipboardKeepImages = defaults.object(forKey: Keys.clipboardKeepImages) as? Bool ?? true
         screenshotsEnabled = defaults.object(forKey: Keys.screenshotsEnabled) as? Bool ?? true
         clipboardAppearance = PanelAppearance(rawValue: defaults.string(forKey: Keys.clipboardAppearance) ?? "") ?? .system

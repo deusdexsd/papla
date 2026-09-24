@@ -11,7 +11,8 @@ import SwiftUI
 final class ClipboardPanel: NSPanel {
     private weak var controller: ClipboardController?
 
-    static let size = CGSize(width: 760, height: 560)
+    static let defaultWidth: Double = 760
+    static var size: CGSize { CGSize(width: Settings.shared.clipboardPanelWidth, height: 560) }
 
     init(controller: ClipboardController) {
         self.controller = controller
@@ -61,6 +62,7 @@ final class ClipboardPanel: NSPanel {
 
     /// Centered on the screen the pointer is on, a little above the middle.
     func present() {
+        setContentSize(Self.size)
         let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
             ?? NSScreen.main ?? NSScreen.screens.first
         if let visible = screen?.visibleFrame {

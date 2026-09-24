@@ -719,6 +719,23 @@ struct SettingsContent: View {
                 + "“System” follows your Mac's light/dark mode."))
         }
 
+        panel(label: t("Szerokość wyszukiwarki", "Search window width")) {
+            HStack(spacing: DS.Space.base) {
+                Slider(value: $settings.clipboardPanelWidth, in: 600...1200, step: 20)
+                Text("\(Int(settings.clipboardPanelWidth)) px")
+                    .font(DS.Font.counter)
+                    .foregroundStyle(DS.Color.inkSecondary)
+                    .frame(width: 70, alignment: .trailing)
+                TransportKey(title: t("Domyślna", "Default")) {
+                    settings.clipboardPanelWidth = ClipboardPanel.defaultWidth
+                }
+            }
+            note(t("Jeśli długie wpisy albo transkrypcje się ucinają, poszerz okno. Zmiana działa "
+                + "od następnego otwarcia wyszukiwarki.",
+                "If long entries or transcripts get cut off, make the window wider. Applies the "
+                + "next time the search window opens."))
+        }
+
         panel(label: t("Wklejanie", "Pasting")) {
             Toggle(isOn: Binding(
                 get: { settings.pasteStraightenDashes },

@@ -156,6 +156,7 @@ struct ClipboardView: View {
     }
 
     private var filterBar: some View {
+        GeometryReader { geo in
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: DS.Space.snug) {
                 FilterChip(title: t("Wszystko", "All"), isOn: filter == nil, style: style) { filter = nil }
@@ -167,8 +168,11 @@ struct ClipboardView: View {
             }
             .padding(.horizontal, DS.Space.roomy + 6)
             .padding(.vertical, 3)
+            .frame(minWidth: geo.size.width)
         }
         .scrollClipDisabled()
+        }
+        .frame(height: 36)
         .padding(.bottom, DS.Space.base - 3)
     }
 

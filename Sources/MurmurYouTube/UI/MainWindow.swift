@@ -133,7 +133,8 @@ private struct TransportPanel: View {
 
     var body: some View {
         HStack(spacing: DS.Space.roomy) {
-            VStack(alignment: .leading, spacing: DS.Space.snug) {
+            Spacer(minLength: 0)
+            VStack(alignment: .center, spacing: DS.Space.snug) {
                 HStack(spacing: DS.Space.snug) {
                     TransportKey(
                         title: isRecording ? "Stop" : t("Nagrywaj", "Record"),
@@ -154,7 +155,7 @@ private struct TransportPanel: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: DS.Space.tight) {
+            VStack(alignment: .center, spacing: DS.Space.tight) {
                 VisualizerView(
                     energy: levelEnergy,
                     isAnimating: isRecording,
@@ -164,7 +165,7 @@ private struct TransportPanel: View {
                 .frame(width: 90, height: 87)
             }
 
-            VStack(alignment: .leading, spacing: DS.Space.tight) {
+            VStack(alignment: .center, spacing: DS.Space.tight) {
                 DeckWindow {
                     Readout(text: counterText, large: true)
                         .padding(.horizontal, DS.Space.base)
@@ -172,7 +173,7 @@ private struct TransportPanel: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: DS.Space.snug) {
+            VStack(alignment: .center, spacing: DS.Space.snug) {
                 TransportKey(
                     title: t("Chwyć obszar", "Grab Area"),
                     systemImage: "viewfinder",
@@ -182,7 +183,7 @@ private struct TransportPanel: View {
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding(DS.Space.roomy)
         .background(BrushedPanel())
