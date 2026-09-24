@@ -5,7 +5,7 @@ import SwiftUI
 /// Direction: the orb — the same glass sphere that's the app icon and the HUD indicator
 /// (`SiriOrb` in HUDView.swift). Dark ground, soft glow, one blue/violet/cyan accent family
 /// (`Brand`, also in HUDView.swift). No brushed metal, no hardware fasteners, no analog
-/// meters — those belonged to a different app this was forked from; the window should look
+/// meters; the window should look
 /// like it belongs to the same product as the thing that appears while you're dictating.
 ///
 /// Rules that keep this from turning into a generic dark-mode app:

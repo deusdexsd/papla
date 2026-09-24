@@ -1,10 +1,9 @@
 # Papla
 
 Osobista appka na macOS działająca w tle (ikona w pasku menu, bez ikony w Docku). Wszystko
-dzieje się lokalnie na Macu — nic nie wychodzi w sieć. Zaczęła się jako fork
-[murmur-youtube](https://github.com/per-simmons/murmur-youtube), dziś to osobny projekt.
+dzieje się lokalnie na Macu — nic nie wychodzi w sieć.
 
-Cztery niezależne funkcje, każda z własnym skrótem, historią i zakładką w ustawieniach:
+Kilka niezależnych funkcji, każda z własnym skrótem, historią i zakładką w ustawieniach:
 
 - **Dyktowanie** — trzymasz klawisz (albo naciskasz raz i raz), mówisz po polsku, tekst
   ląduje w polu, w którym piszesz. Transkrypcja: NVIDIA Parakeet TDT v3 (CoreML, ~470 MB,
@@ -68,6 +67,31 @@ xattr -cr /Applications/Papla.app
 ## Licencja
 
 [MIT](LICENSE) — możesz używać, zmieniać i rozpowszechniać, zostawiając informację o autorze.
+
+## Tłumaczenie i języki
+
+Tłumaczenie działa w całości na Macu (systemowy Apple Translation), bez wysyłania tekstu do
+internetu. Źródłem jest zawsze **polski**.
+
+**Języki docelowe:** angielski, niemiecki, hiszpański, francuski, włoski, ukraiński, portugalski.
+Wybierasz go w Ustawienia ▸ Dyktowanie.
+
+**Gdzie tłumaczysz:**
+- **Dyktowanie z tłumaczeniem** — skrót ⌃⌥⌘T (zmienisz w Ustawieniach): mówisz po polsku, w polu
+  ląduje tekst w wybranym języku. Kula/fala dostaje wtedy osobne kolory, żebyś widział, że to
+  tryb tłumaczenia.
+- **Wyszukiwarka schowka** — zaznacz wpis i naciśnij ⌘T, żeby go przetłumaczyć.
+
+**Pakiety językowe:** przy pierwszym użyciu danego języka macOS pobiera jego pakiet. Pojawi się
+systemowe okno z prośbą o zgodę — kliknij Pobierz, potem tłumaczenie działa offline. Bez pakietu
+Papla wstawi oryginał i pokaże błąd, zamiast po cichu nic nie robić.
+
+**Pozostałe języki w aplikacji:**
+- **Interfejs:** polski i angielski (przełącznik w Ustawieniach oraz w menu pod prawym klikiem na
+  ikonę; domyślnie angielski).
+- **OCR (chwytanie tekstu):** polski, angielski, niemiecki, francuski, hiszpański, włoski,
+  ukraiński, portugalski — główny i opcjonalny dodatkowy język.
+- **Dyktowanie:** rozpoznawanie mowy jest ustawione pod polski.
 
 ## Wymagania
 
