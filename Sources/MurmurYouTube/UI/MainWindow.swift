@@ -23,6 +23,7 @@ struct MainWindow: View {
     @Bindable var clipboardController: ClipboardController
     @Bindable var colorController: ColorController
     @Bindable var timerController: TimerController
+    @State private var tour = TourState.shared
 
     var body: some View {
         ZStack {
@@ -50,9 +51,24 @@ struct MainWindow: View {
             .padding(DS.Space.roomy)
         }
         .frame(minWidth: 720, minHeight: 560)
+        .overlayPreferenceValue(CoachAnchorKey.self) { anchors in
+            GeometryReader { geometry in
+                if tour.isActive {
+                    CoachOverlay(tour: tour, anchors: anchors, geometry: geometry)
+                        .transition(.opacity)
+                }
+            }
+        }
+        .onAppear {
+            if tour.isPending { tour.isPending = false; tour.start() }
+        }
+        .onChange(of: tour.isPending) {
+            if tour.isPending { tour.isPending = false; tour.start() }
+        }
         .background {
-            // Esc closes the window, the same way it dismisses the search bar.
-            Button("") { NSApp.keyWindow?.close() }
+            // Esc closes the window (or ends the tour, when one is running), the same way it
+            // dismisses the search bar.
+            Button("") { tour.isActive ? tour.finish() : NSApp.keyWindow?.close() }
                 .keyboardShortcut(.cancelAction)
                 .opacity(0)
                 .allowsHitTesting(false)
@@ -96,6 +112,7 @@ private struct TransportPanel: View {
                     }
                     .padding(.leading, DS.Space.tight)
                 }
+                .coachAnchor("record")
             }
 
             VStack(alignment: .center, spacing: DS.Space.tight) {
@@ -125,12 +142,14 @@ private struct TransportPanel: View {
                     grabController.beginGrab()
                 }
             }
+            .coachAnchor("grab")
 
             VStack(alignment: .center, spacing: DS.Space.snug) {
                 TransportKey(title: t("Wyszukiwarka", "Search"), systemImage: "magnifyingglass") {
                     clipboardController.showPanel()
                 }
             }
+            .coachAnchor("search")
 
             Spacer(minLength: 0)
         }

@@ -92,25 +92,9 @@ struct PermissionsSettingsPanel: View {
     }
 
     private func permissionRow(
-        title: String, detail: String, granted: Bool,
-        open: @escaping () -> Void
+        title: String, detail: String, granted: Bool, open: @escaping () -> Void
     ) -> some View {
-        HStack(spacing: DS.Space.base) {
-            Image(systemName: granted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(granted ? DS.Color.statusGood : DS.Color.statusBad)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(DS.Font.bodyEmphasis)
-                Text(detail).font(DS.Font.label).foregroundStyle(DS.Color.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: DS.Space.base)
-            Text(granted ? t("Nadane", "Granted") : t("Brak", "Missing"))
-                .font(DS.Font.silkscreen)
-                .foregroundStyle(granted ? DS.Color.statusGood : DS.Color.statusBad)
-            TransportKey(title: t("Otwórz ustawienia", "Open settings"), action: open)
-        }
-        .padding(.vertical, DS.Space.tight)
+        PermissionRowView(title: title, detail: detail, granted: granted, open: open)
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -129,5 +113,47 @@ struct PermissionsSettingsPanel: View {
         process.arguments = ["-c", "sleep 1; /usr/bin/open \"\(path)\""]
         try? process.run()
         NSApp.terminate(nil)
+    }
+}
+
+
+/// One permission: live status dot, what it's for, and a single button into the right page.
+struct PermissionRowView: View {
+    let title: String
+    let detail: String
+    let granted: Bool
+    let open: () -> Void
+
+    var body: some View {
+        HStack(spacing: DS.Space.base) {
+            Image(systemName: granted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(granted ? DS.Color.statusGood : DS.Color.statusBad)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(DS.Font.bodyEmphasis)
+                Text(detail).font(DS.Font.label).foregroundStyle(DS.Color.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: DS.Space.base)
+            Text(granted ? t("Nadane", "Granted") : t("Brak", "Missing"))
+                .font(DS.Font.silkscreen)
+                .foregroundStyle(granted ? DS.Color.statusGood : DS.Color.statusBad)
+            TransportKey(title: t("Otwórz ustawienia", "Open settings"), action: open)
+        }
+        .padding(.vertical, DS.Space.tight)
+    }
+}
+
+/// The three permission actions, shared by Ustawienia ▸ Uprawnienia and the first-run guide.
+@MainActor
+enum PermissionActions {
+    static func accessibility() { Permissions.promptForAccessibility(); Permissions.openAccessibilitySettings() }
+    static func screenRecording() { Permissions.promptForScreenRecording(); Permissions.openScreenRecordingSettings() }
+    static func microphone(done: @escaping @MainActor () -> Void) {
+        Task {
+            _ = await Permissions.requestMicrophone()
+            done()
+            if !Permissions.hasMicrophone { Permissions.openMicrophoneSettings() }
+        }
     }
 }

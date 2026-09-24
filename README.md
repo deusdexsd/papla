@@ -7,7 +7,8 @@ pobrania modelu mowy (i opcjonalnego sprawdzenia aktualizacji w Ustawienia ▸ M
 Funkcje, każda z własnym skrótem i zakładką w ustawieniach:
 
 - **Dyktowanie** — trzymasz klawisz (albo naciskasz raz i raz), mówisz po polsku, tekst
-  ląduje w polu, w którym piszesz. Transkrypcja: NVIDIA Parakeet TDT v3 (CoreML, ~470 MB,
+  ląduje w polu, w którym piszesz. Gdy kursor nie jest w polu, tekst trafia do schowka — możesz więc
+  chodzić po aplikacjach, mówić, a na końcu kliknąć w pole i wkleić. Transkrypcja: NVIDIA Parakeet TDT v3 (CoreML, ~470 MB,
   pobierany raz). Brak pola do wpisania → tekst trafia do schowka. Czyszczenie regułowe
   (wypełniacze, interpunkcja) + własny słownik poprawek.
   - **Tłumaczenie podyktowanego tekstu** — drugi skrót (⌃⌥⌘T): mówisz po polsku, wstawia się
@@ -57,6 +58,9 @@ xattr -cr /Applications/Papla.app
 ```
 
 ### Pierwsze uruchomienie
+
+Przy pierwszym starcie Papla prowadzi przez krótki przewodnik (co robi, model mowy, uprawnienia, wygląd), a
+potem pokazuje w oknie „co jest co". Wszystko da się pominąć i uruchomić ponownie z menu pod ikoną.
 
 1. Uruchom Paplę — ikona pojawi się w pasku menu (lewy klik otwiera/zamyka okno ustawień, prawy pokazuje menu z wyszukiwarką, ustawieniami i językiem).
 2. Nadaj uprawnienia w Ustawieniach systemowych ▸ Prywatność i bezpieczeństwo: **Mikrofon**,

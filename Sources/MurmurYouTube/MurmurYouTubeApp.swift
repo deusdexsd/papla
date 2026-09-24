@@ -95,7 +95,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // API is touched, and only once ever per code signature — asking up front means
         // that happens right after launch, when the user is already expecting a
         // permissions dance, rather than silently failing the first real grab.
-        if !Permissions.hasScreenRecording {
+        // (Skipped on the very first run — the first-run guide explains it before asking.)
+        if Settings.shared.onboardingDone && !Permissions.hasScreenRecording {
             Permissions.promptForScreenRecording()
         }
 
@@ -112,6 +113,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         observeState()
         observeGrabState()
         installStatusItemLeftClick()
+        if !Settings.shared.onboardingDone {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(700))
+                OnboardingController.shared.show()
+            }
+        }
         let readyMessage = "Papla gotowa — przytrzymaj \(Settings.shared.triggerDisplayName), żeby dyktować, "
             + "albo \(Settings.shared.grabShortcut.displayName), żeby chwycić tekst z ekranu"
         Log.app.info("\(readyMessage, privacy: .public)")
@@ -386,6 +393,11 @@ private struct MenuContent: View {
         if !Permissions.hasScreenRecording {
             Button(t("Nadaj uprawnienia: Nagrywanie ekranu…", "Grant permission: Screen Recording…")) { Permissions.openScreenRecordingSettings() }
         }
+
+        Button(t("Przewodnik pierwszego uruchomienia…", "First-run guide…")) { OnboardingController.shared.show() }
+        Button(t("Pokaż, co jest co", "Show what's what")) { OnboardingController.startTour() }
+
+        Divider()
 
         Button(t("Zamknij Paplę", "Quit Papla")) { NSApp.terminate(nil) }
             .keyboardShortcut("q")

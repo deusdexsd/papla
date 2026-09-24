@@ -340,6 +340,15 @@ final class Settings {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
 
+    /// First-run guide and the "co jest co" tour each show once; both can be replayed.
+    var onboardingDone: Bool {
+        didSet { defaults.set(onboardingDone, forKey: Keys.onboardingDone) }
+    }
+
+    var tourDone: Bool {
+        didSet { defaults.set(tourDone, forKey: Keys.tourDone) }
+    }
+
     var speechModel: SpeechModel {
         didSet { defaults.set(speechModel.rawValue, forKey: SpeechModel.defaultsKey) }
     }
@@ -600,6 +609,8 @@ final class Settings {
         static let hudVisualizerStyle = "hudVisualizerStyle"
         static let appLanguage = "appLanguage"
         static let menuBarIconStyle = "menuBarIconStyle"
+        static let onboardingDone = "onboardingDone"
+        static let tourDone = "tourDone"
         static let punctuationStyle = "punctuationStyle"
         static let accentPrimary = "accentPrimary"
         static let accentSecondary = "accentSecondary"
@@ -660,6 +671,8 @@ final class Settings {
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
         appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .english
+        onboardingDone = defaults.bool(forKey: Keys.onboardingDone)
+        tourDone = defaults.bool(forKey: Keys.tourDone)
         speechModel = SpeechModel.current
         punctuationStyle = PunctuationStyle(rawValue: defaults.string(forKey: Keys.punctuationStyle) ?? "") ?? .normal
         menuBarIconStyle = MenuBarIconStyle(rawValue: defaults.string(forKey: Keys.menuBarIconStyle) ?? "") ?? .orb

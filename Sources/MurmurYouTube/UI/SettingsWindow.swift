@@ -151,11 +151,13 @@ struct SettingsContent: View {
                 ) {
                     withAnimation(DS.Motion.panel) { tab = candidate }
                 }
+                .modifier(TabCoachAnchor(tab: candidate))
             }
             KarabinerInfoButton()
                 .padding(.leading, DS.Space.tight)
             Spacer(minLength: 0)
         }
+        .coachAnchor("tabs")
     }
 
     /// Pinned above the scrolling panels so the live search window stays in view while the
@@ -1040,6 +1042,19 @@ struct SettingsContent: View {
                 + "dictating. Left click opens/closes the Papla window, right click opens the menu."))
         }
 
+        panel(label: t("Przewodnik", "Guide")) {
+            HStack(spacing: DS.Space.snug) {
+                TransportKey(title: t("Przewodnik pierwszego uruchomienia", "First-run guide"), systemImage: "list.bullet.rectangle") {
+                    OnboardingController.shared.show()
+                }
+                TransportKey(title: t("Pokaż, co jest co", "Show what's what"), systemImage: "questionmark.circle") {
+                    OnboardingController.startTour()
+                }
+            }
+            note(t("Uruchom ponownie przewodnik z pierwszego startu albo samouczek, który podświetla elementy okna.",
+                   "Run the first-start guide again, or the tour that highlights the parts of the window."))
+        }
+
         panel(label: t("Wizualizacja", "Visualization")) {
             Picker(t("Kształt", "Shape"), selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in
@@ -1530,5 +1545,21 @@ private struct SearchWidthPreview: View {
         .frame(maxWidth: .infinity)
         .clipped()
         .animation(DS.Motion.panel, value: width)
+    }
+}
+
+
+/// Registers the tabs the tour points at by name.
+private struct TabCoachAnchor: ViewModifier {
+    let tab: SettingsTab
+
+    func body(content: Content) -> some View {
+        switch tab {
+        case .dictionary: content.coachAnchor("dictionary")
+        case .appearance: content.coachAnchor("icon-appearance")
+        case .model: content.coachAnchor("icon-model")
+        case .permissions: content.coachAnchor("icon-permissions")
+        default: content
+        }
     }
 }
