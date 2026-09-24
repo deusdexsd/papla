@@ -27,6 +27,49 @@ Cztery niezależne funkcje, każda z własnym skrótem, historią i zakładką w
 
 Pełna instrukcja obsługi: [docs/instrukcja.html](docs/instrukcja.html) (wersja PDF do wydruku).
 
+## Instalacja
+
+**Jedna komenda** (buduje ze źródeł, ~kilka minut za pierwszym razem):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deusdexsd/papla/main/install.sh | bash
+```
+
+Wymaga Maca z Apple Silicon, macOS 26+ i Xcode Command Line Tools (skrypt sam o nie poprosi).
+
+**Albo gotowa aplikacja:** pobierz `Papla.dmg` z zakładki
+[Releases](https://github.com/deusdexsd/papla/releases), przeciągnij Paplę do Programów.
+Aplikacja nie jest podpisana przez Apple, więc macOS ją zablokuje. Rozwiązanie: prawy klik na
+Papli ▸ **Otwórz** ▸ Otwórz, albo w terminalu:
+
+```bash
+xattr -cr /Applications/Papla.app
+```
+
+### Pierwsze uruchomienie
+
+1. Uruchom Paplę — ikona pojawi się w pasku menu (lewy klik otwiera/zamyka okno, prawy pokazuje menu).
+2. Nadaj uprawnienia w Ustawieniach systemowych ▸ Prywatność i bezpieczeństwo: **Mikrofon**,
+   **Dostępność**, **Nagrywanie ekranu**.
+3. Przy pierwszym dyktowaniu model rozpoznawania mowy (~470 MB) pobierze się sam — to jednorazowe.
+4. Język interfejsu (angielski / polski), skróty i wygląd ikony zmienisz w Ustawieniach.
+
+### Porady
+
+- Po każdej aktualizacji (nowy podpis) macOS zapomina Dostępność: usuń Paplę z listy (−), dodaj
+  ponownie i uruchom appkę od nowa.
+- Klawisze F1–F12 mają w macOS własne funkcje; do skrótów używaj kombinacji z ⌘⌥⌃ albo
+  zbinduj klawisz w Karabiner-Elements.
+- Tłumaczenie używa systemowego Apple Translation — pakiet języka pobierze się przy pierwszym
+  użyciu (potrzebne jedno kliknięcie w systemowym oknie).
+- Aktualizacja: uruchom komendę instalacyjną jeszcze raz.
+- Odinstalowanie: przenieś `/Applications/Papla.app` do kosza.
+
+## Licencja
+
+Wszystkie prawa zastrzeżone. Aplikacja jest darmowa do użytku osobistego; kodu nie wolno
+kopiować ani rozpowszechniać bez zgody autora.
+
 ## Wymagania
 
 - macOS 26+ na Apple Silicon, Xcode / Swift 6.
