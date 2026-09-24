@@ -58,7 +58,7 @@ private struct OnboardingView: View {
 
     @State private var step = 0
     @State private var settings = Settings.shared
-    private let count = 5
+    private let count = 6
 
     @State private var accessibility = Permissions.hasAccessibility
     @State private var microphone = Permissions.hasMicrophone
@@ -86,10 +86,11 @@ private struct OnboardingView: View {
                 ScrollView {
                     Group {
                         switch step {
-                        case 0: welcome
-                        case 1: dictation
-                        case 2: permissions
-                        case 3: appearance
+                        case 0: language
+                        case 1: welcome
+                        case 2: dictation
+                        case 3: permissions
+                        case 4: appearance
                         default: ready
                         }
                     }
@@ -129,7 +130,7 @@ private struct OnboardingView: View {
     private var footer: some View {
         HStack {
             if step == 0 {
-                Button(t("Pomiń — ustawię później", "Skip — I'll set up later")) { onFinish(false) }
+                Button("Pomiń · Skip") { onFinish(false) }
                     .buttonStyle(.plain).foregroundStyle(DS.Color.inkSecondary)
             } else {
                 TransportKey(title: t("Wstecz", "Back")) { step -= 1 }
@@ -191,6 +192,22 @@ private struct OnboardingView: View {
     }
 
     // MARK: - Steps
+
+    /// Always first, and always bilingual — it's the choice that decides which language the
+    /// rest of the guide is in.
+    private var language: some View {
+        VStack(spacing: DS.Space.snug) {
+            header("globe", "Język · Language",
+                   "Wybierz język aplikacji. Choose the app's language. Możesz to zmienić później w Ustawieniach · You can change it later in Settings.")
+            HStack(spacing: DS.Space.snug) {
+                ForEach(AppLanguage.allCases, id: \.self) { language in
+                    choice(title: language.displayName, detail: nil, isOn: settings.appLanguage == language) {
+                        settings.appLanguage = language
+                    }
+                }
+            }
+        }
+    }
 
     private var welcome: some View {
         VStack(spacing: DS.Space.snug) {
@@ -288,16 +305,8 @@ private struct OnboardingView: View {
     private var appearance: some View {
         VStack(spacing: DS.Space.snug) {
             header("paintbrush.pointed.fill", t("Wygląd i start", "Looks and startup"),
-                   t("Wybierz język, ikonę w pasku menu i czy Papla ma wstawać razem z systemem. Wszystko zmienisz później w Ustawieniach.",
-                     "Pick the language, the menu bar icon and whether Papla starts with your Mac. You can change it all later in Settings."))
-
-            HStack(spacing: DS.Space.snug) {
-                ForEach(AppLanguage.allCases, id: \.self) { language in
-                    choice(title: language.displayName, detail: nil, isOn: settings.appLanguage == language) {
-                        settings.appLanguage = language
-                    }
-                }
-            }
+                   t("Wybierz ikonę w pasku menu i czy Papla ma wstawać razem z systemem. Wszystko zmienisz później w Ustawieniach.",
+                     "Pick the menu bar icon and whether Papla starts with your Mac. You can change it all later in Settings."))
 
             HStack(spacing: DS.Space.snug) {
                 ForEach(MenuBarIconStyle.allCases, id: \.self) { style in
