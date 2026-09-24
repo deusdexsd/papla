@@ -83,6 +83,15 @@ struct MainWindow: View {
             .padding(DS.Space.roomy)
         }
         .frame(minWidth: 720, minHeight: 560)
+        .background {
+            // Esc leaves Settings the same way it dismisses the search bar.
+            if section == .settings {
+                Button("") { NSApp.keyWindow?.close() }
+                    .keyboardShortcut(.cancelAction)
+                    .opacity(0)
+                    .allowsHitTesting(false)
+            }
+        }
         .onAppear { consumePendingSection() }
         .onChange(of: router.pendingSection) { consumePendingSection() }
     }

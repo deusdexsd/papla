@@ -91,7 +91,8 @@ struct SettingsContent: View {
                 .padding(.bottom, DS.Space.roomy)
             }
         }
-        .padding(DS.Space.panel)
+        .padding(.horizontal, DS.Space.wide)
+        .padding(.vertical, DS.Space.roomy + 2)
         // A recorder left running behind a closed section would keep swallowing the next
         // key someone presses, anywhere in the app, forever.
         .onDisappear {
@@ -112,6 +113,7 @@ struct SettingsContent: View {
                 }
             }
             Spacer()
+            KarabinerInfoButton()
         }
     }
 
@@ -1199,10 +1201,10 @@ struct SettingsContent: View {
         VStack(alignment: .leading, spacing: DS.Space.base) {
             Silkscreen(text: label, large: true)
             content()
+            Rectangle().fill(DS.Color.seam).frame(height: 1)
+                .padding(.top, DS.Space.snug)
         }
-        .padding(DS.Space.roomy)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(BrushedPanel())
     }
 
     private func note(_ text: String) -> some View {
@@ -1303,5 +1305,94 @@ private struct ShortcutRow: View {
         ShortcutRecorder.stop(token)
         token = nil
         isRecording = false
+    }
+}
+
+
+/// The "(i)" next to the settings tabs: how to put Papla on the F keys. macOS reserves bare
+/// F1–F12 for brightness, volume and so on, so Papla itself can't see them — a separate,
+/// third-party program (Karabiner-Elements) has to turn one into a key combination Papla can.
+private struct KarabinerInfoButton: View {
+    @State private var isShowing = false
+
+    private static let rule = """
+    {
+        "description": "F5 to Cmd + Option + Control + Backslash",
+        "manipulators": [
+            {
+                "from": {
+                    "key_code": "f5",
+                    "modifiers": { "optional": ["any"] }
+                },
+                "to": [
+                    {
+                        "key_code": "backslash",
+                        "modifiers": ["left_command", "left_option", "left_control"]
+                    }
+                ],
+                "type": "basic"
+            }
+        ]
+    }
+    """
+
+    var body: some View {
+        Button { isShowing.toggle() } label: {
+            Image(systemName: "info.circle")
+                .font(.system(size: 17))
+                .foregroundStyle(DS.Color.inkSecondary)
+        }
+        .buttonStyle(.plain)
+        .focusEffectDisabled()
+        .help(t("Jak ustawić klawisze F", "How to use the F keys"))
+        .popover(isPresented: $isShowing, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: DS.Space.base) {
+                Text(t("Klawisze F1–F12 jako skróty", "F1–F12 keys as shortcuts"))
+                    .font(DS.Font.title)
+                Text(t(
+                    "macOS zarezerwował gołe klawisze F (jasność, głośność, muzyka), więc Papla ich "
+                    + "nie widzi. Da się to obejść osobnym programem — Karabiner-Elements. To zupełnie "
+                    + "inna aplikacja, nie związana z Paplą (darmowa, pobierasz ją ze strony "
+                    + "karabiner-elements.pqrs.org). Papla nic w niej nie ustawia i za nią nie odpowiada.",
+                    "macOS reserves the bare F keys (brightness, volume, media), so Papla can't see "
+                    + "them. A separate program — Karabiner-Elements — can work around that. It is a "
+                    + "completely different app, unrelated to Papla (free, from "
+                    + "karabiner-elements.pqrs.org). Papla doesn't configure it and isn't responsible for it."
+                ))
+                .font(DS.Font.body)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Text(t("Jak to zrobić:", "How:")).font(DS.Font.bodyEmphasis)
+                Text(t(
+                    "1. W Karabinerze: Complex Modifications ▸ Add your own rule, wklej kod poniżej "
+                    + "(przykład: F5 → ⌘⌥⌃\\).\n"
+                    + "2. W Papli: Dyktowanie ▸ Nagraj własny… i wciśnij F5 — Papla zobaczy ⌘⌥⌃\\.\n"
+                    + "3. Inny klawisz? Zmień \"key_code\" w części from (np. \"f6\") i w to (np. "
+                    + "\"equal_sign\" dla =), potem nagraj ten skrót w Papli.",
+                    "1. In Karabiner: Complex Modifications ▸ Add your own rule, paste the code below "
+                    + "(example: F5 → ⌘⌥⌃\\).\n"
+                    + "2. In Papla: Dictation ▸ Record custom… and press F5 — Papla will see ⌘⌥⌃\\.\n"
+                    + "3. A different key? Change \"key_code\" in from (e.g. \"f6\") and in to (e.g. "
+                    + "\"equal_sign\" for =), then record that shortcut in Papla."
+                ))
+                .font(DS.Font.body)
+                .fixedSize(horizontal: false, vertical: true)
+
+                ScrollView(.horizontal) {
+                    Text(Self.rule)
+                        .font(.system(size: 11, design: .monospaced))
+                        .textSelection(.enabled)
+                        .padding(DS.Space.base)
+                }
+                .background(DS.Color.ink.opacity(0.06), in: .rect(cornerRadius: DS.Radius.control))
+
+                TransportKey(title: t("Kopiuj kod", "Copy code"), systemImage: "doc.on.doc") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(Self.rule, forType: .string)
+                }
+            }
+            .padding(DS.Space.roomy + 2)
+            .frame(width: 420)
+        }
     }
 }

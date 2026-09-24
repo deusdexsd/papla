@@ -92,8 +92,8 @@ struct Lamp: View {
 
 // MARK: - Controls
 
-/// A button in the app's own voice: flat glass cap, soft shadow, the orb's accent when
-/// engaged. Press feedback is a scale/opacity dip, not a hardware key travel.
+/// A button in the search bar's own voice: a capsule chip, quiet when off, an accent wash
+/// with a ring when engaged — the same shape and type as the clipboard panel's filter chips.
 struct TransportKey: View {
     let title: String
     var systemImage: String?
@@ -102,62 +102,35 @@ struct TransportKey: View {
     var isEnabled = true
     let action: () -> Void
 
-    @State private var isPressed = false
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: DS.Space.tight) {
-                if isEngaged {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(engagedColor)
-                        .transition(.scale.combined(with: .opacity))
-                }
                 if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 11, weight: .semibold))
                 }
-                Silkscreen(text: title, color: labelColor)
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
             }
-            .frame(minWidth: DS.Material.keyMinWidth)
-            .frame(height: DS.Material.keyHeight)
-            .padding(.horizontal, DS.Space.base)
-            .background(cap)
+            .foregroundStyle(isEngaged ? DS.Color.ink : DS.Color.ink.opacity(0.75))
+            .frame(minWidth: DS.Material.keyMinWidth - DS.Space.roomy * 2)
+            .padding(.horizontal, DS.Space.roomy)
+            .padding(.vertical, 7)
+            .background(
+                Capsule().fill(isEngaged
+                    ? engagedColor.opacity(0.2)
+                    : DS.Color.ink.opacity(isHovering ? 0.12 : 0.08))
+            )
+            .overlay(Capsule().strokeBorder(isEngaged ? engagedColor.opacity(0.8) : .clear, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
+        .focusEffectDisabled()
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.4)
-        .scaleEffect(isPressed ? 0.96 : 1)
+        .onHover { isHovering = $0 }
         .animation(DS.Motion.panel, value: isEngaged)
-        .onLongPressGesture(minimumDuration: 0) {} onPressingChanged: { pressing in
-            withAnimation(pressing ? DS.Motion.press : DS.Motion.release) { isPressed = pressing }
-        }
-    }
-
-    private var labelColor: Color {
-        isEngaged ? engagedColor : DS.Color.ink
-    }
-
-    private var cap: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: DS.Radius.control)
-                .fill(DS.Color.cap)
-            // The caller's own color at moderate opacity when engaged — a wash, not a
-            // neutral "lift", so it reads regardless of light/dark face or accent color.
-            if isEngaged {
-                RoundedRectangle(cornerRadius: DS.Radius.control)
-                    .fill(engagedColor.opacity(0.16))
-            }
-            RoundedRectangle(cornerRadius: DS.Radius.control)
-                .strokeBorder(isEngaged ? engagedColor.opacity(0.7) : DS.Color.seam,
-                              lineWidth: isEngaged ? 1.5 : DS.Border.hairline)
-        }
-        .shadow(
-            color: (isPressed ? DS.Shadow.pressed : DS.Shadow.raised).color,
-            radius: (isPressed ? DS.Shadow.pressed : DS.Shadow.raised).radius,
-            x: (isPressed ? DS.Shadow.pressed : DS.Shadow.raised).x,
-            y: (isPressed ? DS.Shadow.pressed : DS.Shadow.raised).y
-        )
     }
 }
 
