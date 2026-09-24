@@ -24,16 +24,15 @@ struct MainWindow: View {
     @Bindable var colorController: ColorController
     @Bindable var timerController: TimerController
 
-    @State private var section: Section = .transcriptions
+    @State private var section: Section = .settings
     @State private var router = WindowRouter.shared
 
     enum Section: String, CaseIterable, Identifiable {
+        case settings
         case transcriptions
         case grabs
-        case clipboard
         case colors
         case dictionary
-        case settings
 
         var id: String { rawValue }
         @MainActor
@@ -41,7 +40,6 @@ struct MainWindow: View {
             switch self {
             case .transcriptions: t("Transkrypcje", "Transcriptions")
             case .grabs: t("Chwytanie", "Grabs")
-            case .clipboard: t("Schowek", "Clipboard")
             case .colors: t("Kolory", "Colors")
             case .dictionary: t("Słownik", "Dictionary")
             case .settings: t("Ustawienia", "Settings")
@@ -63,7 +61,6 @@ struct MainWindow: View {
                         switch section {
                         case .transcriptions: TranscriptionList()
                         case .grabs: GrabHistoryList()
-                        case .clipboard: ClipboardView(controller: clipboardController)
                         case .colors: ColorHistoryList(controller: colorController)
                         case .dictionary: DictionaryPanel()
                         case .settings:
@@ -104,6 +101,7 @@ struct MainWindow: View {
 
     private var sectionKeys: some View {
         HStack(spacing: DS.Space.snug) {
+            Spacer(minLength: 0)
             ForEach(Section.allCases) { candidate in
                 TransportKey(
                     title: candidate.title,
@@ -113,7 +111,12 @@ struct MainWindow: View {
                     withAnimation(DS.Motion.panel) { section = candidate }
                 }
             }
-            Spacer()
+            Rectangle().fill(DS.Color.seam).frame(width: 1, height: 20)
+                .padding(.horizontal, DS.Space.tight)
+            TransportKey(title: t("Pokaż wyszukiwarkę", "Show search"), systemImage: "magnifyingglass") {
+                clipboardController.showPanel()
+            }
+            Spacer(minLength: 0)
         }
     }
 }

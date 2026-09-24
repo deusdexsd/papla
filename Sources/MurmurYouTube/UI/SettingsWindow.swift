@@ -103,6 +103,7 @@ struct SettingsContent: View {
 
     private var tabBar: some View {
         HStack(spacing: DS.Space.snug) {
+            Spacer(minLength: 0)
             ForEach(SettingsTab.allCases) { candidate in
                 TransportKey(
                     title: candidate.title,
@@ -112,8 +113,9 @@ struct SettingsContent: View {
                     withAnimation(DS.Motion.panel) { tab = candidate }
                 }
             }
-            Spacer()
             KarabinerInfoButton()
+                .padding(.leading, DS.Space.tight)
+            Spacer(minLength: 0)
         }
     }
 
@@ -720,6 +722,7 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Szerokość wyszukiwarki", "Search window width")) {
+            SearchWidthPreview(width: settings.clipboardPanelWidth)
             HStack(spacing: DS.Space.base) {
                 Slider(value: $settings.clipboardPanelWidth, in: 600...1200, step: 20)
                 Text("\(Int(settings.clipboardPanelWidth)) px")
@@ -978,6 +981,7 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Wizualizacja", "Visualization")) {
+            VisualizerLivePreview()
             Picker(t("Kształt", "Shape"), selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in
                     Text(style.displayName).tag(style)
@@ -994,6 +998,7 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Kolory fali", "Wave colors")) {
+            VisualizerLivePreview()
             HStack(spacing: DS.Space.roomy) {
                 colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.waveformAccentPrimary.color },
@@ -1015,6 +1020,7 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Rozpiętość nasłuchu", "Listening range")) {
+            VisualizerLivePreview()
             HStack(spacing: DS.Space.base) {
                 Silkscreen(text: t("Mało", "Little"))
                 Slider(value: $settings.orbSpread, in: 0.2...2.0, step: 0.1)
@@ -1029,6 +1035,7 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Kolory", "Colors")) {
+            VisualizerLivePreview()
             HStack(spacing: DS.Space.roomy) {
                 colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.accentPrimary.color },
@@ -1411,5 +1418,105 @@ private struct KarabinerInfoButton: View {
             .padding(DS.Space.roomy + 2)
             .frame(width: 420)
         }
+    }
+}
+
+
+/// The dictation indicator as it will look and move, driven by a made-up speech pattern
+/// (phrases with pauses, syllable-rate wobble) instead of the microphone — so shape, colors
+/// and spread can be judged live without having to talk while adjusting them.
+private struct VisualizerLivePreview: View {
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let phrase = sin(t * 0.85)
+            let talking = phrase > -0.25
+            let syllable = 0.5 + 0.5 * sin(t * 9.0) * (0.6 + 0.4 * sin(t * 3.1))
+            let level = talking ? min(1, max(0, (0.35 + 0.65 * syllable) * (0.55 + 0.45 * sin(t * 1.7)))) : 0
+            VisualizerView(
+                energy: 0.22 + CGFloat(level) * 0.85,
+                isAnimating: true,
+                isError: false,
+                size: 64
+            )
+            .frame(width: 160, height: 100)
+            .frame(maxWidth: .infinity)
+            .background(Color.black.opacity(0.82), in: .rect(cornerRadius: DS.Radius.panel))
+        }
+    }
+}
+
+/// A scaled mock of the search window at the chosen width, filled with long sample entries,
+/// so it's obvious how much text fits before it gets cut off. Drawn at 1:1 size and shrunk,
+/// so the proportions match the real panel; the outline of the widest setting stays fixed.
+private struct SearchWidthPreview: View {
+    let width: Double
+    private static let maxWidth: Double = 1200
+    private static let height: Double = 330
+
+    private static let samples = [
+        ("Dzień dobry, chciałbym zapytać o możliwość przełożenia piątkowego spotkania na poniedziałek rano, jeśli to nie sprawi problemu.", "Wiadomości · 2 min temu · Tekst"),
+        ("https://github.com/deusdexsd/papla/releases/tag/v1.0.0", "Safari · 12 min temu · Link"),
+        ("Transkrypcja: dzisiaj nagrywamy trzeci odcinek serii i musimy jeszcze dograć narrację do wstępu.", "Papla · 1 godz. temu · Tekst"),
+    ]
+
+    var body: some View {
+        GeometryReader { geo in
+            let scale = geo.size.width / Self.maxWidth
+            ZStack {
+                RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous)
+                    .strokeBorder(DS.Color.seam, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                mock
+                    .frame(width: width, height: Self.height)
+                    .background(DS.Color.ink.opacity(0.06), in: .rect(cornerRadius: PanelStyle.cornerRadius))
+                    .clipShape(RoundedRectangle(cornerRadius: PanelStyle.cornerRadius, style: .continuous))
+                    .scaleEffect(scale)
+                    .frame(width: width * scale, height: Self.height * scale)
+            }
+        }
+        .frame(height: Self.height * 0.42 + 8)
+        .animation(DS.Motion.panel, value: width)
+    }
+
+    private var mock: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass").font(.system(size: 17, weight: .medium))
+                Text(t("Szukaj w schowku…", "Search clipboard…")).font(.system(size: 20))
+                Spacer()
+                Image(systemName: "clock").font(.system(size: 17))
+            }
+            .foregroundStyle(DS.Color.inkSecondary)
+            .padding(.horizontal, 22).padding(.vertical, 18)
+
+            HStack(spacing: 8) {
+                ForEach([t("Wszystko", "All"), t("Tekst", "Text"), t("Linki", "Links"), t("Obrazy", "Images")], id: \.self) { title in
+                    Text(title).font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 16).padding(.vertical, 7)
+                        .background(Capsule().fill(DS.Color.ink.opacity(0.08)))
+                }
+            }
+            .padding(.bottom, 10)
+            Rectangle().fill(DS.Color.seam).frame(height: 1)
+
+            VStack(spacing: 2) {
+                ForEach(Array(Self.samples.enumerated()), id: \.offset) { index, sample in
+                    HStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 8).fill(DS.Color.ink.opacity(0.10)).frame(width: 40, height: 40)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(sample.0).font(.system(size: 14, weight: .medium)).lineLimit(1)
+                            Text(sample.1).font(.system(size: 11)).foregroundStyle(DS.Color.inkSecondary)
+                        }
+                        Spacer(minLength: 0)
+                        Text("⌘\(index + 1)").font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(DS.Color.inkSecondary)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                }
+            }
+            .padding(8)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DS.Color.ink)
     }
 }

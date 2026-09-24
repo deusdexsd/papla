@@ -269,7 +269,12 @@ private struct MenuContent: View {
     }
 
     var body: some View {
-        Button(t("Pokaż Paplę", "Show Papla")) {
+        Button(t("Pokaż wyszukiwarkę Papli", "Show Papla search")) {
+            clipboardController.showPanel()
+        }
+
+        Button(t("Ustawienia Papli", "Papla settings")) {
+            WindowRouter.shared.pendingSection = .settings
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
