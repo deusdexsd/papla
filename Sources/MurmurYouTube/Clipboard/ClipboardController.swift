@@ -92,7 +92,6 @@ final class ClipboardController {
     /// The gear in the panel: closes the search and opens Papla's own window on Ustawienia.
     func openSettings() {
         hidePanel()
-        WindowRouter.shared.pendingSection = .settings
         NotificationCenter.default.post(name: .openPaplaWindow, object: nil)
     }
 

@@ -13,6 +13,8 @@ import SwiftUI
 struct ClipboardView: View {
     let controller: ClipboardController
     var isPanel = false
+    /// A non-interactive live copy inside Ustawienia: never grabs keyboard focus.
+    var isPreview = false
 
     @State private var store = ClipboardStore.shared
     @State private var colorStore = ColorStore.shared
@@ -269,7 +271,7 @@ struct ClipboardView: View {
         query = ""
         filter = nil
         selection = allItems.first?.id
-        if isPanel { searchFocused = true }
+        if isPanel && !isPreview { searchFocused = true }
     }
 
     /// Colour entries live in `ColorStore`, transcriptions in `RunStore`, everything else in

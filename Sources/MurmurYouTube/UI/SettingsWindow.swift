@@ -32,7 +32,7 @@ struct SettingsWindow: View {
 /// feature. A small tab row up top, the same `TransportKey` idiom the rest of the app uses
 /// for switching sections, keeps them apart without needing three separate windows.
 private enum SettingsTab: String, CaseIterable, Identifiable {
-    case dictation, grab, clipboard, colors, timer, appearance
+    case dictation, grab, clipboard, colors, timer, appearance, dictionary
 
     var id: String { rawValue }
     @MainActor
@@ -44,6 +44,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .colors: t("Kolory", "Colors")
         case .timer: t("Minutnik", "Timer")
         case .appearance: t("Wygląd", "Appearance")
+        case .dictionary: t("Słownik", "Dictionary")
         }
     }
 }
@@ -77,18 +78,32 @@ struct SettingsContent: View {
         VStack(alignment: .leading, spacing: DS.Space.base) {
             tabBar
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: DS.Space.wide) {
-                    switch tab {
-                    case .dictation: dictationPanels
-                    case .grab: grabPanels
-                    case .clipboard: clipboardPanels
-                    case .colors: colorPanels
-                    case .timer: timerPanels
-                    case .appearance: appearancePanels
+            switch tab {
+            case .appearance:
+                VisualizerLivePreview()
+            case .clipboard:
+                clipboardWidthControls
+            default:
+                EmptyView()
+            }
+
+            if tab == .dictionary {
+                DictionaryPanel()
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: DS.Space.wide) {
+                        switch tab {
+                        case .dictation: dictationPanels
+                        case .grab: grabPanels
+                        case .clipboard: clipboardPanels
+                        case .colors: colorPanels
+                        case .timer: timerPanels
+                        case .appearance: appearancePanels
+                        case .dictionary: EmptyView()
+                        }
                     }
+                    .padding(.bottom, DS.Space.roomy)
                 }
-                .padding(.bottom, DS.Space.roomy)
             }
         }
         .padding(.horizontal, DS.Space.wide)
@@ -116,6 +131,25 @@ struct SettingsContent: View {
             KarabinerInfoButton()
                 .padding(.leading, DS.Space.tight)
             Spacer(minLength: 0)
+        }
+    }
+
+    /// Pinned above the scrolling panels so the live search window stays in view while the
+    /// slider moves.
+    private var clipboardWidthControls: some View {
+        VStack(alignment: .leading, spacing: DS.Space.snug) {
+            SearchWidthPreview(controller: clipboardController, width: settings.clipboardPanelWidth)
+            HStack(spacing: DS.Space.base) {
+                Silkscreen(text: t("Szerokość wyszukiwarki", "Search window width"))
+                Slider(value: $settings.clipboardPanelWidth, in: 600...1200, step: 20)
+                Text("\(Int(settings.clipboardPanelWidth)) px")
+                    .font(DS.Font.counter)
+                    .foregroundStyle(DS.Color.inkSecondary)
+                    .frame(width: 70, alignment: .trailing)
+                TransportKey(title: t("Domyślna", "Default")) {
+                    settings.clipboardPanelWidth = ClipboardPanel.defaultWidth
+                }
+            }
         }
     }
 
@@ -721,24 +755,6 @@ struct SettingsContent: View {
                 + "“System” follows your Mac's light/dark mode."))
         }
 
-        panel(label: t("Szerokość wyszukiwarki", "Search window width")) {
-            SearchWidthPreview(width: settings.clipboardPanelWidth)
-            HStack(spacing: DS.Space.base) {
-                Slider(value: $settings.clipboardPanelWidth, in: 600...1200, step: 20)
-                Text("\(Int(settings.clipboardPanelWidth)) px")
-                    .font(DS.Font.counter)
-                    .foregroundStyle(DS.Color.inkSecondary)
-                    .frame(width: 70, alignment: .trailing)
-                TransportKey(title: t("Domyślna", "Default")) {
-                    settings.clipboardPanelWidth = ClipboardPanel.defaultWidth
-                }
-            }
-            note(t("Jeśli długie wpisy albo transkrypcje się ucinają, poszerz okno. Zmiana działa "
-                + "od następnego otwarcia wyszukiwarki.",
-                "If long entries or transcripts get cut off, make the window wider. Applies the "
-                + "next time the search window opens."))
-        }
-
         panel(label: t("Wklejanie", "Pasting")) {
             Toggle(isOn: Binding(
                 get: { settings.pasteStraightenDashes },
@@ -981,7 +997,6 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Wizualizacja", "Visualization")) {
-            VisualizerLivePreview()
             Picker(t("Kształt", "Shape"), selection: $settings.hudVisualizerStyle) {
                 ForEach(HUDVisualizerStyle.allCases, id: \.self) { style in
                     Text(style.displayName).tag(style)
@@ -998,7 +1013,6 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Kolory fali", "Wave colors")) {
-            VisualizerLivePreview()
             HStack(spacing: DS.Space.roomy) {
                 colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.waveformAccentPrimary.color },
@@ -1020,7 +1034,6 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Rozpiętość nasłuchu", "Listening range")) {
-            VisualizerLivePreview()
             HStack(spacing: DS.Space.base) {
                 Silkscreen(text: t("Mało", "Little"))
                 Slider(value: $settings.orbSpread, in: 0.2...2.0, step: 0.1)
@@ -1035,7 +1048,6 @@ struct SettingsContent: View {
         }
 
         panel(label: t("Kolory", "Colors")) {
-            VisualizerLivePreview()
             HStack(spacing: DS.Space.roomy) {
                 colorSwatch(t("Pierwszy", "First"), binding: Binding(
                     get: { settings.accentPrimary.color },
@@ -1446,19 +1458,14 @@ private struct VisualizerLivePreview: View {
     }
 }
 
-/// A scaled mock of the search window at the chosen width, filled with long sample entries,
-/// so it's obvious how much text fits before it gets cut off. Drawn at 1:1 size and shrunk,
-/// so the proportions match the real panel; the outline of the widest setting stays fixed.
+/// The real search window, live, at the width chosen — same view, same data, just scaled down
+/// and inert — so what you see is exactly what will pop up. The dashed outline is the widest
+/// possible setting, which keeps the scale steady while the slider moves.
 private struct SearchWidthPreview: View {
+    let controller: ClipboardController
     let width: Double
     private static let maxWidth: Double = 1200
-    private static let height: Double = 330
-
-    private static let samples = [
-        ("Dzień dobry, chciałbym zapytać o możliwość przełożenia piątkowego spotkania na poniedziałek rano, jeśli to nie sprawi problemu.", "Wiadomości · 2 min temu · Tekst"),
-        ("https://github.com/deusdexsd/papla/releases/tag/v1.0.0", "Safari · 12 min temu · Link"),
-        ("Transkrypcja: dzisiaj nagrywamy trzeci odcinek serii i musimy jeszcze dograć narrację do wstępu.", "Papla · 1 godz. temu · Tekst"),
-    ]
+    private static let height: Double = 560
 
     var body: some View {
         GeometryReader { geo in
@@ -1466,57 +1473,15 @@ private struct SearchWidthPreview: View {
             ZStack {
                 RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous)
                     .strokeBorder(DS.Color.seam, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                mock
+                ClipboardView(controller: controller, isPanel: true, isPreview: true)
                     .frame(width: width, height: Self.height)
-                    .background(DS.Color.ink.opacity(0.06), in: .rect(cornerRadius: PanelStyle.cornerRadius))
                     .clipShape(RoundedRectangle(cornerRadius: PanelStyle.cornerRadius, style: .continuous))
+                    .allowsHitTesting(false)
                     .scaleEffect(scale)
                     .frame(width: width * scale, height: Self.height * scale)
             }
         }
-        .frame(height: Self.height * 0.42 + 8)
+        .frame(height: Self.height * 0.36 + 8)
         .animation(DS.Motion.panel, value: width)
-    }
-
-    private var mock: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "magnifyingglass").font(.system(size: 17, weight: .medium))
-                Text(t("Szukaj w schowku…", "Search clipboard…")).font(.system(size: 20))
-                Spacer()
-                Image(systemName: "clock").font(.system(size: 17))
-            }
-            .foregroundStyle(DS.Color.inkSecondary)
-            .padding(.horizontal, 22).padding(.vertical, 18)
-
-            HStack(spacing: 8) {
-                ForEach([t("Wszystko", "All"), t("Tekst", "Text"), t("Linki", "Links"), t("Obrazy", "Images")], id: \.self) { title in
-                    Text(title).font(.system(size: 13, weight: .medium))
-                        .padding(.horizontal, 16).padding(.vertical, 7)
-                        .background(Capsule().fill(DS.Color.ink.opacity(0.08)))
-                }
-            }
-            .padding(.bottom, 10)
-            Rectangle().fill(DS.Color.seam).frame(height: 1)
-
-            VStack(spacing: 2) {
-                ForEach(Array(Self.samples.enumerated()), id: \.offset) { index, sample in
-                    HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 8).fill(DS.Color.ink.opacity(0.10)).frame(width: 40, height: 40)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(sample.0).font(.system(size: 14, weight: .medium)).lineLimit(1)
-                            Text(sample.1).font(.system(size: 11)).foregroundStyle(DS.Color.inkSecondary)
-                        }
-                        Spacer(minLength: 0)
-                        Text("⌘\(index + 1)").font(.system(size: 11, weight: .medium, design: .rounded))
-                            .foregroundStyle(DS.Color.inkSecondary)
-                    }
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                }
-            }
-            .padding(8)
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(DS.Color.ink)
     }
 }

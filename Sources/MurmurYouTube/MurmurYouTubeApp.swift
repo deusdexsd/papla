@@ -274,7 +274,6 @@ private struct MenuContent: View {
         }
 
         Button(t("Ustawienia Papli", "Papla settings")) {
-            WindowRouter.shared.pendingSection = .settings
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }

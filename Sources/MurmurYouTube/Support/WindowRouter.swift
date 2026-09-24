@@ -11,11 +11,3 @@ extension Notification.Name {
     static let openTimerPanel = Notification.Name("ai.pivotstudio.papla.openTimerPanel")
 }
 
-/// Carries "open the window on this section" from wherever the request came from to
-/// `MainWindow`, which may not even exist yet when the request is made.
-@MainActor
-@Observable
-final class WindowRouter {
-    static let shared = WindowRouter()
-    var pendingSection: MainWindow.Section?
-}

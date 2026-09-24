@@ -24,55 +24,25 @@ struct MainWindow: View {
     @Bindable var colorController: ColorController
     @Bindable var timerController: TimerController
 
-    @State private var section: Section = .settings
-    @State private var router = WindowRouter.shared
-
-    enum Section: String, CaseIterable, Identifiable {
-        case settings
-        case transcriptions
-        case grabs
-        case colors
-        case dictionary
-
-        var id: String { rawValue }
-        @MainActor
-        var title: String {
-            switch self {
-            case .transcriptions: t("Transkrypcje", "Transcriptions")
-            case .grabs: t("Chwytanie", "Grabs")
-            case .colors: t("Kolory", "Colors")
-            case .dictionary: t("Słownik", "Dictionary")
-            case .settings: t("Ustawienia", "Settings")
-            }
-        }
-    }
-
     var body: some View {
         ZStack {
             DS.Color.chassis.ignoresSafeArea()
 
             VStack(spacing: DS.Space.base) {
-                TransportPanel(controller: controller, grabController: grabController)
-
-                sectionKeys
+                TransportPanel(
+                    controller: controller,
+                    grabController: grabController,
+                    clipboardController: clipboardController
+                )
 
                 Well {
-                    Group {
-                        switch section {
-                        case .transcriptions: TranscriptionList()
-                        case .grabs: GrabHistoryList()
-                        case .colors: ColorHistoryList(controller: colorController)
-                        case .dictionary: DictionaryPanel()
-                        case .settings:
-                            SettingsContent(
-                                controller: controller,
-                                grabController: grabController,
-                                clipboardController: clipboardController,
-                                colorController: colorController,
-                                timerController: timerController
-                            )
-                        }
-                    }
+                    SettingsContent(
+                        controller: controller,
+                        grabController: grabController,
+                        clipboardController: clipboardController,
+                        colorController: colorController,
+                        timerController: timerController
+                    )
                     .padding(DS.Space.hair)
                 }
                 .frame(maxHeight: .infinity)
@@ -81,42 +51,11 @@ struct MainWindow: View {
         }
         .frame(minWidth: 720, minHeight: 560)
         .background {
-            // Esc leaves Settings the same way it dismisses the search bar.
-            if section == .settings {
-                Button("") { NSApp.keyWindow?.close() }
-                    .keyboardShortcut(.cancelAction)
-                    .opacity(0)
-                    .allowsHitTesting(false)
-            }
-        }
-        .onAppear { consumePendingSection() }
-        .onChange(of: router.pendingSection) { consumePendingSection() }
-    }
-
-    private func consumePendingSection() {
-        guard let pending = router.pendingSection else { return }
-        section = pending
-        router.pendingSection = nil
-    }
-
-    private var sectionKeys: some View {
-        HStack(spacing: DS.Space.snug) {
-            Spacer(minLength: 0)
-            ForEach(Section.allCases) { candidate in
-                TransportKey(
-                    title: candidate.title,
-                    isEngaged: section == candidate,
-                    engagedColor: Brand.accent
-                ) {
-                    withAnimation(DS.Motion.panel) { section = candidate }
-                }
-            }
-            Rectangle().fill(DS.Color.seam).frame(width: 1, height: 20)
-                .padding(.horizontal, DS.Space.tight)
-            TransportKey(title: t("Pokaż wyszukiwarkę", "Show search"), systemImage: "magnifyingglass") {
-                clipboardController.showPanel()
-            }
-            Spacer(minLength: 0)
+            // Esc closes the window, the same way it dismisses the search bar.
+            Button("") { NSApp.keyWindow?.close() }
+                .keyboardShortcut(.cancelAction)
+                .opacity(0)
+                .allowsHitTesting(false)
         }
     }
 }
@@ -128,6 +67,7 @@ struct MainWindow: View {
 private struct TransportPanel: View {
     @Bindable var controller: DictationController
     @Bindable var grabController: GrabController
+    let clipboardController: ClipboardController
 
     @State private var elapsed: TimeInterval = 0
     @State private var startedAt: Date?
@@ -183,6 +123,12 @@ private struct TransportPanel: View {
                     isEnabled: !grabController.state.isBusy
                 ) {
                     grabController.beginGrab()
+                }
+            }
+
+            VStack(alignment: .center, spacing: DS.Space.snug) {
+                TransportKey(title: t("Wyszukiwarka", "Search"), systemImage: "magnifyingglass") {
+                    clipboardController.showPanel()
                 }
             }
 
