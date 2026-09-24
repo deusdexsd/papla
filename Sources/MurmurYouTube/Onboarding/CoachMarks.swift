@@ -38,15 +38,15 @@ final class TourState {
             CoachStep(anchors: ["dictionary"], symbol: "character.book.closed", title: t("Słownik", "Dictionary"),
                       text: t("Uczy Paplę słów, które źle rozpoznaje — nazw własnych, żargonu. Ma inny kolor, bo w odróżnieniu od reszty nie ma odpowiednika w wyszukiwarce.",
                               "Teaches Papla words it mishears — names, jargon. It has a different color because, unlike the rest, it has no counterpart in the search.")),
-            CoachStep(anchors: ["icon-appearance", "icon-model", "icon-permissions"], symbol: "paintbrush.pointed", title: t("Wygląd, model, uprawnienia", "Appearance, model, permissions"),
-                      text: t("Trzy ikony: wygląd (język, ikona w pasku menu, kula lub fala), wybór i pobieranie modelu mowy oraz uprawnienia macOS. Najedź myszką, żeby zobaczyć nazwę.",
-                              "Three icons: appearance (language, menu bar icon, orb or wave), speech model choice and download, and macOS permissions. Hover to see the name.")),
+            CoachStep(anchors: ["icon-appearance", "icon-model", "icon-permissions"], symbol: "gearshape", title: t("Ogólne, model, uprawnienia", "General, model, permissions"),
+                      text: t("Trzy ikony: zębatka (język, ikona w pasku menu, kula lub fala, ponowne uruchomienie przewodnika i tego samouczka), wybór i pobieranie modelu mowy oraz uprawnienia macOS. Najedź myszką, żeby zobaczyć nazwę.",
+                              "Three icons: the gear (language, menu bar icon, orb or wave, replaying the guide and this tour), speech model choice and download, and macOS permissions. Hover to see the name.")),
             CoachStep(anchors: [], symbol: "menubar.rectangle", title: t("Ikona w pasku menu", "Menu bar icon"),
                       text: t("Papla mieszka w pasku menu u góry ekranu. Lewy klik otwiera i zamyka to okno, prawy pokazuje menu: wyszukiwarka, ustawienia, język, szybkie przełączniki.",
                               "Papla lives in the menu bar at the top of the screen. Left click opens and closes this window, right click shows the menu: search, settings, language, quick toggles.")),
             CoachStep(anchors: [], symbol: "checkmark.seal", title: t("To wszystko", "That's it"),
-                      text: t("Przewodnik i ten samouczek możesz uruchomić ponownie w menu pod prawym klikiem albo w Ustawienia ▸ Wygląd.",
-                              "You can run this tour and the guide again from the right-click menu or in Settings ▸ Appearance.")),
+                      text: t("Przewodnik i ten samouczek możesz uruchomić ponownie w menu pod prawym klikiem albo w Ustawienia ▸ ikona zębatki.",
+                              "You can run this tour and the guide again from the right-click menu or in Settings ▸ the gear icon.")),
         ]
     }
 

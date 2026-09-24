@@ -39,7 +39,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     /// The last three are shown as bare icons — there's no room for ten words in one row.
     var icon: String? {
         switch self {
-        case .appearance: "paintbrush.pointed"
+        case .appearance: "gearshape"
         case .model: "cpu"
         case .permissions: "lock.shield"
         default: nil
@@ -54,7 +54,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .clipboard: t("Schowek", "Clipboard")
         case .colors: t("Kolory", "Colors")
         case .timer: t("Minutnik", "Timer")
-        case .appearance: t("Wygląd", "Appearance")
+        case .appearance: t("Ogólne", "General")
         case .dictionary: t("Słownik", "Dictionary")
         case .model: t("Model", "Model")
         case .permissions: t("Uprawnienia", "Permissions")

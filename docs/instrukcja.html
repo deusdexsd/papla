@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Papla — instrukcja obsługi</title>
+<title>Papla — instrukcja obsługi · user guide</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   :root { --ink:#1d1d1f; --mute:#6e6e73; --line:#e5e5ea; --accent:#0a6cf5; --soft:#f5f5f7; }
@@ -26,9 +26,21 @@
   .cover { padding: 6pt 0 10pt; }
   .toc { columns: 2; column-gap: 24pt; color: var(--mute); font-size: 10.5pt; margin: 6pt 0 0; }
   .toc div { margin: 2pt 0; }
+
+  .langbar { position: fixed; top: 10pt; right: 14pt; display: flex; gap: 4pt; z-index: 10; }
+  .langbar button { font: 600 10pt -apple-system, "SF Pro Text", Arial, sans-serif; border: 1px solid var(--line); background: var(--soft);
+        color: var(--ink); border-radius: 999px; padding: 3pt 10pt; cursor: pointer; }
+  .langbar button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  body { padding: 0 6pt; }
+  .lang { display: none; }
+  html[data-lang="pl"] .lang.pl, html[data-lang="en"] .lang.en { display: block; }
+  @media print { .langbar { display: none; } }
 </style>
 </head>
 <body>
+<div class="langbar"><button data-l="pl">Polski</button><button data-l="en">English</button></div>
+<div class="lang pl">
+
 
 <div class="cover">
   <h1>Papla</h1>
@@ -41,14 +53,15 @@
 </div>
 
 <h2>1. Czym jest Papla</h2>
-<p>Papla to aplikacja działająca w tle na Macu — jej ikona (kółeczka) siedzi w pasku menu na górze ekranu, bez ikony w Docku. Składa się z czterech niezależnych funkcji, z których każda ma <b>własny skrót klawiszowy, własną historię i własną zakładkę w ustawieniach</b>:</p>
+<p>Papla to aplikacja działająca w tle na Macu — jej ikona (kółeczka) siedzi w pasku menu na górze ekranu, bez ikony w Docku. Składa się z niezależnych funkcji, z których każda ma <b>własny skrót klawiszowy i własną zakładkę w ustawieniach</b>:</p>
 <ul>
   <li><b>Dyktowanie</b> — mówisz po polsku, tekst sam wpisuje się tam, gdzie piszesz.</li>
   <li><b>Chwytanie tekstu</b> — zaznaczasz obszar ekranu, a tekst z niego (albo wartość kodu QR) ląduje w schowku.</li>
   <li><b>Wyszukiwarka / schowek</b> — historia wszystkiego, co skopiowałeś, ze zrzutami ekranu, miniaturami i kategoriami.</li>
   <li><b>Próbnik kolorów</b> — pipeta, która zapisuje kolor z dowolnego miejsca na ekranie.</li>
+  <li><b>Minutnik</b> — szybkie liczniki i budziki z dźwiękiem, opcjonalnie widoczne w pasku menu.</li>
 </ul>
-<p>Wszystko dzieje się lokalnie na Twoim Macu — żadne dane nie są wysyłane w sieć (jedyny wyjątek to jednorazowe pobranie modelu rozpoznawania mowy, patrz punkt 4).</p>
+<p>Wszystko dzieje się lokalnie na Twoim Macu — żadne dane nie są wysyłane w sieć (jedyny wyjątek to pobranie modelu rozpoznawania mowy i opcjonalne sprawdzenie jego aktualizacji, patrz punkt 4).</p>
 
 <h2>2. Instalacja</h2>
 <ol>
@@ -74,11 +87,11 @@
 
 <h2>4. Pierwsze uruchomienie</h2>
 <ol>
-  <li>Kliknij ikonę Papli w pasku menu i wybierz <b>Pobierz model mowy…</b> — to jednorazowe pobranie ok. 470 MB (model NVIDIA Parakeet, rozpoznaje polski). Bez tego dyktowanie nie zadziała. Po pobraniu w menu widać „Model mowy zainstalowany ✓".</li>
+  <li>Kliknij ikonę Papli w pasku menu i wybierz <b>Pobierz model mowy…</b> (albo Ustawienia ▸ Model) — to jednorazowe pobranie ok. 470 MB (model NVIDIA Parakeet, rozpoznaje polski). Bez tego dyktowanie nie zadziała. Po pobraniu w menu widać „Model mowy zainstalowany ✓".</li>
   <li>Sprawdź uprawnienia z punktu 3.</li>
   <li>Opcjonalnie włącz <b>Uruchamiaj przy logowaniu</b> (menu ▸ ta pozycja) — Papla wystartuje w tle razem z Twoim kontem.</li>
 </ol>
-<p>Przy pierwszym uruchomieniu Papla pokazuje <b>przewodnik</b> (kilka kroków: co robi, dyktowanie i model mowy, uprawnienia, wygląd, podsumowanie ze skrótami), a potem <b>samouczek „co jest co"</b> — okno przyciemnia się i po kolei podświetla elementy z krótkim opisem. Oba można w każdej chwili pominąć (<b>Pomiń</b> albo <kbd>Esc</kbd>) i uruchomić ponownie z menu pod ikoną albo z <b>Ustawienia ▸ Wygląd ▸ Przewodnik</b>.</p>
+<p>Przy pierwszym uruchomieniu Papla pokazuje <b>przewodnik</b> (kilka kroków: co robi, dyktowanie i model mowy, uprawnienia, wygląd, podsumowanie ze skrótami), a potem <b>samouczek „co jest co"</b> — okno przyciemnia się i po kolei podświetla elementy z krótkim opisem. Oba można w każdej chwili pominąć (<b>Pomiń</b> albo <kbd>Esc</kbd>) i uruchomić ponownie z menu pod ikoną albo z <b>Ustawienia ▸ ikona zębatki ▸ Przewodnik</b>.</p>
 <p>Menu pod ikoną zawiera też: <b>Pokaż wyszukiwarkę Papli</b>, <b>Ustawienia Papli</b>, wybór języka interfejsu (polski / angielski), przyciski chwytania tekstu, próbnika kolorów i minutnika, szybkie przełączniki oraz <b>Zamknij Paplę</b>. Lewy klik na ikonę otwiera i zamyka okno ustawień, prawy pokazuje to menu.</p>
 
 <h2>5. Dyktowanie</h2>
@@ -113,7 +126,7 @@
   <li><b>Kod QR</b> (a także Aztec, DataMatrix, PDF417): zamiast tekstu do schowka trafia <b>wartość kodu</b> — np. adres strony.</li>
   <li>Z menu paska górnego możesz też użyć <b>Chwyć obszar…</b> i <b>Chwyć cały ekran</b>.</li>
 </ul>
-<p>Ustawienia (<b>Ustawienia ▸ Chwytanie</b>): własny skrót, język główny i dodatkowy (np. polski + angielski), dokładność rozpoznawania, łączenie wyrazów dzielonych na końcu wiersza, <b>zamiana długiego myślnika „—" na zwykły „-"</b>, automatyczne wklejanie i włączanie/wyłączanie ruchomego blasku ramki. Historia wszystkich chwytów jest w sekcji <b>Chwytanie</b> głównego okna.</p>
+<p>Ustawienia (<b>Ustawienia ▸ Chwytanie</b>): własny skrót, język główny i dodatkowy (np. polski + angielski), dokładność rozpoznawania, łączenie wyrazów dzielonych na końcu wiersza, <b>zamiana długiego myślnika „—" na zwykły „-"</b>, automatyczne wklejanie i włączanie/wyłączanie ruchomego blasku ramki. Historia chwytów jest w wyszukiwarce (kategoria Wszystko).</p>
 
 <h2>7. Wyszukiwarka i schowek</h2>
 <p>Domyślny skrót: <kbd>⌃⌥⌘V</kbd> — otwiera pływające okno w stylu wyszukiwarki systemowej. Zapamiętuje wszystko, co skopiujesz zwykłym <kbd>⌘C</kbd>.</p>
@@ -148,14 +161,15 @@
 <h3>Wygląd okna</h3>
 <p>Okno wyszukiwarki ma natywny wygląd macOS (szkło Liquid Glass, kolory systemowe, Twój systemowy akcent). W <b>Ustawienia ▸ Schowek ▸ Wygląd wyszukiwarki</b> wybierz: <b>Systemowy</b> (podąża za trybem Maca), <b>Jasny</b> lub <b>Ciemny</b>.</p>
 
-<h2>8. Próbnik kolorów</h2>
+<h2>8. Próbnik kolorów i minutnik</h2>
 <p>Domyślny skrót: <kbd>⌃⌥⌘C</kbd>. Pojawia się systemowa pipeta z lupą — kliknij dowolny piksel na ekranie. Kolor:</p>
 <ul>
   <li>trafia do schowka w wybranym zapisie: <b>HEX</b> (<code>#FF8800</code>), <b>RGB</b> (<code>rgb(255, 136, 0)</code>) lub <b>HSL</b> (<code>hsl(32, 100%, 50%)</code>),</li>
   <li>zapisuje się w historii, którą widać w wyszukiwarce (kategoria Kolory),</li>
-  <li>widać go też w wyszukiwarce, w kategoriach Kolory i Wszystko.</li>
 </ul>
 <p>Ustawienia (<b>Ustawienia ▸ Kolory</b>): skrót, zapis, limit historii, czyszczenie historii.</p>
+<h3>Minutnik</h3>
+<p>Domyślny skrót: <kbd>⌃⌥⌘M</kbd> (albo zegar w wyszukiwarce). Wpisujesz minuty (np. <code>45</code>) i opcjonalny opis — po upływie czasu rozlega się alarm z wybranym dźwiękiem. Najbliższy minutnik widać w polu wyszukiwarki, a w <b>Ustawienia ▸ Minutnik</b> możesz włączyć odliczanie w pasku menu.</p>
 
 <h2>9. Ustawienia</h2>
 <p>Główne okno Papli to ustawienia (lewy klik na ikonę w pasku menu albo „Ustawienia Papli" w menu). Na górze są przyciski <b>Nagrywaj</b>, <b>Chwyć obszar</b> i <b>Wyszukiwarka</b>. <kbd>Esc</kbd> zamyka okno. Ustawienia są podzielone na zakładki:</p>
@@ -166,10 +180,10 @@
   <tr><td>Schowek</td><td>skrót wyszukiwarki, historia i limit, zrzuty ekranu, wygląd i <b>szerokość okna (podgląd na żywo)</b>, zamiana myślników przy wklejaniu</td></tr>
   <tr><td>Kolory</td><td>skrót pipety, zapis koloru, historia kolorów</td></tr>
   <tr><td>Minutnik</td><td>skrót, dźwięk alarmu, odliczanie w pasku menu</td></tr>
-  <tr><td>Wygląd</td><td>język interfejsu, ikona w pasku menu (5 do wyboru), kula lub fala z podglądem na żywo, kolory, rozpiętość reakcji na głos, pozycja i margines wskaźnika, dźwięki, uruchamianie przy logowaniu</td></tr>
+  <tr><td>Ogólne (ikona zębatki)</td><td>język interfejsu, ikona w pasku menu (5 do wyboru), kula lub fala z podglądem na żywo, kolory, rozpiętość reakcji na głos, pozycja i margines wskaźnika, dźwięki, uruchamianie przy logowaniu, <b>Przewodnik</b> (ponowne uruchomienie przewodnika i samouczka „co jest co")</td></tr>
   <tr><td>Słownik</td><td>własne poprawki rozpoznawania słów</td></tr>
-  <tr><td>Uprawnienia</td><td>status Dostępności, Mikrofonu i Nagrywania ekranu na żywo, skróty do właściwych ustawień systemu, przycisk „Uruchom Paplę od nowa" i przypomnienie, że po każdej reinstalacji uprawnienia trzeba nadać ponownie</td></tr>
-  <tr><td>Model</td><td>wybór modelu mowy, rozmiar i lokalizacja, <b>Pobierz ponownie</b> (naprawa uszkodzonego modelu), <b>Sprawdź aktualizacje</b>, lista innych modeli. Możesz wybrać inny model mowy (v2 angielski, 110M angielski, JA japoński) — ale <b>tylko Parakeet v3 rozumie polski</b>; modele z polskim są podświetlone na zielono, reszta jest oznaczona ostrzeżeniem</td></tr>
+  <tr><td>Uprawnienia (ikona kłódki)</td><td>status Dostępności, Mikrofonu i Nagrywania ekranu na żywo, skróty do właściwych ustawień systemu, przycisk „Uruchom Paplę od nowa" i przypomnienie, że po każdej reinstalacji uprawnienia trzeba nadać ponownie</td></tr>
+  <tr><td>Model (ikona procesora)</td><td>wybór modelu mowy, rozmiar i lokalizacja, <b>Pobierz ponownie</b> (naprawa uszkodzonego modelu), <b>Sprawdź aktualizacje</b>, lista innych modeli. Możesz wybrać inny model mowy (v2 angielski, 110M angielski, JA japoński) — ale <b>tylko Parakeet v3 rozumie polski</b>; modele z polskim są podświetlone na zielono, reszta jest oznaczona ostrzeżeniem</td></tr>
 </table>
 <div class="tip"><b>Klawisze F1–F12:</b> macOS zarezerwował gołe klawisze F, więc Papla ich nie widzi. Obok zakładek jest przycisk (i) z instrukcją, jak przypisać klawisz F do skrótu programem <b>Karabiner-Elements</b> — to zupełnie osobna, niezależna aplikacja, niezwiązana z Paplą.</div>
 <div class="tip"><b>Zmiana skrótu:</b> kliknij <b>Zmień</b>, naciśnij nową kombinację (musi zawierać modyfikator: ⌘, ⌥, ⌃ albo ⇧ — wyjątek to klawisze F1–F20). <kbd>Esc</kbd> anuluje. W trakcie nagrywania skróty Papli są wstrzymane, więc możesz ustawić kombinację, która jest już używana.</div>
@@ -181,12 +195,14 @@
   <tr><td>Chwytanie tekstu</td><td><kbd>⌃⌥⌘4</kbd></td><td>Ustawienia ▸ Chwytanie</td></tr>
   <tr><td>Wyszukiwarka / schowek</td><td><kbd>⌃⌥⌘V</kbd></td><td>Ustawienia ▸ Schowek</td></tr>
   <tr><td>Próbnik kolorów</td><td><kbd>⌃⌥⌘C</kbd></td><td>Ustawienia ▸ Kolory</td></tr>
+  <tr><td>Dyktowanie z tłumaczeniem</td><td><kbd>⌃⌥⌘T</kbd></td><td>Ustawienia ▸ Dyktowanie</td></tr>
+  <tr><td>Minutnik</td><td><kbd>⌃⌥⌘M</kbd></td><td>Ustawienia ▸ Minutnik</td></tr>
   <tr><td>Ustawienia okna</td><td><kbd>⌘,</kbd></td><td>—</td></tr>
 </table>
 
 <h2>11. Rozwiązywanie problemów</h2>
 <h3>Skróty w ogóle nie reagują</h3>
-<p>Najczęściej brakuje uprawnienia <b>Dostępność</b> (albo macOS je „zapomniał" po aktualizacji). Usuń Paplę z listy (−), dodaj ponownie (+), zamknij Paplę i uruchom od nowa. W menu paska górnego są przyciski <b>Nadaj uprawnienia: Ułatwienia dostępu… / Mikrofon… / Nagrywanie ekranu…</b> — otwierają od razu właściwe miejsce w Ustawieniach systemowych („Ułatwienia dostępu" to to samo co „Dostępność").</p>
+<p>Najczęściej brakuje uprawnienia <b>Dostępność</b> (albo macOS je „zapomniał" po aktualizacji). Usuń Paplę z listy (−), dodaj ponownie (+), zamknij Paplę i uruchom od nowa. W <b>Ustawienia ▸ Uprawnienia</b> (ikona kłódki) widać na żywo, czego brakuje, a przycisk „Otwórz ustawienia” prowadzi wprost do właściwego miejsca w Ustawieniach systemowych („Ułatwienia dostępu" to to samo co „Dostępność").</p>
 <h3>Dyktowanie: „nic się nie dzieje" / błąd modelu</h3>
 <p>Sprawdź, czy model mowy jest pobrany (menu ▸ „Model mowy zainstalowany ✓") i czy Papla ma dostęp do <b>Mikrofonu</b>. Pierwsze dyktowanie po uruchomieniu może potrwać kilka sekund, bo model wczytuje się z dysku.</p>
 <h3>Tekst nie wpisuje się w pole</h3>
@@ -209,7 +225,219 @@
 </ul>
 
 <h2>Dla dociekliwych</h2>
-<p>Kod źródłowy jest w repozytorium git (folder <code>Papla-repo</code>). Budowanie: <code>make install</code> w folderze projektu (potrzebny Xcode); testy: <code>swift test</code>. Szczegóły w pliku <code>README.md</code>.</p>
+<p>Kod źródłowy (licencja MIT, bez nazwy i ikony Papli) jest na GitHubie: <code>github.com/deusdexsd/papla</code>. Instalacja jedną komendą jest opisana w README. Budowanie: <code>make install</code> w folderze projektu (potrzebny Xcode); testy: <code>swift test</code>. Szczegóły w pliku <code>README.md</code>.</p>
 
+
+</div>
+<div class="lang en">
+
+<div class="cover">
+  <h1>Papla</h1>
+  <div class="lead">User guide — dictation, grabbing text from the screen, clipboard search and a color picker.</div>
+  <div class="toc">
+    <div>1. What Papla is</div><div>2. Installation</div><div>3. Permissions</div><div>4. First launch</div>
+    <div>5. Dictation</div><div>6. Text grab</div><div>7. Search and clipboard</div><div>8. Color picker and timer</div>
+    <div>9. Settings</div><div>10. Shortcut cheat sheet</div><div>11. Troubleshooting</div><div>12. Data and privacy</div>
+  </div>
+</div>
+
+<h2>1. What Papla is</h2>
+<p>Papla is a background app for the Mac — its icon (a grid of dots) sits in the menu bar at the top of the screen, with no Dock icon. It is made of independent features, each with <b>its own keyboard shortcut and its own tab in Settings</b>:</p>
+<ul>
+  <li><b>Dictation</b> — you speak, and the text types itself where you are writing.</li>
+  <li><b>Text grab</b> — select an area of the screen and the text in it (or a QR code's value) lands on the clipboard.</li>
+  <li><b>Search / clipboard</b> — a history of everything you copied, with screenshots, thumbnails and categories.</li>
+  <li><b>Color picker</b> — an eyedropper that saves a color from anywhere on the screen.</li>
+  <li><b>Timer</b> — quick timers and alarms with a sound, optionally shown in the menu bar.</li>
+</ul>
+<p>Everything happens locally on your Mac — none of your data is sent over the network (the only exceptions are downloading the speech model and the optional check for a model update, see section 4).</p>
+
+<h2>2. Installation</h2>
+<p><b>One command</b> (builds from source; needs Xcode Command Line Tools, macOS 26 and Apple Silicon):</p>
+<pre>curl -fsSL https://raw.githubusercontent.com/deusdexsd/papla/main/install.sh | bash</pre>
+<p><b>Or the ready-made app:</b></p>
+<ol>
+  <li>Download <b>Papla.dmg</b> from the GitHub <i>Releases</i> page and open it (double-click).</li>
+  <li>Drag <b>Papla</b> onto the <b>Applications</b> shortcut in the same window.</li>
+  <li>Launch Papla from Applications. Its icon appears in the menu bar.</li>
+</ol>
+<div class="note"><b>If macOS blocks it</b> ("cannot verify the developer") — the app is not signed by Apple. Right-click it ▸ <b>Open ▸ Open</b>, or in Terminal:
+<pre>xattr -cr /Applications/Papla.app</pre></div>
+<p><b>Requirements:</b> a Mac with Apple Silicon (M1 or newer) and macOS 26 (Tahoe) or newer.</p>
+
+<h2>3. Permissions</h2>
+<p>Papla asks for system permissions because it does things macOS does not allow apps to do by default: it listens for shortcuts in any app and types text. Turn them on in <b>System Settings ▸ Privacy &amp; Security</b>:</p>
+<table>
+  <tr><th>Permission</th><th>What for</th></tr>
+  <tr><td><b>Accessibility</b></td><td>Global keyboard shortcuts and typing text into other apps. <b>Nothing works without it.</b></td></tr>
+  <tr><td><b>Microphone</b></td><td>Dictation.</td></tr>
+  <tr><td><b>Screen Recording</b></td><td>Grabbing text from the screen (taking a "picture" of the selected area).</td></tr>
+  <tr><td><b>Desktop</b> (Files &amp; Folders)</td><td>Showing screenshots in the search. macOS asks the first time you open the search.</td></tr>
+</table>
+<p>How to add one: open the matching entry, click <b>+</b>, pick Papla from Applications and switch it on. Afterwards <b>quit Papla (menu ▸ Quit Papla) and launch it again</b> — a running app often doesn't notice a permission granted while it runs. All of this is also in <b>Settings ▸ Permissions</b> (lock icon), with live status.</p>
+<div class="note"><b>Important after every update:</b> Papla is signed locally (without a paid Apple certificate), so after installing a new version macOS "forgets" these permissions. Then: select Papla in the list, click <b>−</b> (remove), add it again with <b>+</b> and restart it. Just flipping the switch often isn't enough.</div>
+
+<h2>4. First launch</h2>
+<ol>
+  <li>Click Papla's icon in the menu bar and choose <b>Download speech model…</b> (or Settings ▸ Model) — a one-time download of about 470 MB (the NVIDIA Parakeet model, which understands Polish). Dictation won't work without it. Once downloaded the menu shows "Speech model installed ✓".</li>
+  <li>Check the permissions from section 3.</li>
+  <li>Optionally turn on <b>Launch at login</b> (menu ▸ that entry) — Papla will start in the background with your account.</li>
+</ol>
+<p>On first launch Papla shows a <b>guide</b> (a few steps: language, what it does, dictation and the speech model, permissions, looks, a summary with shortcuts) and then a <b>"what's what" tour</b> — the window dims and lights up its parts one by one with a short description. You can skip either at any time (<b>Skip</b> or <kbd>Esc</kbd>) and run them again from the menu bar icon or from <b>Settings ▸ gear icon ▸ Guide</b>.</p>
+<p>The menu under the icon also contains: <b>Show Papla search</b>, <b>Papla settings</b>, the interface language (Polish / English), buttons for text grab, the color picker and the timer, quick toggles and <b>Quit Papla</b>. A left click on the icon opens and closes the settings window; a right click shows this menu.</p>
+
+<h2>5. Dictation</h2>
+<p>Default key: <kbd>right ⌥</kbd> (Option). Change it in <b>Settings ▸ Dictation</b> — select one, two or three modifier keys at once, or click <b>Record custom…</b> and press any combination (e.g. <kbd>⌃⌥⌘\</kbd> or a function key).</p>
+<h3>Two ways to trigger</h3>
+<ul>
+  <li><b>Hold</b> — hold the key and speak; release to finish.</li>
+  <li><b>Toggle</b> — press once to start, press again to stop. You can let go of the key while speaking — handy for longer dictations.</li>
+</ul>
+<h3>What it looks like</h3>
+<p>A glowing orb (or wave) appears at the bottom of the screen and reacts to your voice. When you finish, the text is typed into the field you're working in. <b>If no field is active</b>, the text goes to the clipboard — you paste it yourself (<kbd>⌘V</kbd>). Errors show up as a short message under the orb.</p>
+<div class="tip"><b>Dictate on the go:</b> because text without a field lands on the clipboard, you can move between apps, look at different things and just talk — Papla records everything in order. At the end you click into any field, open the search (Transcriptions category) or press <kbd>⌘V</kbd>, and the text appears exactly where you want it.</div>
+<h3>Cleanup and dictionary</h3>
+<ul>
+  <li><b>Clean up transcriptions</b> (Settings ▸ Dictation) removes filler words ("uh", "um"), fixes spacing and punctuation. Spoken commands: "new paragraph", "new line", "open bracket", "close bracket" (in Polish: "nowy akapit", "nowa linia", "otwórz nawias", "zamknij nawias").</li>
+  <li><b>Dictionary</b> (Settings ▸ Dictionary) teaches Papla words it mishears — names, jargon. Add a word or a "when you hear X, type Y" pair. The dictionary file can be opened from the app menu <i>Papla ▸ Show dictionary file</i> (visible while the main window is in front).</li>
+</ul>
+<h3>Punctuation, emoji and XD</h3>
+<ul>
+  <li><b>Settings ▸ Dictation ▸ Punctuation</b>: <b>Normal</b>, <b>No final period</b> (no more "hate period" in chat messages) or <b>Minimal</b> (also no commas; ? and ! stay).</li>
+  <li>Nothing ever follows an emoji or an "XD" — no comma, no period — whichever option you pick. You get "XD" by saying "iksde".</li>
+  <li><b>Emoji</b>: intensity 0–5, custom entries, switching off individual keywords, emoji at the end of the sentence. They are picked from a rule dictionary, with no AI model.</li>
+  <li><b>Translation</b>: a second shortcut (default <kbd>⌃⌥⌘T</kbd>) dictates in Polish and inserts the text in the chosen language (English, German, Spanish, French, Italian, Ukrainian, Portuguese). macOS downloads the language pack on first use.</li>
+</ul>
+<h3>History</h3>
+<p>Every dictated sentence is saved with its time and shows up in the search (the <b>Transcriptions</b> category) — with a copy button.</p>
+
+<h2>6. Text grab</h2>
+<p>Default shortcut: <kbd>⌃⌥⌘4</kbd>. The screen dims — drag a rectangle around the text you want. A rounded frame with a gently flowing glow shows the selection. <kbd>Esc</kbd> cancels.</p>
+<ul>
+  <li><b>Text</b> goes to the clipboard (optionally pasted straight into the active field). Recognition is forced to Polish so diacritics don't get lost.</li>
+  <li><b>QR codes</b> (also Aztec, DataMatrix, PDF417): instead of text, the <b>code's value</b> goes to the clipboard — e.g. a web address.</li>
+  <li>From the menu bar you can also use <b>Grab an area…</b> and <b>Grab the whole screen</b>.</li>
+</ul>
+<p>Settings (<b>Settings ▸ Grab</b>): your own shortcut, primary and secondary language (e.g. Polish + English), recognition accuracy, joining words hyphenated at line ends, <b>replacing the long dash "—" with a plain "-"</b>, automatic pasting and switching the frame's moving glow on or off. The grab history lives in the search (category All).</p>
+
+<h2>7. Search and clipboard</h2>
+<p>Default shortcut: <kbd>⌃⌥⌘V</kbd> — opens a floating window styled like the system search. It remembers everything you copy with a plain <kbd>⌘C</kbd>.</p>
+<h3>Categories</h3>
+<table>
+  <tr><th>Filter</th><th>What it contains</th></tr>
+  <tr><td>All</td><td>Everything below, newest first.</td></tr>
+  <tr><td>Text / Code</td><td>Copied text; fragments recognized as code, terminal commands.</td></tr>
+  <tr><td>Links</td><td>Web and e-mail addresses.</td></tr>
+  <tr><td>Images</td><td>Copied images and image files — with a real thumbnail.</td></tr>
+  <tr><td>Screenshots</td><td>Screenshots and screen recordings made with the built-in macOS feature (<kbd>⌘⇧3</kbd>, <kbd>⌘⇧4</kbd>, <kbd>⌘⇧5</kbd>) — with thumbnails; recordings have a play icon.</td></tr>
+  <tr><td>Colors</td><td>Colors from the picker and copied values like <code>#FF8800</code>, <code>rgb(…)</code>.</td></tr>
+  <tr><td>Files</td><td>Copied files — with a Finder-style preview (PDF, documents, video).</td></tr>
+</table>
+<h3>Keyboard</h3>
+<table>
+  <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>move the selection</td></tr>
+  <tr><td>typing</td><td>filters the list live</td></tr>
+  <tr><td><kbd>↩</kbd></td><td>copies the selected item to the clipboard and closes the window</td></tr>
+  <tr><td><kbd>⌘V</kbd></td><td>pastes the selected item straight into the app you were working in</td></tr>
+  <tr><td><kbd>⌘1</kbd> … <kbd>⌘9</kbd></td><td>pastes the matching list item with one shortcut</td></tr>
+  <tr><td><kbd>⌘T</kbd></td><td>translates the selected item</td></tr>
+  <tr><td><kbd>⌘⌫</kbd></td><td>removes the item from the history</td></tr>
+  <tr><td><kbd>Esc</kbd> or click outside</td><td>closes the search</td></tr>
+  <tr><td>right click on an item</td><td>Copy / Paste / Show in Finder / Delete</td></tr>
+  <tr><td>gear in the corner</td><td>opens Papla's settings</td></tr>
+</table>
+<div class="tip">Removing a screenshot from the list (<i>"Hide from list"</i>) <b>does not delete the file</b> from disk — it only hides it in Papla.</div>
+<h3>Replacing the long dash when pasting</h3>
+<p>In <b>Settings ▸ Clipboard ▸ Pasting</b> you can turn on replacing "—" and "–" with a plain "-". It only applies <b>at the moment of pasting</b> (<kbd>⌘V</kbd> in any app or pasting from the search) — ordinary copying is left untouched, and right after the paste the clipboard returns to the original. Text formatting (bold, fonts) stays. Requires the Accessibility permission.</p>
+<h3>Clipboard privacy</h3>
+<p>Content copied from password managers (1Password, Bitwarden, Passwords, Keychain, KeePassXC and others) and anything apps mark as confidential is <b>never saved</b>. You can turn the history off, limit it (100–2000 items) or clear it in <b>Settings ▸ Clipboard</b>. "Remember images too" decides whether Papla keeps copies of copied screenshots/images; image files are in the Images category regardless.</p>
+<h3>Window appearance and width</h3>
+<p>The search window has a native macOS look (Liquid Glass, system colors, your system accent). In <b>Settings ▸ Clipboard</b> choose <b>System</b> (follows the Mac's mode), <b>Light</b> or <b>Dark</b>, and set the window <b>width</b> with a live preview — handy when long entries get cut off.</p>
+
+<h2>8. Color picker and timer</h2>
+<p>Default shortcut: <kbd>⌃⌥⌘C</kbd>. The system eyedropper with a magnifier appears — click any pixel on the screen. The color:</p>
+<ul>
+  <li>goes to the clipboard in the chosen notation: <b>HEX</b> (<code>#FF8800</code>), <b>RGB</b> (<code>rgb(255, 136, 0)</code>) or <b>HSL</b> (<code>hsl(32, 100%, 50%)</code>),</li>
+  <li>is saved in the history you can see in the search (Colors category).</li>
+</ul>
+<p>Settings (<b>Settings ▸ Colors</b>): shortcut, notation, history limit, clearing the history.</p>
+<h3>Timer</h3>
+<p>Default shortcut: <kbd>⌃⌥⌘M</kbd> (or the clock in the search). Type minutes (e.g. <code>45</code>) and an optional description — when time is up an alarm plays with the chosen sound. The nearest timer is shown in the search field, and in <b>Settings ▸ Timer</b> you can show the countdown in the menu bar.</p>
+
+<h2>9. Settings</h2>
+<p>Papla's main window is the settings (left-click the menu bar icon, or "Papla settings" in the menu). At the top are the <b>Record</b>, <b>Grab Area</b> and <b>Search</b> buttons. <kbd>Esc</kbd> closes the window. Settings are split into tabs:</p>
+<table>
+  <tr><th>Tab</th><th>Contents</th></tr>
+  <tr><td>Dictation</td><td>dictation key, trigger mode, cleanup, punctuation, translation, emoji</td></tr>
+  <tr><td>Grab</td><td>shortcut, OCR languages, accuracy, text and selection-frame options</td></tr>
+  <tr><td>Clipboard</td><td>search shortcut, history and limit, screenshots, appearance and <b>window width (live preview)</b>, dash replacement when pasting</td></tr>
+  <tr><td>Colors</td><td>picker shortcut, color notation, color history</td></tr>
+  <tr><td>Timer</td><td>shortcut, alarm sound, countdown in the menu bar</td></tr>
+  <tr><td>Dictionary</td><td>your own corrections for word recognition</td></tr>
+  <tr><td>General (gear icon)</td><td>interface language, menu bar icon (5 to choose from), orb or wave with a live preview, colors, listening range, indicator position and margin, sounds, launch at login, <b>Guide</b> (run the guide and the "what's what" tour again)</td></tr>
+  <tr><td>Model (chip icon)</td><td>speech model choice, size and location, <b>Download again</b> (repairs a corrupted model), <b>Check for updates</b>, a list of other models. You can pick another speech model (v2 English, 110M English, JA Japanese) — but <b>only Parakeet v3 understands Polish</b>; models with Polish are highlighted green, the rest carry a warning</td></tr>
+  <tr><td>Permissions (lock icon)</td><td>live status of Accessibility, Microphone and Screen Recording, shortcuts to the right system settings, a "Restart Papla" button and a reminder that permissions must be granted again after every reinstall</td></tr>
+</table>
+<div class="tip"><b>F1–F12 keys:</b> macOS reserves the bare F keys, so Papla can't see them. Next to the tabs there is an (i) button explaining how to map an F key to a shortcut with <b>Karabiner-Elements</b> — a completely separate, independent app, unrelated to Papla.</div>
+<div class="tip"><b>Changing a shortcut:</b> click <b>Change</b>, press the new combination (it must include a modifier: ⌘, ⌥, ⌃ or ⇧ — F1–F20 are the exception). <kbd>Esc</kbd> cancels. While recording, Papla's shortcuts are paused, so you can set a combination that is already in use.</div>
+
+<h2>10. Shortcut cheat sheet</h2>
+<table>
+  <tr><th>Function</th><th>Default shortcut</th><th>Where to change</th></tr>
+  <tr><td>Dictation</td><td><kbd>right ⌥</kbd></td><td>Settings ▸ Dictation</td></tr>
+  <tr><td>Dictate and translate</td><td><kbd>⌃⌥⌘T</kbd></td><td>Settings ▸ Dictation</td></tr>
+  <tr><td>Text grab</td><td><kbd>⌃⌥⌘4</kbd></td><td>Settings ▸ Grab</td></tr>
+  <tr><td>Search / clipboard</td><td><kbd>⌃⌥⌘V</kbd></td><td>Settings ▸ Clipboard</td></tr>
+  <tr><td>Color picker</td><td><kbd>⌃⌥⌘C</kbd></td><td>Settings ▸ Colors</td></tr>
+  <tr><td>Timer</td><td><kbd>⌃⌥⌘M</kbd></td><td>Settings ▸ Timer</td></tr>
+  <tr><td>Window settings</td><td><kbd>⌘,</kbd></td><td>—</td></tr>
+</table>
+
+<h2>11. Troubleshooting</h2>
+<h3>Shortcuts don't react at all</h3>
+<p>Most often the <b>Accessibility</b> permission is missing (or macOS "forgot" it after an update). Remove Papla from the list (−), add it again (+), quit Papla and start it again. <b>Settings ▸ Permissions</b> (lock icon) shows live what is missing, and "Open settings" leads straight to the right place.</p>
+<h3>Dictation: "nothing happens" / model error</h3>
+<p>Check that the speech model is downloaded (Settings ▸ Model, or the menu ▸ "Speech model installed ✓") and that Papla has access to the <b>Microphone</b>. The first dictation after launch can take a few seconds while the model loads from disk. If the model seems broken, use <b>Download again</b> in the Model tab.</p>
+<h3>Text doesn't get typed into the field</h3>
+<p>Click into the text field before dictating. If no field is active, the text lands on the clipboard — paste it with <kbd>⌘V</kbd>. In a few apps (e.g. Electron, browsers) Papla pastes text with a shortcut; the clipboard then returns to its previous contents.</p>
+<h3>Grab: "no text found" or diacritics are missing</h3>
+<p>Turn on the <b>Screen Recording</b> permission. Set the primary language to Polish and the "Accurate" mode (Settings ▸ Grab). Select an area larger than the text itself.</p>
+<h3>No screenshots in the search</h3>
+<p>Check that "Show screenshots and screen recordings" is on and that macOS gave Papla access to the <b>Desktop</b> folder. Papla looks for screenshots in the folder set in macOS (Screenshot app ▸ Options ▸ Save to) and on the Desktop. The list refreshes every time you open the search.</p>
+<h3>I don't see images in the "Images" category</h3>
+<p>Copied image <i>files</i> are always there. Images copied without a file (e.g. a screenshot to the clipboard with <kbd>⌃⌘⇧4</kbd>) require "Remember images too" in Settings ▸ Clipboard.</p>
+<h3>A shortcut does something else instead of working in Papla</h3>
+<p>The same combination may already be taken by another app or by macOS. Set a different one in the matching settings tab.</p>
+<h3>Search window is too narrow and cuts text off</h3>
+<p>Settings ▸ Clipboard ▸ window width (with a live preview).</p>
+
+<h2>12. Data and privacy</h2>
+<ul>
+  <li>Histories (transcriptions, grabs, clipboard, colors) and the dictionary are in <code>~/Library/Application Support/MurmurYouTube/</code> — never in the cloud and never outside your Mac. Deleting that folder wipes all histories.</li>
+  <li>The speech recognition model is in <code>~/Library/Application Support/FluidAudio/</code>.</li>
+  <li>Papla sends your data nowhere; the only network connections are downloading the speech model and the optional check for a model update.</li>
+  <li>Full uninstall: quit Papla, drag it from Applications to the Trash, delete the folders above and (if enabled) the entry in System Settings ▸ General ▸ Login Items.</li>
+</ul>
+
+<h2>For the curious</h2>
+<p>The source code (MIT license, excluding the Papla name and icon) is on GitHub: <code>github.com/deusdexsd/papla</code>. One-command installation is described in the README. Building: <code>make install</code> in the project folder (needs Xcode); tests: <code>swift test</code>. Details in <code>README.md</code>.</p>
+
+</div>
+
+<script>
+(function () {
+  var stored = null;
+  try { stored = localStorage.getItem("papla-guide-lang"); } catch (e) {}
+  var lang = stored || ((navigator.language || "").toLowerCase().indexOf("pl") === 0 ? "pl" : "en");
+  function apply(l) {
+    document.documentElement.setAttribute("data-lang", l);
+    document.documentElement.lang = l;
+    document.querySelectorAll(".langbar button").forEach(function (b) { b.classList.toggle("on", b.dataset.l === l); });
+    try { localStorage.setItem("papla-guide-lang", l); } catch (e) {}
+  }
+  document.querySelectorAll(".langbar button").forEach(function (b) { b.addEventListener("click", function () { apply(b.dataset.l); }); });
+  apply(lang);
+})();
+</script>
 </body>
 </html>
