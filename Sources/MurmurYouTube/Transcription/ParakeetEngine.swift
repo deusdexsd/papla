@@ -73,7 +73,7 @@ actor ParakeetEngine: TranscriptionEngine {
 
         do {
             let manager = try await ParakeetModels.shared.manager()
-            var decoderState = try TdtDecoderState()
+            var decoderState = try TdtDecoderState(decoderLayers: SpeechModel.current.version.decoderLayers)
             let started = Date()
             let result = try await manager.transcribe(samples, decoderState: &decoderState)
             let elapsed = Date().timeIntervalSince(started)
@@ -108,27 +108,17 @@ actor ParakeetEngine: TranscriptionEngine {
 actor ParakeetModels {
     static let shared = ParakeetModels()
 
-    /// Whether the models are already on disk, checked without loading them.
+    /// Whether the selected model is already on disk, checked without loading it.
     ///
     /// `nonisolated` and filesystem-based on purpose: the menu needs this synchronously
     /// while drawing, and an in-memory "have I loaded yet" flag would wrongly report
     /// "not downloaded" on every fresh launch.
-    nonisolated static var isDownloaded: Bool {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let encoder = support
-            .appendingPathComponent("FluidAudio/Models/parakeet-tdt-0.6b-v3/Encoder.mlmodelc")
-        return FileManager.default.fileExists(atPath: encoder.path)
-    }
+    nonisolated static var isDownloaded: Bool { SpeechModel.current.isDownloaded }
 
-    nonisolated static var folderURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("FluidAudio/Models/parakeet-tdt-0.6b-v3")
-    }
-
-    /// Total bytes of the model folder on disk, `nil` when it isn't there.
-    nonisolated static var installedSize: Int64? {
+    /// Total bytes of a model's folder on disk, `nil` when it isn't there.
+    nonisolated static func installedSize(of model: SpeechModel) -> Int64? {
         guard let files = FileManager.default.enumerator(
-            at: folderURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey]
+            at: model.folderURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey]
         ) else { return nil }
         var total: Int64 = 0
         for case let url as URL in files {
@@ -137,18 +127,16 @@ actor ParakeetModels {
         return total > 0 ? total : nil
     }
 
-    /// When the model was downloaded — the encoder folder's own modification date.
-    nonisolated static var installedDate: Date? {
-        try? folderURL.appendingPathComponent("Encoder.mlmodelc")
-            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    /// When the model was downloaded — its folder's own modification date.
+    nonisolated static func installedDate(of model: SpeechModel) -> Date? {
+        try? model.folderURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
     /// The Hugging Face repo the model comes from — its last-modified date says whether
     /// something newer than the local copy exists, and its sibling repos are the other
     /// models published alongside it.
-    static func checkRemote() async throws -> (lastModified: Date?, others: [String]) {
-        let repo = "FluidInference/parakeet-tdt-0.6b-v3-coreml"
-        async let info = URLSession.shared.data(from: URL(string: "https://huggingface.co/api/models/\(repo)")!)
+    static func checkRemote(_ model: SpeechModel) async throws -> (lastModified: Date?, others: [String]) {
+        async let info = URLSession.shared.data(from: URL(string: "https://huggingface.co/api/models/\(model.huggingFaceRepo)")!)
         async let list = URLSession.shared.data(
             from: URL(string: "https://huggingface.co/api/models?author=FluidInference&search=parakeet&limit=30")!)
 
@@ -163,53 +151,58 @@ actor ParakeetModels {
         if let array = try JSONSerialization.jsonObject(with: try await list.0) as? [[String: Any]] {
             others = array.compactMap { $0["id"] as? String }
                 .map { $0.replacingOccurrences(of: "FluidInference/", with: "") }
-                .filter { $0 != "parakeet-tdt-0.6b-v3-coreml" }
         }
         return (date, others)
     }
 
-    /// Throws the local copy away and downloads it again — the fix for a corrupted download.
-    func redownload() async throws {
+    /// Throws the local copy of `model` away and downloads it again — the fix for a corrupted
+    /// download.
+    func redownload(_ model: SpeechModel) async throws {
         loaded = nil
+        loadedModel = nil
         loadTask = nil
-        try? FileManager.default.removeItem(at: Self.folderURL)
+        loadTaskModel = nil
+        try? FileManager.default.removeItem(at: model.folderURL)
         _ = try await manager()
     }
 
     private var loaded: AsrManager?
+    private var loadedModel: SpeechModel?
     private var loadTask: Task<AsrManager, Error>?
+    private var loadTaskModel: SpeechModel?
 
     var isLoaded: Bool { loaded != nil }
 
-    /// Loads once; concurrent callers await the same task rather than racing to download.
+    /// Loads once per model; concurrent callers await the same task rather than racing to
+    /// download. Choosing a different model in Ustawienia simply loads that one next time.
     func manager() async throws -> AsrManager {
-        if let loaded { return loaded }
-        if let loadTask { return try await loadTask.value }
+        let model = SpeechModel.current
+        if let loaded, loadedModel == model { return loaded }
+        if let loadTask, loadTaskModel == model { return try await loadTask.value }
 
         let task = Task<AsrManager, Error> {
-            // Built as a value first: os.Logger requires a literal interpolation, so a
-            // ternary can't be passed directly as the argument.
-            let stage = Self.isDownloaded
-                ? "loading models from disk"
-                : "downloading models (~470 MB, one time)"
-            Log.speech.info("Parakeet: \(stage, privacy: .public)")
+            let stage = model.isDownloaded ? "loading models from disk" : "downloading models (one time)"
+            Log.speech.info("Parakeet \(model.rawValue, privacy: .public): \(stage, privacy: .public)")
             let started = Date()
-            let models = try await AsrModels.downloadAndLoad(version: .v3, encoderPrecision: .int8)
+            let models = try await AsrModels.downloadAndLoad(version: model.version, encoderPrecision: .int8)
             let manager = AsrManager(config: .default)
             try await manager.loadModels(models)
             Log.speech.info("Parakeet: ready in \(Date().timeIntervalSince(started), format: .fixed(precision: 1))s")
             return manager
         }
         loadTask = task
+        loadTaskModel = model
 
         do {
             let manager = try await task.value
             loaded = manager
+            loadedModel = model
             return manager
         } catch {
             // Don't cache a failed load — a transient download error shouldn't wedge the
             // engine for the rest of the session.
             loadTask = nil
+            loadTaskModel = nil
             throw error
         }
     }

@@ -62,7 +62,9 @@ xattr -cr /Applications/Papla.app
 2. Nadaj uprawnienia w Ustawieniach systemowych ▸ Prywatność i bezpieczeństwo: **Mikrofon**,
    **Dostępność**, **Nagrywanie ekranu**.
 3. Przy pierwszym dyktowaniu model rozpoznawania mowy (~470 MB) pobierze się sam — to jednorazowe.
-   Stan modelu, ponowne pobranie (gdy coś nie działa) i sprawdzanie aktualizacji są w Ustawienia ▸ Model.
+   Wybór modelu mowy, jego stan, ponowne pobranie (gdy coś nie działa) i sprawdzanie aktualizacji są w Ustawienia ▸ Model.
+   Uwaga: tylko domyślny Parakeet v3 rozumie polski — pozostałe modele (angielskie, japoński) są w aplikacji
+   oznaczone ostrzeżeniem.
 4. Język interfejsu (angielski / polski), skróty i wygląd ikony zmienisz w Ustawieniach.
 
 ### Porady

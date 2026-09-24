@@ -340,6 +340,10 @@ final class Settings {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
 
+    var speechModel: SpeechModel {
+        didSet { defaults.set(speechModel.rawValue, forKey: SpeechModel.defaultsKey) }
+    }
+
     var punctuationStyle: PunctuationStyle {
         didSet { defaults.set(punctuationStyle.rawValue, forKey: Keys.punctuationStyle) }
     }
@@ -656,6 +660,7 @@ final class Settings {
         orbSpread = defaults.object(forKey: Keys.orbSpread) as? Double ?? 0.7
         hudVisualizerStyle = HUDVisualizerStyle(rawValue: defaults.string(forKey: Keys.hudVisualizerStyle) ?? "") ?? .orb
         appLanguage = AppLanguage(rawValue: defaults.string(forKey: Keys.appLanguage) ?? "") ?? .english
+        speechModel = SpeechModel.current
         punctuationStyle = PunctuationStyle(rawValue: defaults.string(forKey: Keys.punctuationStyle) ?? "") ?? .normal
         menuBarIconStyle = MenuBarIconStyle(rawValue: defaults.string(forKey: Keys.menuBarIconStyle) ?? "") ?? .orb
 

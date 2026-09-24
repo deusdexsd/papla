@@ -370,6 +370,9 @@ private struct MenuContent: View {
         // deliberately instead.
         Button(parakeetStatus) { preloadParakeet() }
             .disabled(isPreloadingParakeet || parakeetOnDisk)
+        if !settings.speechModel.supportsPolish {
+            Text(t("⚠︎ Aktywny model nie obsługuje polskiego", "⚠︎ The active model doesn't support Polish"))
+        }
 
 
         Divider()
