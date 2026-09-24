@@ -1,7 +1,8 @@
 # Papla
 
 Osobista appka na macOS działająca w tle (ikona w pasku menu, bez ikony w Docku). Wszystko
-dzieje się lokalnie na Macu — nic nie wychodzi w sieć.
+dzieje się lokalnie na Macu — Twoje nagrania i teksty nie wychodzą w sieć. Sieć jest używana tylko do
+pobrania modelu mowy (i opcjonalnego sprawdzenia aktualizacji w Ustawienia ▸ Model).
 
 Funkcje, każda z własnym skrótem i zakładką w ustawieniach:
 
@@ -61,6 +62,7 @@ xattr -cr /Applications/Papla.app
 2. Nadaj uprawnienia w Ustawieniach systemowych ▸ Prywatność i bezpieczeństwo: **Mikrofon**,
    **Dostępność**, **Nagrywanie ekranu**.
 3. Przy pierwszym dyktowaniu model rozpoznawania mowy (~470 MB) pobierze się sam — to jednorazowe.
+   Stan modelu, ponowne pobranie (gdy coś nie działa) i sprawdzanie aktualizacji są w Ustawienia ▸ Model.
 4. Język interfejsu (angielski / polski), skróty i wygląd ikony zmienisz w Ustawieniach.
 
 ### Porady

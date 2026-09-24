@@ -120,6 +120,62 @@ actor ParakeetModels {
         return FileManager.default.fileExists(atPath: encoder.path)
     }
 
+    nonisolated static var folderURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("FluidAudio/Models/parakeet-tdt-0.6b-v3")
+    }
+
+    /// Total bytes of the model folder on disk, `nil` when it isn't there.
+    nonisolated static var installedSize: Int64? {
+        guard let files = FileManager.default.enumerator(
+            at: folderURL, includingPropertiesForKeys: [.totalFileAllocatedSizeKey]
+        ) else { return nil }
+        var total: Int64 = 0
+        for case let url as URL in files {
+            total += Int64((try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize) ?? 0)
+        }
+        return total > 0 ? total : nil
+    }
+
+    /// When the model was downloaded — the encoder folder's own modification date.
+    nonisolated static var installedDate: Date? {
+        try? folderURL.appendingPathComponent("Encoder.mlmodelc")
+            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
+
+    /// The Hugging Face repo the model comes from — its last-modified date says whether
+    /// something newer than the local copy exists, and its sibling repos are the other
+    /// models published alongside it.
+    static func checkRemote() async throws -> (lastModified: Date?, others: [String]) {
+        let repo = "FluidInference/parakeet-tdt-0.6b-v3-coreml"
+        async let info = URLSession.shared.data(from: URL(string: "https://huggingface.co/api/models/\(repo)")!)
+        async let list = URLSession.shared.data(
+            from: URL(string: "https://huggingface.co/api/models?author=FluidInference&search=parakeet&limit=30")!)
+
+        var date: Date?
+        if let object = try JSONSerialization.jsonObject(with: try await info.0) as? [String: Any],
+           let text = object["lastModified"] as? String {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            date = formatter.date(from: text)
+        }
+        var others: [String] = []
+        if let array = try JSONSerialization.jsonObject(with: try await list.0) as? [[String: Any]] {
+            others = array.compactMap { $0["id"] as? String }
+                .map { $0.replacingOccurrences(of: "FluidInference/", with: "") }
+                .filter { $0 != "parakeet-tdt-0.6b-v3-coreml" }
+        }
+        return (date, others)
+    }
+
+    /// Throws the local copy away and downloads it again — the fix for a corrupted download.
+    func redownload() async throws {
+        loaded = nil
+        loadTask = nil
+        try? FileManager.default.removeItem(at: Self.folderURL)
+        _ = try await manager()
+    }
+
     private var loaded: AsrManager?
     private var loadTask: Task<AsrManager, Error>?
 
