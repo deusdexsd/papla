@@ -134,7 +134,6 @@ private struct TransportPanel: View {
     var body: some View {
         HStack(spacing: DS.Space.roomy) {
             VStack(alignment: .leading, spacing: DS.Space.snug) {
-                Silkscreen(text: t("Nagrywanie", "Recording"))
                 HStack(spacing: DS.Space.snug) {
                     TransportKey(
                         title: isRecording ? "Stop" : t("Nagrywaj", "Record"),
@@ -150,14 +149,12 @@ private struct TransportPanel: View {
 
                     HStack(spacing: DS.Space.tight) {
                         Lamp(color: DS.Color.record, isLit: isRecording)
-                        Silkscreen(text: "Rec")
                     }
                     .padding(.leading, DS.Space.tight)
                 }
             }
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {
-                Silkscreen(text: t("Poziom", "Level"))
                 VisualizerView(
                     energy: levelEnergy,
                     isAnimating: isRecording,
@@ -168,7 +165,6 @@ private struct TransportPanel: View {
             }
 
             VStack(alignment: .leading, spacing: DS.Space.tight) {
-                Silkscreen(text: t("Licznik", "Counter"))
                 DeckWindow {
                     Readout(text: counterText, large: true)
                         .padding(.horizontal, DS.Space.base)
@@ -177,7 +173,6 @@ private struct TransportPanel: View {
             }
 
             VStack(alignment: .leading, spacing: DS.Space.snug) {
-                Silkscreen(text: t("Chwytanie", "Capture"))
                 TransportKey(
                     title: t("Chwyć obszar", "Grab Area"),
                     systemImage: "viewfinder",
