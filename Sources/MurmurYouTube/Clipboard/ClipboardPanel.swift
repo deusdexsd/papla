@@ -27,7 +27,7 @@ final class ClipboardPanel: NSPanel {
         level = .statusBar
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         hidesOnDeactivate = false
-        isMovableByWindowBackground = true
+        isMovableByWindowBackground = false
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true

@@ -75,8 +75,12 @@ struct ClipboardView: View {
     var body: some View {
         let items = visible
         VStack(spacing: 0) {
-            searchBar
-            filterBar
+            VStack(spacing: 0) {
+                searchBar
+                filterBar
+            }
+            // The window is only moved from here, so dragging a row can drag the entry out.
+            .background { if isPanel { WindowDragArea() } }
             Rectangle().fill(style.hairline).frame(height: 1)
 
             if items.isEmpty {
@@ -757,5 +761,18 @@ private struct TimerBadge: View {
         let seconds = max(0, Int(fireDate.timeIntervalSinceNow))
         let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+    }
+}
+
+
+/// Dragging anywhere on this area moves the whole window — the one place the search panel can
+/// be moved from, so that dragging a list row means dragging its content instead.
+private struct WindowDragArea: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { DragView() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { false }
+        override func mouseDown(with event: NSEvent) { window?.performDrag(with: event) }
     }
 }
