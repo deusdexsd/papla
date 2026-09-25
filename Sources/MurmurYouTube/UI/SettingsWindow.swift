@@ -123,6 +123,16 @@ struct SettingsContent: View {
         }
         .padding(.horizontal, DS.Space.wide)
         .padding(.vertical, DS.Space.roomy + 2)
+        // The window's content stays alive after it is closed, so `onDisappear` alone never
+        // fired and the indicator preview stayed on screen.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) { note in
+            guard let window = note.object as? NSWindow, !(window is NSPanel) else { return }
+            HUDPreview.hide()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { note in
+            guard let window = note.object as? NSWindow, !(window is NSPanel), tab == .appearance else { return }
+            HUDPreview.show()
+        }
         // A recorder left running behind a closed section would keep swallowing the next
         // key someone presses, anywhere in the app, forever.
         .onDisappear {
