@@ -27,7 +27,7 @@ Features, each with its own shortcut and its own tab in Settings:
   everything you copied (⌘C): text, links, images, colors, code, files — with real thumbnails and
   Finder-style QuickLook previews, plus macOS screenshots and screen recordings. Native look (Liquid
   Glass, system colors), system / light / dark. Category filters, ⌘1–⌘9 to paste, ⌘T to translate,
-  adjustable width with a live preview. Right-click ▸ **Remove formatting** puts a plain-text copy on the clipboard as a new entry. Optionally **on paste** "—" and "–" become "-". Content from
+  adjustable width with a live preview. Right-click ▸ **Remove formatting** puts a plain-text copy on the clipboard as a new entry. Images, screenshots, recordings, files and colors can be dragged straight out of the search into other apps. Optionally **on paste** "—" and "–" become "-". Content from
   password managers is never saved.
 - **Timer** — ⌃⌥⌘M opens a quick entry: type minutes (e.g. 45) and a description, get an alarm with
   the sound you chose, optionally a countdown in the menu bar.
@@ -160,7 +160,7 @@ Funkcje, każda z własnym skrótem i zakładką w ustawieniach:
   z prawdziwymi miniaturami (obrazy, a dla plików podgląd QuickLook jak w Finderze) i
   kolorami wybranymi pipetą oraz zrzutami i nagraniami ekranu z macOS (kategoria „Zrzuty"). Natywny wygląd (szkło Liquid Glass, kolory systemowe), tryb
   systemowy / jasny / ciemny. Wyszukiwarka + filtry kategorii, ⌘1–⌘9 do wklejania, zębatka
-  otwiera ustawienia Papli. ⌘T tłumaczy zaznaczony wpis. Prawy klik ▸ **Usuń formatowanie** kładzie do schowka czysty tekst jako nową pozycję.
+  otwiera ustawienia Papli. ⌘T tłumaczy zaznaczony wpis. Prawy klik ▸ **Usuń formatowanie** kładzie do schowka czysty tekst jako nową pozycję. Obrazy, zrzuty, nagrania, pliki i kolory można przeciągać prosto z wyszukiwarki do innych aplikacji.
   Zwykłe kopiowanie zostaje nietknięte; opcjonalnie **przy wklejaniu** (⌘V w dowolnej
   aplikacji lub z historii) „—” i „–” zamieniają się na „-”, a po wklejeniu schowek wraca do
   oryginału. Treści z menedżerów haseł nigdy nie są zapisywane.

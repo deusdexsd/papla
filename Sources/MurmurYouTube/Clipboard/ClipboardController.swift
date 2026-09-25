@@ -19,6 +19,8 @@ final class ClipboardController {
     /// this before auto-hiding on `resignKey` — translation is async, and selecting it from a
     /// context menu must not make the whole panel disappear before the result comes back.
     var isTranslating = false
+    /// True while an entry is being dragged out of the panel — it must not close on focus loss.
+    var isDragging = false
 
     // MARK: - Lifecycle
 

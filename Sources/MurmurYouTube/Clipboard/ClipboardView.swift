@@ -183,7 +183,7 @@ struct ClipboardView: View {
             ScrollView {
                 LazyVStack(spacing: 2) {
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                        ClipboardRow(
+                        let row = ClipboardRow(
                             item: item,
                             isSelected: selection == item.id,
                             quickIndex: isPanel && index < 9 ? index + 1 : nil,
@@ -192,6 +192,13 @@ struct ClipboardView: View {
                             style: style,
                             onDelete: { remove(item) }
                         )
+                        Group {
+                            if canDrag(item) {
+                                row.onDrag { beginDrag(item) }
+                            } else {
+                                row
+                            }
+                        }
                         .id(item.id)
                         .onTapGesture { selection = item.id; activate(item) }
                         .contextMenu {
@@ -394,6 +401,70 @@ struct ClipboardView: View {
             try? await Task.sleep(for: .seconds(1.2))
             if flashedID == copy.id { flashedID = nil }
         }
+    }
+
+    // MARK: - Dragging out
+
+    /// Images, screenshots, recordings, files and colors can be dragged straight into other
+    /// apps. Files go as the file itself (nothing is duplicated — the receiving app copies
+    /// it), a color goes as a real color plus its text notation.
+    private func canDrag(_ item: ClipboardItem) -> Bool {
+        dragProvider(for: item) != nil
+    }
+
+    private func beginDrag(_ item: ClipboardItem) -> NSItemProvider {
+        controller.isDragging = true
+        Task { @MainActor in
+            // Hold the panel open until the button is released, then close it like a paste does.
+            while NSEvent.pressedMouseButtons & 1 != 0 { try? await Task.sleep(for: .milliseconds(80)) }
+            try? await Task.sleep(for: .milliseconds(300))
+            controller.isDragging = false
+            if isPanel { controller.hidePanel() }
+        }
+        return dragProvider(for: item) ?? NSItemProvider()
+    }
+
+    private func dragProvider(for item: ClipboardItem) -> NSItemProvider? {
+        switch item.kind {
+        case .color:
+            guard let hex = item.colorHex, let color = Self.nsColor(hex: hex) else { return nil }
+            let provider = NSItemProvider()
+            // The system's own color pasteboard type — what a color well or the color panel
+            // drags — so it lands as a color, not text.
+            if let data = try? NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false) {
+                provider.registerDataRepresentation(
+                    forTypeIdentifier: NSPasteboard.PasteboardType.color.rawValue, visibility: .all
+                ) { completion in completion(data, nil); return nil }
+            }
+            provider.registerObject((item.text ?? hex) as NSString, visibility: .all)
+            provider.suggestedName = hex
+            return provider
+        case .image:
+            guard let url = store.imageURL(for: item),
+                  FileManager.default.fileExists(atPath: url.path),
+                  let provider = NSItemProvider(contentsOf: url) else { return nil }
+            provider.suggestedName = t("Obraz ", "Image ")
+                + item.date.formatted(.dateTime.year().month().day().hour().minute())
+                    .replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: ".")
+            return provider
+        case .screenshot, .file:
+            guard let path = item.filePaths?.first, FileManager.default.fileExists(atPath: path) else { return nil }
+            return NSItemProvider(contentsOf: URL(fileURLWithPath: path))
+        default:
+            return nil
+        }
+    }
+
+    private static func nsColor(hex: String) -> NSColor? {
+        var value = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        if value.count == 3 { value = value.map { "\($0)\($0)" }.joined() }
+        guard value.count == 6, let number = UInt32(value, radix: 16) else { return nil }
+        return NSColor(
+            srgbRed: CGFloat((number >> 16) & 0xFF) / 255,
+            green: CGFloat((number >> 8) & 0xFF) / 255,
+            blue: CGFloat(number & 0xFF) / 255,
+            alpha: 1
+        )
     }
 
     private func move(_ delta: Int) {
