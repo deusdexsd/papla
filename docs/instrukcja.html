@@ -53,7 +53,7 @@
 </div>
 
 <h2>1. Czym jest Papla</h2>
-<p>Papla to aplikacja działająca w tle na Macu — jej ikona (kółeczka) siedzi w pasku menu na górze ekranu, bez ikony w Docku. Składa się z niezależnych funkcji, z których każda ma <b>własny skrót klawiszowy i własną zakładkę w ustawieniach</b>:</p>
+<p>Papla to aplikacja działająca w tle na Macu — jej ikona (domyślnie siatka kropek — w Ustawieniach do wyboru jest 5 wariantów) siedzi w pasku menu na górze ekranu, bez ikony w Docku. Składa się z niezależnych funkcji, z których każda ma <b>własny skrót klawiszowy i własną zakładkę w ustawieniach</b>:</p>
 <ul>
   <li><b>Dyktowanie</b> — mówisz po polsku, tekst sam wpisuje się tam, gdzie piszesz.</li>
   <li><b>Chwytanie tekstu</b> — zaznaczasz obszar ekranu, a tekst z niego (albo wartość kodu QR) ląduje w schowku.</li>
@@ -227,6 +227,20 @@
   <li>Pełne odinstalowanie: zamknij Paplę, przeciągnij ją z Programów do Kosza, usuń powyższe foldery i (jeśli włączone) pozycję w Ustawieniach systemowych ▸ Ogólne ▸ Rzeczy otwierane podczas logowania.</li>
 </ul>
 
+<h2>Wskazówki i mniej oczywiste funkcje</h2>
+<ul>
+  <li><b>Dyktuj w podróży</b> — bez aktywnego pola tekst ląduje w schowku; wklejasz go później (punkt 5).</li>
+  <li><b>Usuń formatowanie</b> — prawy klik na tekście w wyszukiwarce daje czysty tekst jako nową pozycję (punkt 7).</li>
+  <li><b>Przeciąganie z wyszukiwarki</b> — obrazy, zrzuty, nagrania i pliki przeciągasz do innych aplikacji jako plik, a kolor jako kolor. Okno przesuwasz za górną część (pole szukania i filtry).</li>
+  <li><b>Szerokość wyszukiwarki</b> — Ustawienia ▸ Schowek, z podglądem na żywo.</li>
+  <li><b>Interpunkcja</b> — tryb „bez kropki na końcu" i minimalny; po emoji i „XD" nigdy nie ma przecinka ani kropki (punkt 5).</li>
+  <li><b>Kula lub fala</b> — Ustawienia ▸ ikona zębatki, z podglądem animacji na żywo i wyborem 5 ikon w pasku menu.</li>
+  <li><b>Model mowy</b> — ikona procesora: wybór modelu (tylko v3 rozumie polski), ponowne pobranie, sprawdzanie aktualizacji.</li>
+  <li><b>Uprawnienia</b> — ikona kłódki: status na żywo i szybkie przejście do właściwych ustawień systemu; po każdej reinstalacji nadaj je ponownie.</li>
+  <li><b>Klawisze F</b> — przycisk (i) obok zakładek tłumaczy, jak przypisać je programem Karabiner-Elements.</li>
+  <li><b>Przewodnik i samouczek „co jest co"</b> — Ustawienia ▸ ikona zębatki ▸ Przewodnik albo menu pod ikoną.</li>
+</ul>
+
 <h2>Dla dociekliwych</h2>
 <p>Kod źródłowy (licencja MIT, bez nazwy i ikony Papli) jest na GitHubie: <code>github.com/deusdexsd/papla</code>. Instalacja jedną komendą jest opisana w README. Budowanie: <code>make install</code> w folderze projektu (potrzebny Xcode); testy: <code>swift test</code>. Szczegóły w pliku <code>README.md</code>.</p>
 
@@ -245,7 +259,7 @@
 </div>
 
 <h2>1. What Papla is</h2>
-<p>Papla is a background app for the Mac — its icon (a grid of dots) sits in the menu bar at the top of the screen, with no Dock icon. It is made of independent features, each with <b>its own keyboard shortcut and its own tab in Settings</b>:</p>
+<p>Papla is a background app for the Mac — its icon (a grid of dots by default — Settings offers 5 variants) sits in the menu bar at the top of the screen, with no Dock icon. It is made of independent features, each with <b>its own keyboard shortcut and its own tab in Settings</b>:</p>
 <ul>
   <li><b>Dictation</b> — you speak, and the text types itself where you are writing.</li>
   <li><b>Text grab</b> — select an area of the screen and the text in it (or a QR code's value) lands on the clipboard.</li>
@@ -423,6 +437,20 @@
   <li>The speech recognition model is in <code>~/Library/Application Support/FluidAudio/</code>.</li>
   <li>Papla sends your data nowhere; the only network connections are downloading the speech model and the optional check for a model update.</li>
   <li>Full uninstall: quit Papla, drag it from Applications to the Trash, delete the folders above and (if enabled) the entry in System Settings ▸ General ▸ Login Items.</li>
+</ul>
+
+<h2>Tips and less obvious features</h2>
+<ul>
+  <li><b>Dictate on the go</b> — with no active field the text lands on the clipboard; paste it later (section 5).</li>
+  <li><b>Remove formatting</b> — right-click text in the search to get plain text as a new entry (section 7).</li>
+  <li><b>Dragging out of the search</b> — images, screenshots, recordings and files drag into other apps as the file, a color as a color. Move the window by its top part (search field and filters).</li>
+  <li><b>Search window width</b> — Settings ▸ Clipboard, with a live preview.</li>
+  <li><b>Punctuation</b> — "no final period" and minimal modes; nothing ever follows an emoji or "XD" — no comma, no period (section 5).</li>
+  <li><b>Orb or wave</b> — Settings ▸ gear icon, with a live animated preview and 5 menu bar icons to pick from.</li>
+  <li><b>Speech model</b> — chip icon: model choice (only v3 understands Polish), re-download, update check.</li>
+  <li><b>Permissions</b> — lock icon: live status and quick jumps to the right system settings; grant them again after every reinstall.</li>
+  <li><b>F keys</b> — the (i) button next to the tabs explains how to map them with Karabiner-Elements.</li>
+  <li><b>Guide and "what's what" tour</b> — Settings ▸ gear icon ▸ Guide, or the menu bar icon menu.</li>
 </ul>
 
 <h2>For the curious</h2>
