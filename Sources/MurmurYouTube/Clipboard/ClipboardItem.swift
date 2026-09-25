@@ -67,11 +67,15 @@ struct ClipboardItem: Identifiable, Codable, Equatable, Sendable {
     var filePaths: [String]?
     var appName: String?
     var bundleID: String?
+    /// A copy made by "Usuń formatowanie" — kept as its own entry next to the original even
+    /// when the two strings are identical.
+    var fromPlainText: Bool?
 
     /// What "the same thing copied twice" means, per kind — a second copy of an identical
     /// item moves the old one to the top instead of stacking duplicates.
     var signature: String {
-        switch kind {
+        if fromPlainText == true { return "p:" + (text ?? "") }
+        return switch kind {
         case .text, .link, .code: "t:" + (text ?? "")
         case .color: "c:" + (colorHex ?? text ?? "")
         case .image: "i:" + (imageDigest ?? id.uuidString)

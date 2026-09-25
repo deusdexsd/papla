@@ -197,6 +197,9 @@ struct ClipboardView: View {
                         .contextMenu {
                             Button(t("Kopiuj", "Copy")) { copyOnly(item) }
                             if isPanel { Button(t("Wklej", "Paste")) { controller.paste(item) } }
+                            if item.text != nil, [.text, .code, .link].contains(item.kind), item.fromTranscription != true {
+                                Button(t("Usuń formatowanie", "Remove formatting")) { removeFormatting(item) }
+                            }
                             if let direction = translateDirection(for: item) {
                                 Button(direction.label) { translate(item, to: direction.target) }
                             }
@@ -360,6 +363,36 @@ struct ClipboardView: View {
                 try? await Task.sleep(for: .seconds(3))
                 if translateStatus?.id == item.id { translateStatus = nil }
             }
+        }
+    }
+
+    /// Plain-text copy of an entry: only a bare string goes on the pasteboard (no RTF/HTML
+    /// flavors), invisible layout characters are cleaned out, and the result becomes a new
+    /// history entry on top — the same way a translation does.
+    private func removeFormatting(_ item: ClipboardItem) {
+        guard let text = item.text else { return }
+        let plain = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "[\\u00A0\\u2007\\u202F]", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "[\\u200B\\u200C\\u200D\\u2060\\uFEFF]", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "[ \\t]+\n", with: "\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(plain, forType: .string)
+        ClipboardMonitor.shared.adopt()
+
+        let copy = ClipboardItem(
+            date: Date(), kind: item.kind, text: plain,
+            appName: t("Bez formatowania", "Plain text"), fromPlainText: true
+        )
+        store.add(copy)
+        selection = copy.id
+        flashedID = copy.id
+        Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            if flashedID == copy.id { flashedID = nil }
         }
     }
 
